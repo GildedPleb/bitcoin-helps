@@ -1,0 +1,79 @@
+type Query {
+  hello: String
+  getAfffiliationsAndIssues(language: String!): LanguageSelectors
+  getArgumentId(
+    languageId: String
+    issueId: String
+    affiliationId: String
+  ): ArgumentId
+  getInputPairByArgumentId(id: Int!): InputPairOrJob
+}
+
+type Mutation {
+  like(id: Int!): Int
+  dislike(id: Int!): Int
+}
+
+type Subscription {
+  subscribeToArgument(jobId: String!): Update
+}
+
+type Update {
+  type: String!
+  message: String!
+  sequence: Int!
+}
+
+type Job {
+  jobId: String!
+  argumentId: Int!
+  language: LanguageMinimal!
+}
+
+type Argument {
+  content: String!
+}
+
+type LanguageMinimal {
+  name: String!
+}
+
+type InputPair {
+  arguments: [Argument!]!
+  language: LanguageMinimal!
+}
+
+union InputPairOrJob = Job | InputPair
+
+type ArgumentId {
+  id: Int!
+}
+
+type OptionType {
+  value: String!
+  label: String!
+}
+
+type GroupType {
+  label: String!
+  options: [OptionType!]!
+}
+
+type TranslationTypeMapped {
+  selectAffiliation: String!
+  selectIssue: String!
+  selectNoMatch: String!
+  speak: String!
+  iAmAffiliatedWith: String!
+  andICareAbout: String!
+  loading: String!
+  whyCare: String!
+  findingArgument: String!
+}
+
+type LanguageSelectors {
+  id: String!
+  translations: TranslationTypeMapped!
+  issueCategories: [GroupType!]!
+  affiliationTypes: [GroupType!]!
+}

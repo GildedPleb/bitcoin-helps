@@ -1,0 +1,169 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+model Language {
+  id               String            @id @default(uuid())
+  name             String            @unique
+  translations     Json
+  issueCategories  IssueCategory[]
+  affiliationTypes AffiliationType[]
+  InputPair        InputPair[]
+  GenerateJob      GenerateJob[]
+  LanguagePrompt   LanguagePrompt?   @relation(fields: [languagePromptId], references: [id])
+  languagePromptId String?
+}
+
+model IssueCategory {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  issues      Issue[]
+  language    Language @relation(fields: [languageId], references: [id])
+  languageId  String
+}
+
+model AffiliationType {
+  id           String        @id @default(uuid())
+  name         String
+  description  String
+  affiliations Affiliation[]
+  language     Language      @relation(fields: [languageId], references: [id])
+  languageId   String
+}
+
+model Issue {
+  id              String        @id @default(uuid())
+  name            String
+  issueCategory   IssueCategory @relation(fields: [issueCategoryId], references: [id])
+  issueCategoryId String
+  InputPair       InputPair[]
+  GenerateJob     GenerateJob[]
+
+  @@unique([name, issueCategoryId])
+}
+
+model Affiliation {
+  id                String          @id @default(uuid())
+  name              String
+  affiliationType   AffiliationType @relation(fields: [affiliationTypeId], references: [id])
+  affiliationTypeId String
+  InputPair         InputPair[]
+  GenerateJob       GenerateJob[]
+
+  @@unique([name, affiliationTypeId])
+}
+
+model InputPair {
+  id            String      @id @unique @default(uuid())
+  issue         Issue       @relation(fields: [issueId], references: [id])
+  issueId       String
+  affiliation   Affiliation @relation(fields: [affiliationId], references: [id])
+  affiliationId String
+  language      Language    @relation(fields: [languageId], references: [id])
+  languageId    String
+  arguments     Argument[]
+  created       DateTime    @default(now())
+  updated       DateTime    @updatedAt
+  hits          Int         @default(1)
+
+  @@unique([issueId, affiliationId, languageId])
+}
+
+model Argument {
+  id          Int             @id @unique @default(autoincrement())
+  inputPair   InputPair?      @relation(fields: [inputPairId], references: [id])
+  inputPairId String?
+  content     String
+  like        Int             @default(0)
+  dislike     Int             @default(0)
+  created     DateTime        @default(now())
+  updated     DateTime        @updatedAt
+  createdBy   User?           @relation("createdBy", fields: [createdById], references: [id])
+  createdById Int?
+  editedBy    User[]
+  GenerateJob GenerateJob?
+  prompt      ArgumentPrompt? @relation(fields: [promptId], references: [id])
+  promptId    String?
+}
+
+model User {
+  id               Int        @id @unique @default(autoincrement())
+  CreatedArguments Argument[] @relation("createdBy")
+  EditedArguments  Argument[]
+  twitterHandle    String     @unique
+  email            String     @unique
+  hasSignedTerms   Boolean
+  role             Role
+  password         String
+  token            String?
+}
+
+model GenerateJob {
+  id               String         @id @default(uuid())
+  argument         Argument       @relation(fields: [argumentId], references: [id])
+  argumentId       Int            @unique
+  language         Language       @relation(fields: [languageId], references: [id])
+  languageId       String
+  issue            Issue          @relation(fields: [issueId], references: [id])
+  issueId          String
+  affiliation      Affiliation    @relation(fields: [affiliationId], references: [id])
+  affiliationId    String
+  status           JobStatus      @default(PENDING)
+  argumentPrompt   ArgumentPrompt @relation(fields: [argumentPromptId], references: [id])
+  argumentPromptId String         @default("b8b9571d-495c-4dd2-aced-7aa402aca019")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([issueId, affiliationId, languageId])
+}
+
+model ArgumentPrompt {
+  id          String        @id @default(uuid())
+  name        String
+  content     String
+  version     Int
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Argument    Argument[]
+  GenerateJob GenerateJob[]
+
+  @@unique([name, version], name: "name_version")
+}
+
+model LanguagePrompt {
+  id                    String     @id @default(uuid())
+  version               Int
+  name                  String
+  translationPrompt     String
+  translationExample    Json
+  issuePrompt           String
+  issueCategoryPrompt   String
+  issueExample          Json
+  affiliationPrompt     String
+  affiliationTypePrompt String
+  affiliationExample    Json
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  Language              Language[]
+
+  @@unique([name, version], name: "name_version")
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+}
+
+enum Role {
+  AI
+  User
+  Admin
+}
