@@ -31,8 +31,8 @@ echo "...Endpoint Layer initialized!"
 
 ###### Prompt Assurance ######
 
-# TODO: this needs to work for both prod and dev
-echo "...Syncing prompts..."
-npm run update-prompts
+# TODO: this needs to work for both prod and dev. And it needs to work in such a way that it only checks that a prompt exists for each, but not actually seed the prompt.
+# echo "...Syncing prompts..."
+# npm run update-prompts
 
 echo "\n\nENDING: Pre-install COMPLETE\n\n"
