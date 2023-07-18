@@ -6,7 +6,7 @@
     "@aws-sdk/client-dynamodb": "^3.370.0",
     "@aws-sdk/client-lambda": "^3.370.0",
     "@aws-sdk/util-dynamodb": "^3.370.0",
-    "aws-crt": "^1.15.20",
+    "aws-crt": "^1.15.21",
     "graceful-fs": "^4.2.11",
     "graphql": "^16.7.1",
     "handlebars": "^4.7.7",
