@@ -4,18 +4,17 @@ configValidationMode: error
 
 provider:
   name: aws
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   runtime: nodejs18.x
   httpApi:
     cors: true
   deploymentMethod: direct
-  region: us-east-2
+  region: ${env:AWS_REGION}
   iam:
     role: arn:aws:iam::${env:AWS_ACCOUNT_ID}:role/AWSLambdaService
   environment:
-    NODE_ENV: ${env:NODE_ENV}
-    CONNECTIONS_TABLE: CONNECTIONS
-    STREAM_CONTENT_TABLE: STREAM_CONTENT
+    CONNECTIONS_TABLE: ${self:service}-${self:provider.stage}-connections
+    STREAM_CONTENT_TABLE: ${self:service}-${self:provider.stage}-stream-content
     LANGUAGE_LOCKS_TABLE: ${self:service}-${self:provider.stage}-language-locks
 
 plugins:
@@ -25,6 +24,7 @@ plugins:
   - serverless-prune-plugin
   - serverless-scriptable-plugin
   - serverless-plugin-log-retention
+  - serverless-plugin-layer-manager
 
 package:
   individually: true
@@ -33,6 +33,9 @@ package:
     - src/graphql/schema.graphql
 
 custom:
+  layerConfig:
+    installLayers: false
+    exportPrefix: ${self:provider.stage}-
   esbuild:
     target: node18
     plugins: esbuild-plugins.cjs
@@ -57,7 +60,7 @@ custom:
         - ${env:AWS_VPC_SUBNET_2}
         - ${env:AWS_VPC_SUBNET_3}
     environment:
-      DATABASE_URL: ${env:DATABASE_URL}
+      DATABASE_URL: ${env:DATABASE_URL_${self:provider.stage}}
     layers:
       - { Ref: PrismaLambdaLayer }
     memorySize: 512
@@ -136,7 +139,7 @@ functions:
       AWS_IOT_CLIENT_ID: ${env:AWS_IOT_CLIENT_ID}
       PUBLISH_ENDPOINT: !Sub "wss://${WebsocketsApi}.execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}/"
       OPENAI_API_KEY: ${env:OPENAI_API_KEY}
-      GPT_VERSION: ${env:GPT_VERSION}
+      GPT_VERSION: ${env:GPT_VERSION_${self:provider.stage}}
     layers:
       - { Ref: EndpointLambdaLayer }
     memorySize: 256
@@ -146,7 +149,7 @@ functions:
     timeout: 100 # 1:40 minutes
     maximumRetryAttempts: 1
     environment:
-      GPT_VERSION: ${env:GPT_VERSION}
+      GPT_VERSION: ${env:GPT_VERSION_${self:provider.stage}}
       OPENAI_API_KEY: ${env:OPENAI_API_KEY}
       SAVE_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-saveLanguage
       FIND_LANGUAGE_PROMPT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findLanguagePrompt
@@ -262,7 +265,7 @@ resources:
     graphqlInvokeLanguageRole:
       Type: "AWS::IAM::Role"
       Properties:
-        RoleName: graphql-invoke-language-role
+        RoleName: graphql-invoke-language-role-${self:provider.stage}
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -304,7 +307,7 @@ resources:
     graphqlInvokeSubscriptionRole:
       Type: "AWS::IAM::Role"
       Properties:
-        RoleName: graphql-invoke-subscription-role
+        RoleName: graphql-invoke-subscription-role-${self:provider.stage}
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -343,7 +346,7 @@ resources:
     streamRole:
       Type: "AWS::IAM::Role"
       Properties:
-        RoleName: stream-role
+        RoleName: stream-role-${self:provider.stage}
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -399,7 +402,7 @@ resources:
     lambdaLanguageRole:
       Type: "AWS::IAM::Role"
       Properties:
-        RoleName: lambda-language-role
+        RoleName: lambda-language-role-${self:provider.stage}
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -430,3 +433,34 @@ resources:
                     - "dynamodb:PutItem"
                     - "dynamodb:DeleteItem"
                   Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.LANGUAGE_LOCKS_TABLE}"
+  # Outputs:
+  #   EndpointLambdaLayerQualifiedArn:
+  #     # Value: !Ref EndpointLambdaLayer
+  #     Export:
+  #       Name: ${self:provider.stage}-EndpointLambdaLayerQualifiedArn
+  #   PrismaLambdaLayerQualifiedArn:
+  #     # Value: !Ref PrismaLambdaLayer
+  #     Export:
+  #       Name: ${self:provider.stage}-PrismaLambdaLayerQualifiedArn
+
+  # The below works:
+  # Outputs:
+  #   DevEndpointLambdaLayerQualifiedArn:
+  #     Description: "Current Lambda layer version for ${self:provider.stage}"
+  #     Value:
+  #       Ref: "EndpointLambdaLayer"
+  #     Export:
+  #       Name: ${self:provider.stage}-EndpointLambdaLayerQualifiedArn
+
+  # Outputs:
+  #   EndpointLambdaLayerQualifiedArn:
+  #     Description: "Current Lambda layer version for ${self:provider.stage}"
+  #     Value:
+  #       Ref: "EndpointLambdaLayer"
+  # Export:
+  #   Name: ${self:provider.stage}-EndpointLambdaLayerQualifiedArn
+  # PrismaLambdaLayerQualifiedArn:
+  #   Value:
+  #     Ref: "PrismaLambdaLayer"
+  # Export:
+  #   Name: ${self:provider.stage}-PrismaLambdaLayerQualifiedArn

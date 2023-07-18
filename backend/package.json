@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "codegen": "graphql-codegen --config codegen.ts",
-    "update-prompts": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seed.ts",
+    "update-prompts-dev": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/seed.ts dev",
+    "update-prompts-prod": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/seed.ts prod",
+    "verify-seeds": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/verify.ts",
     "print-tree": "tree -I 'node_modules|build' -P '*.ts'"
   },
   "keywords": [],
@@ -41,6 +43,7 @@
     "serverless-esbuild": "^1.46.0",
     "serverless-esbuild-layers": "^0.1.6",
     "serverless-plugin-common-excludes": "^4.0.0",
+    "serverless-plugin-layer-manager": "^1.1.1",
     "serverless-plugin-log-retention": "^2.0.0",
     "serverless-prune-plugin": "^2.0.2",
     "serverless-scriptable-plugin": "^1.3.1",

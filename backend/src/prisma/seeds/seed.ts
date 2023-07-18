@@ -1,7 +1,15 @@
-import { PrismaClient, Prisma } from "@prisma/client";
-import { argumentPrompts, languagePrompts } from "../../prompts";
+import { PrismaClient } from "@prisma/client";
+import { argumentPrompts, languagePrompts } from "../../../prompts";
 
-function deepEqual(obj1, obj2) {
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const STAGE = process.argv[2] ?? "dev";
+
+console.log(`Running seeds for ${STAGE}...`);
+
+function deepEqual(obj1: unknown, obj2: unknown) {
   if (obj1 === obj2) return true;
 
   if (
@@ -25,7 +33,9 @@ function deepEqual(obj1, obj2) {
 
 // TODO: Add validation
 
-const prisma = new PrismaClient();
+const DATABASE_URL = process.env[`DATABASE_URL_${STAGE}`] ?? "Will fail";
+
+const prisma = new PrismaClient({ datasources: { db: { url: DATABASE_URL } } });
 
 async function main() {
   for (const prompt of argumentPrompts) {

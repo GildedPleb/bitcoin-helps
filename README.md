@@ -46,10 +46,12 @@ I'll let ChatGPT explain what this project does:
 
 You will note that the only way to employ such an argument, sans AI, is to have what amounts to "unlimited money". The playbook is easy and powerful (but expensive): this is how CocaCola convinces the world sugar is good. Likewise, I assert that the only way fiat has been able to dominate the academic and intellectual stage is because it is indeed, exactly that, _unlimited money_, which can always pay more for more bullshit. Perhaps the arguments herein are also bullshit, but I suppose that is the point: now the fiat-opposition can begin to have a just, and not wildly distorted, playing field. Problematically, if fiat apologists were to fork and deploy this very same project to prove fiat is good, they will soon find out "fiat good" is an impossible premise because it fundamentally disagrees with reality where bitcoin does not. But why would they do that? After all, they already have over a century of academic rigor to draw from, making it absolutely astonishing that an oppositional opinion exists at all.
 
-Brandolini's law be damned, fiat is finished.
+...yet here we are.
 
 # Why?
 
 This project is a result of reading C. Jason Mailer's [book](https://www.amazon.com/Progressives-Case-Bitcoin-Equitable-Peaceful/dp/B0C1J3DC2X) "A Progressive's Case for Bitcoin" and having the thought, "It is compelling that both a libertarian and progressive case can be made for Bitcoin. Indeed, both of those ideologies are radically opposed. What ideology does bitcoin not apply to?" Naturally, I started exploring this concept and found that there are no ideologies that do not agree with and benefit from Bitcoin, even ardent Central Bankers themselves could benefit as it removes moral hazard from their job affording them new-found integrity. Even absurdists benefit, for its hilarious that novel internet nerd money works better than credit cards, treasuries, and remittance combined. Naturally, the next step was to expand the search, to all people groups, and all languages. This project is the result.
+
+But more than all of that, I simply got tired of writing hundreds of these essay by hands for friends and family. The templates used in the prompts herein are the culmination of years of writing and finding patterns in the stories I have told over and over about how important Bitcoin is for so many of the circumstances I have come across.
 
 **Do you get it yet?**
