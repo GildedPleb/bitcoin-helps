@@ -36,6 +36,69 @@ Bitcoin transcends political, ethical, spiritual, religious and other not-so-pro
 
 To ensure universal access and to cater to the global audience, this project utilizes the elasticity of AWS Lambda for backend computing, and AWS' CDN for frontend delivery. This allows us to handle any volume of requests without compromising on service quality, ensuring that the arguments generated are always available to everyone, anytime, and from anywhere around the globe. (Caveat: If the user base were to truly scale, this implies multinational amounts of money to afford the AWS costs, which we don't have.)
 
+# Architecture
+
+The base architecture is AWS Lambda as managed by Serverless, but there were some serious difficulties and concerns in the delivery and access of AI Streaming data: streaming AI data feels like a modern day Ticker Tape Machine. Publishing that stream, and then hooking into that stream requires a PubSub framework and stream caching. The general flow is as follows:
+
+```mermaid
+flowchart TB
+  subgraph "AWS"
+    subgraph "Serverless"
+      APIG["AWS API Gateway"]
+      DYNAMO["AWS DynamoDB Tables"]
+
+      subgraph "Non-VPC Resources"
+        subgraph "Lambdas"
+          CreateLanguage["CreateLanguage"]
+          Websocket["Websocket"]
+          GraphQL["GraphQL"]
+          Stream["Stream"]
+        end
+      end
+
+      subgraph "VPC Resources"
+        PrismaLambdas["Prisma Lambdas"]
+      end
+
+      subgraph "Layers"
+        Prisma["Prisma"]
+        Endpoint["Endpoint"]
+      end
+    end
+    RDS_Postgres["RDS Postgres"]
+    AWS_IoT["AWS IoT MQTT PubSub"]
+  end
+
+  OpenAIGPT["OpenAI ChatGPT"]
+  Internet["Clients"]
+
+
+  Lambdas-->|uses|Endpoint
+  PrismaLambdas-->|uses|Prisma
+
+  Websocket-->|interacts with|DYNAMO
+  Stream<-->|interacts with|DYNAMO
+  CreateLanguage-->|interacts with|DYNAMO
+
+  Lambdas-->|calls|PrismaLambdas
+  RDS_Postgres<-->|interacts with|PrismaLambdas
+
+  Stream<-->|interacts with|OpenAIGPT
+  CreateLanguage<-->|interacts with|OpenAIGPT
+
+  GraphQL<-->|Resolves Requests|APIG
+  Websocket<-->|Resolves Requests|APIG
+  Stream-->|calls|APIG
+  Stream-->|Streams To|APIG
+
+  APIG<-->|interacts with|Internet
+  AWS_IoT<-->|interacts with|Stream
+
+  Websocket-->|calls|Stream
+  GraphQL-->|calls|CreateLanguage
+  GraphQL-->|calls|Websocket
+```
+
 # The Argument
 
 I'll let ChatGPT explain what this project does:
@@ -53,5 +116,7 @@ You will note that the only way to employ such an argument, sans AI, is to have 
 This project is a result of reading C. Jason Mailer's [book](https://www.amazon.com/Progressives-Case-Bitcoin-Equitable-Peaceful/dp/B0C1J3DC2X) "A Progressive's Case for Bitcoin" and having the thought, "It is compelling that both a libertarian and progressive case can be made for Bitcoin. Indeed, both of those ideologies are radically opposed. What ideology does bitcoin not apply to?" Naturally, I started exploring this concept and found that there are no ideologies that do not agree with and benefit from Bitcoin, even ardent Central Bankers themselves could benefit as it removes moral hazard from their job affording them new-found integrity. Even absurdists benefit, for its hilarious that novel internet nerd money works better than credit cards, treasuries, and remittance combined. Naturally, the next step was to expand the search, to all people groups, and all languages. This project is the result.
 
 But more than all of that, I simply got tired of writing hundreds of these essay by hands for friends and family. The templates used in the prompts herein are the culmination of years of writing and finding patterns in the stories I have told over and over about how important Bitcoin is for so many of the circumstances I have come across.
+
+Oh, and I wanted to put together a portfolio project that combined Bitcoin and AI.
 
 **Do you get it yet?**
