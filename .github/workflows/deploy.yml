@@ -64,4 +64,5 @@ jobs:
         run: ./deploy.sh $STAGE
 
       - name: Revoke GitHub traffic
+        if: always()
         run: aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_VPC_SECURITY_GROUP }} --protocol tcp --port ${{ secrets.AWS_SECURITY_GROUP_PORT }} --cidr ${{ secrets.AWS_SECURITY_GROUP_CIDR }}
