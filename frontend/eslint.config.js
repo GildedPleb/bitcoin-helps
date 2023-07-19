@@ -13,6 +13,7 @@ export default [
           functions: "defaultArguments",
         },
       ],
+      "no-console": ["error", { allow: ["warn", "error"] }],
     },
   },
 ];

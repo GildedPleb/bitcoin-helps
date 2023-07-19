@@ -38,7 +38,6 @@ const createBatchLink = (
       } = item.data.subscribeToArgument;
 
       if (type === "Finish") {
-        console.log("Finished");
         observer.next?.({
           ...item,
           errors: [],
@@ -54,7 +53,7 @@ const createBatchLink = (
         currentSequence += 1;
         incomingQueue.shift();
       } else {
-        console.log("Out of sequence", sequence, currentSequence);
+        console.error("Out of sequence", sequence, currentSequence);
         break;
       }
     }
@@ -92,7 +91,6 @@ const createBatchLink = (
           Promise.resolve()
             // eslint-disable-next-line promise/always-return
             .then(() => {
-              console.log("Calling complete");
               clearInterval(interval);
               sendBatch(observer);
               observer.complete();
@@ -109,7 +107,6 @@ const createBatchLink = (
       return () => {
         if (sub) sub.unsubscribe();
         clearInterval(interval);
-        console.log("Calling return");
         Promise.resolve()
           // eslint-disable-next-line promise/always-return
           .then(() => {
