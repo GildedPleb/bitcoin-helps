@@ -1,3 +1,5 @@
+# ./backend/ci/pre-install.sh
+
 set -e
 
 echo "\n\nSTARTING: Pre-install...\n\n"
