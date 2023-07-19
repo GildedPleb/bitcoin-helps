@@ -131,4 +131,5 @@ dist
 
 # general
 backend/prompts.ts
+backend/update.ts
 backend/.esbuild/

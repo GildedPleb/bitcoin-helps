@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
+  type GroupType,
   type OptionType,
   useGetArgumentIdLazyQuery,
 } from "../../../graphql/generated";
@@ -18,6 +19,15 @@ import { GoButton, Selector, Sentence, Spacer } from "../../components";
 export interface OptionTypeMapped extends OptionType {
   direction?: LeftToRightOrRightToLeft;
 }
+
+const sortGroups = (groups: GroupType[]): GroupType[] => {
+  for (const group of groups)
+    group.options.sort((a, b) => a.label.localeCompare(b.label));
+
+  groups.sort((a, b) => a.label.localeCompare(b.label));
+
+  return groups;
+};
 
 const Container = styled.section<{ willUnmount: boolean }>`
   width: 100%;
@@ -138,7 +148,7 @@ function LandingPage() {
               language={language}
               value={affiliation}
               onChange={setAffiliation}
-              options={language.affiliationTypes}
+              options={sortGroups(language.affiliationTypes)}
               placeholder={language.selectAffiliation}
               selectorKey={1}
             />
@@ -149,7 +159,7 @@ function LandingPage() {
               language={language}
               value={issue}
               onChange={setIssue}
-              options={language.issueCategories}
+              options={sortGroups(language.issueCategories)}
               placeholder={language.selectIssue}
               selectorKey={2}
             />

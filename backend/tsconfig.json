@@ -17,5 +17,5 @@
     "allowSyntheticDefaultImports": true
   },
   "exclude": ["node_modules"],
-  "include": ["src", "esbuild-plugins.cjs", "prompts.ts"]
+  "include": ["src", "esbuild-plugins.cjs", "prompts.ts", "update.ts"]
 }
