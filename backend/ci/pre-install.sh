@@ -17,16 +17,24 @@ rm -rf ./src/layers/prisma/nodejs/node_modules
 echo "...Migrating DB and Generating Prisma Client..."
 if [ "$STAGE" = "dev" ]
 then
-  : ${DATABASE_URL_dev:?"Missing DATABASE_URL_dev env variable"}
-  echo "DATABASE: ${DATABASE_URL_dev: -10}"
+  if [ -z "$DATABASE_URL_dev" ]
+  then
+    echo "Missing DATABASE_URL_dev env variable"
+    exit 1
+  fi
+  echo "DATABASE: $(echo $DATABASE_URL_dev | rev | cut -c 1-10 | rev)"
   echo "GPT: ${GPT_VERSION_dev}"
   DATABASE_URL=$DATABASE_URL_dev PRISMA_CLIENT_ENGINE_TYPE=binary npx prisma migrate dev
   echo "...Verifying seeds..."
   DATABASE_URL=$DATABASE_URL_dev npm run verify-seeds
 elif [ "$STAGE" = "prod" ]
 then
-  : ${DATABASE_URL_prod:?"Missing DATABASE_URL_prod env variable"}
-  echo "DATABASE: ${DATABASE_URL_prod: -10}"
+  if [ -z "$DATABASE_URL_prod" ]
+  then
+    echo "Missing DATABASE_URL_prod env variable"
+    exit 1
+  fi
+  echo "DATABASE: $(echo $DATABASE_URL_prod | rev | cut -c 1-10 | rev)"
   echo "GPT: ${GPT_VERSION_prod}"
   DATABASE_URL=$DATABASE_URL_prod PRISMA_CLIENT_ENGINE_TYPE=binary npx prisma migrate deploy && npx prisma generate
   echo "...Verifying seeds..."
