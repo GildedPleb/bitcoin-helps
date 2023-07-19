@@ -39,6 +39,7 @@ jobs:
           AWS_VPC_SUBNET_3: ${{ secrets.AWS_VPC_SUBNET_3 }}
           AWS_IOT_CLIENT_ID: ${{ secrets.AWS_IOT_CLIENT_ID }}
           AWS_IOT_HOST: ${{ secrets.AWS_IOT_HOST }}
+          AWS_DEVICE_PRIVATE_KEY: ${{ secrets.AWS_DEVICE_PRIVATE_KEY }}
 
           # Frontend
           DISABLE_ESLINT_PLUGIN: true

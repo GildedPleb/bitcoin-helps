@@ -100,7 +100,7 @@ functions:
       LIKE_OR_DISLIKE: ${self:service}-${self:provider.stage}-likeOrDislike
       UPDATE_INPUT_PAIR_HIT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-updateInputPairHit
       FIND_LATEST_ARGUMENT_PROMPT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findLatestArgumentPrompts
-      AWS_DEVICE_PRIVATE_KEY: ${ssm:DEVICE_PRIVATE_KEY~true}
+      AWS_DEVICE_PRIVATE_KEY: ${ssm:DEVICE_PRIVATE_KEY, env:AWS_DEVICE_PRIVATE_KEY}
       AWS_IOT_HOST: ${env:AWS_IOT_HOST}
       AWS_IOT_CLIENT_ID: ${env:AWS_IOT_CLIENT_ID}
     layers:
@@ -134,7 +134,7 @@ functions:
       UPDATE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-updateJob
       FINALIZE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-finalizeJob
       TOPIC_PREFIX: ${self:custom.topicPrefix}
-      AWS_DEVICE_PRIVATE_KEY: ${ssm:DEVICE_PRIVATE_KEY~true}
+      AWS_DEVICE_PRIVATE_KEY: ${ssm:DEVICE_PRIVATE_KEY, env:AWS_DEVICE_PRIVATE_KEY}
       AWS_IOT_HOST: ${env:AWS_IOT_HOST}
       AWS_IOT_CLIENT_ID: ${env:AWS_IOT_CLIENT_ID}
       PUBLISH_ENDPOINT: !Sub "wss://${WebsocketsApi}.execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}/"
