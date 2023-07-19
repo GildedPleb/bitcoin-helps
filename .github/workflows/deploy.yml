@@ -19,17 +19,27 @@ jobs:
         with:
           node-version: 18
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Allow GitHub traffic
+        run: aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_VPC_SECURITY_GROUP }} --protocol tcp --port ${{ secrets.AWS_SECURITY_GROUP_PORT }} --cidr ${{ secrets.AWS_SECURITY_GROUP_CIDR }}
+
       - name: Deploy
         env:
           STAGE: ${{ github.ref == 'refs/heads/master' && 'prod' || 'dev' }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
 
           # Backend
-          GPT_VERSION_dev: ${{ secrets.GPT_VERSION_DEV }}
-          GPT_VERSION_prod: ${{ secrets.GPT_VERSION_PROD }}
+          GPT_VERSION_dev: ${{ vars.GPT_VERSION_DEV }}
+          GPT_VERSION_prod: ${{ vars.GPT_VERSION_PROD }}
           DATABASE_URL_dev: ${{ secrets.DATABASE_URL_DEV }}
           DATABASE_URL_prod: ${{ secrets.DATABASE_URL_PROD }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -48,7 +58,10 @@ jobs:
           REACT_APP_API_URL_WS_DEV: ${{ secrets.REACT_APP_API_URL_WS_DEV }}
           REACT_APP_API_URL_WS_PROD: ${{ secrets.REACT_APP_API_URL_WS_PROD }}
           HOSTED_ZONE_ID: ${{ secrets.HOSTED_ZONE_ID }}
-          DOMAIN: ${{ secrets.DOMAIN }}
+          DOMAIN: ${{ vars.DOMAIN }}
           CERTIFICATE_ID: ${{ secrets.CERTIFICATE_ID }}
 
         run: ./deploy.sh $STAGE
+
+      - name: Revoke GitHub traffic
+        run: aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_VPC_SECURITY_GROUP }} --protocol tcp --port ${{ secrets.AWS_SECURITY_GROUP_PORT }} --cidr ${{ secrets.AWS_SECURITY_GROUP_CIDR }}
