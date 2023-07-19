@@ -15,7 +15,7 @@ echo "...Deleting prisma layer node_module..."
 rm -rf ./src/layers/prisma/nodejs/node_modules
 
 echo "...Migrating DB and Generating Prisma Client..."
-if [ "$STAGE" == "dev" ]
+if [ "$STAGE" = "dev" ]
 then
   : ${DATABASE_URL_dev:?"Missing DATABASE_URL_dev env variable"}
   echo "DATABASE: ${DATABASE_URL_dev: -10}"
@@ -23,7 +23,7 @@ then
   DATABASE_URL=$DATABASE_URL_dev PRISMA_CLIENT_ENGINE_TYPE=binary npx prisma migrate dev
   echo "...Verifying seeds..."
   DATABASE_URL=$DATABASE_URL_dev npm run verify-seeds
-elif [ "$STAGE" == "prod" ]
+elif [ "$STAGE" = "prod" ]
 then
   : ${DATABASE_URL_prod:?"Missing DATABASE_URL_prod env variable"}
   echo "DATABASE: ${DATABASE_URL_prod: -10}"
