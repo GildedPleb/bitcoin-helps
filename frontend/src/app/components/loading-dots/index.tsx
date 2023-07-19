@@ -49,6 +49,7 @@ const Dot = styled.div<{ fadeInDelay: number; fadeOutDelay: number }>`
 `;
 
 const Letter = styled.span<{ fadeInDelay: number; fadeOutDelay: number }>`
+  font-size: clamp(1.1rem, 3.5vw, 2rem);
   opacity: 0;
   margin: 0 5px;
   animation: ${fadeIn} 2s ${(properties) => properties.fadeInDelay}s forwards,
