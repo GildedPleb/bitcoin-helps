@@ -11,6 +11,7 @@ then
   echo "PROD URL: ${REACT_APP_API_URL_HTTP_PROD}"
 else
   echo "Invalid stage."
+  exit 1
 fi
 
 npm run build
