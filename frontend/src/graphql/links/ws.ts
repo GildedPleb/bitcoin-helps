@@ -9,20 +9,8 @@ const ENDPOINT_WS =
 const wsLink = new GraphQLWsLink(
   createClient({
     url: ENDPOINT_WS,
-    on: {
-      message: (message) => {},
-      connected: (message) => {
-        console.log("Connected!", message);
-      },
-      closed: (message) => {
-        console.log("Disconnected!", message);
-      },
-    },
     keepAlive: 10_000,
-    shouldRetry: (event) => {
-      console.log("got a CLOSE EVENT:", event);
-      return true;
-    },
+    shouldRetry: () => true,
   })
 );
 

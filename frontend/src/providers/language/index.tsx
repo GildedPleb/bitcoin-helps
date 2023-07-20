@@ -190,7 +190,6 @@ function LanguageProvider({ children }: React.PropsWithChildren) {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       const interval = setInterval(async () => {
         for await (const presetLanguage of generatingLanguages) {
-          console.log("checking:", presetLanguage.value);
           const { data, loading, error } =
             await client.query<GetAfffiliationsAndIssuesQuery>({
               query: GET_AFFILIATIONS_ISSUES,
@@ -200,10 +199,8 @@ function LanguageProvider({ children }: React.PropsWithChildren) {
               fetchPolicy: "network-only",
             });
           if (error) console.error(error);
-          if (!loading && !error && data.getAfffiliationsAndIssues) {
-            console.log("now populated!", presetLanguage.value);
+          if (!loading && !error && data.getAfffiliationsAndIssues)
             updateLanguageStatus(presetLanguage.value, "available");
-          }
         }
       }, 60_000);
 

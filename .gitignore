@@ -133,3 +133,4 @@ dist
 backend/prompts.ts
 backend/update.ts
 backend/.esbuild/
+.vscode/settings.json
