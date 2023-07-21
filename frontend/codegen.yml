@@ -1,5 +1,5 @@
 overwrite: true
-schema: ${REACT_APP_API_URL_HTTP_DEV}
+schema: ${SCHEMA}
 documents: "src/**/*.{ts,tsx,js,jsx}"
 generates:
   src/graphql/generated/index.tsx:
