@@ -14,4 +14,6 @@ else
   exit 1
 fi
 
+npm run generate
+
 npm run build

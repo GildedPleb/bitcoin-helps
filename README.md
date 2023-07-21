@@ -1,5 +1,9 @@
 # Does Bitcoin Help?
 
+prod: [https://doesbitcoinhelp.com](https://doesbitcoinhelp.com)
+
+dev: [https://dev.doesbitcoinhelp.com](https://doesbitcoinhelp.com)
+
 "Does Bitcoin Help?" is a unique project that uses generative AI to illustrate how Bitcoin can be beneficial to, not _various_, but _ALL_ facets of humanity worldwide. The central objective is to generate and/or distribute compelling, context-specific arguments to demonstrate Bitcoin's universal applicability and utility for any chosen input.
 
 We believe that Bitcoin, the only decentralized, transparent, permissionless, uncensorable, fixed-supply, and globally accessible digital currency, has profound implications for not just economics but justice, mercy, and overall human progress and flourishing, for every human in existence, and by extension every entity on the earth, and the earth itself. As such, we are forced to conclude that the greatest harbinger of evil ever perpetrated against humanity and reality is fiat currency. This project all but proves this to be correct.
@@ -36,9 +40,65 @@ Bitcoin transcends political, ethical, spiritual, religious and other not-so-pro
 
 To ensure universal access and to cater to the global audience, this project utilizes the elasticity of AWS Lambda for backend computing, and AWS' CDN for frontend delivery. This allows us to handle any volume of requests without compromising on service quality, ensuring that the arguments generated are always available to everyone, anytime, and from anywhere around the globe. (Caveat: If the user base were to truly scale, this implies multinational amounts of money to afford the AWS costs, which we don't have.)
 
+# The Argument
+
+I'll let ChatGPT explain what this project does:
+
+> Exhaustive enumeration, also known as complete case analysis, is a robust method of investigation that strives to uncover truth by examining every possible scenario within a given context. Its power lies in its methodical and comprehensive nature, systematically analyzing all conceivable circumstances to validate or refute a particular assertion. This approach not only preempts potential counter-arguments but also ensures a meticulous exploration of the subject. In essence, exhaustive enumeration serves as an academic sieve, sifting through each case to reach the most reliable and undiluted understanding of the issue at hand. It can be seen as a unique instrument of intellectual inquiry, often providing the most reliable pathway to discerning truth.
+
+> Applying this methodology, this project seeks to validate the assertion, "Bitcoin fixes that." It aims to rigorously demonstrate how Bitcoin, as a groundbreaking technological and financial innovation, can ameliorate various problems across an exhaustive spectrum of circumstances. This entails a complete case analysis, considering every potential context, individual perspective, and situation to evaluate Bitcoin's potential for improvement or resolution. In essence, this study deploys exhaustive enumeration as an academic tool to reveal the potential of Bitcoin as a universal solution or enhancement in all conceivable scenarios.
+
+You will note that the only way to employ such an argument, sans AI, is to have what amounts to "unlimited money". The playbook is easy and powerful (but expensive): this is how CocaCola convinces the world sugar is good. Likewise, I assert that the only way fiat has been able to dominate the academic and intellectual stage is because it is indeed, exactly that, _unlimited money_, which can always pay more for more bullshit. Perhaps the arguments herein are also bullshit, but I suppose that is the point: now the fiat-opposition can begin to have a just, and not wildly distorted, playing field. Problematically, if fiat apologists were to fork and deploy this very same project to prove fiat is good, they will soon find out "fiat good" is an impossible premise because it fundamentally disagrees with reality where bitcoin does not. But why would they do that? After all, they already have over a century of academic rigor to draw from, making it absolutely astonishing that an oppositional opinion exists at all.
+
+...yet here we are.
+
+# Why?
+
+This project is a result of reading C. Jason Mailer's [book](https://www.amazon.com/Progressives-Case-Bitcoin-Equitable-Peaceful/dp/B0C1J3DC2X) "A Progressive's Case for Bitcoin" and having the thought, "It is compelling that both a libertarian and progressive case can be made for Bitcoin. Indeed, both of those ideologies are radically opposed. What ideology does bitcoin not apply to?" Naturally, I started exploring this concept and found that there are no ideologies that do not agree with and benefit from Bitcoin, even ardent Central Bankers themselves could benefit as it removes moral hazard from their job affording them new-found integrity. Even absurdists benefit, for its hilarious that novel internet nerd money works better than credit cards, treasuries, and remittance combined. Naturally, the next step was to expand the search, to all people groups, and all languages. This project is the result.
+
+But more than all of that, I simply got tired of writing hundreds of these essay by hands for friends and family. The templates used in the prompts herein are the culmination of years of writing and finding patterns in the stories I have told over and over about how important Bitcoin is for so many of the circumstances I have come across.
+
+Oh, and I wanted to put together a portfolio project that combined Bitcoin and AI because I am presently looking for a job in Bitcoin, get a hold of me on twitter [@gildedpleb](https://twitter.com/gildedpleb)
+
+**Do you get it yet?**
+
 # Architecture
 
 The base architecture is AWS Lambda as managed by Serverless, but there were some serious difficulties and concerns in the delivery and access of AI Streaming data: streaming AI data feels like a modern day Ticker Tape Machine. Publishing that stream, and then hooking into that stream requires a PubSub framework and stream caching. The general flow is as follows:
+
+### Frontend
+
+```mermaid
+sequenceDiagram
+  participant User as User
+  participant Client as Client Browser
+  participant Route53 as AWS Route53
+  participant CloudFront as AWS CloudFront
+  participant ACM as AWS Certificate Manager
+  participant S3 as AWS S3 Bucket
+  participant APIG as AWS API Gateway
+  participant Backend as Backend Services
+
+  User->>Client: Enter URL
+  Client->>Route53: DNS Lookup
+  Route53-->>Client: Resolve to CloudFront distribution
+  Client->>CloudFront: Initial HTTPS request
+  CloudFront->>ACM: Request SSL certificate
+  ACM-->>CloudFront: Returns SSL certificate
+  CloudFront-->>Client: Send SSL certificate
+  Client->>CloudFront: Secure HTTPS request for website
+  CloudFront->>S3: Retrieve website resources
+  S3-->>CloudFront: Returns resources
+  CloudFront-->>Client: Serve website securely
+  Client-->>User: Display secure website
+  Client->>APIG: HTTPS Request to Backend
+  APIG->>Backend: Forward Request
+  Backend-->>APIG: Return Response
+  APIG-->>Client: Forward Response
+
+```
+
+### Backend
 
 ```mermaid
 flowchart TB
@@ -76,9 +136,9 @@ flowchart TB
   Lambdas-->|uses|Endpoint
   PrismaLambdas-->|uses|Prisma
 
-  Websocket-->|interacts with|DYNAMO
-  Stream<-->|interacts with|DYNAMO
-  CreateLanguage-->|interacts with|DYNAMO
+  Websocket-->|Connection Persistance Management|DYNAMO
+  Stream<-->|AI stream caching|DYNAMO
+  CreateLanguage-->|Language Gen Management|DYNAMO
 
   Lambdas-->|calls|PrismaLambdas
   RDS_Postgres<-->|interacts with|PrismaLambdas
@@ -99,24 +159,61 @@ flowchart TB
   GraphQL-->|calls|Websocket
 ```
 
-# The Argument
+### CI/CD
 
-I'll let ChatGPT explain what this project does:
+```mermaid
+flowchart TB
 
-> Exhaustive enumeration, also known as complete case analysis, is a robust method of investigation that strives to uncover truth by examining every possible scenario within a given context. Its power lies in its methodical and comprehensive nature, systematically analyzing all conceivable circumstances to validate or refute a particular assertion. This approach not only preempts potential counter-arguments but also ensures a meticulous exploration of the subject. In essence, exhaustive enumeration serves as an academic sieve, sifting through each case to reach the most reliable and undiluted understanding of the issue at hand. It can be seen as a unique instrument of intellectual inquiry, often providing the most reliable pathway to discerning truth.
+    DevCode[Develop on Dev branch] --> DevPushToGH[Push to GitHub]
+    DevPushToGH -->|Start CI/CD pipeline which deploys to dev or fails| devCICD
 
-> Applying this methodology, this project seeks to validate the assertion, "Bitcoin fixes that." It aims to rigorously demonstrate how Bitcoin, as a groundbreaking technological and financial innovation, can ameliorate various problems across an exhaustive spectrum of circumstances. This entails a complete case analysis, considering every potential context, individual perspective, and situation to evaluate Bitcoin's potential for improvement or resolution. In essence, this study deploys exhaustive enumeration as an academic tool to reveal the potential of Bitcoin as a universal solution or enhancement in all conceivable scenarios.
+    subgraph devCICD["Development Pipeline"]
+      direction LR
+      subgraph devBackend["Backend"]
+        DevTypeGen[Generate Types]
+        DevTypeGen --> SeedVerify["Verify Prompt Seeding"]
+        SeedVerify --> DevPrismaCmd[Run Prisma Commands]
+        DevPrismaCmd --> DevTests[Run Tests]
+        DevTests --> DeployToDev{Pass?}
+        DeployToDev -- yes --> DeployDev["Deploy backend"]
+        DeployToDev -- no --> EndDev["End Process with failure"]
+      end
+      subgraph devFrontend["Frontend"]
+        DevBuild[Generate Types]
+        DevBuild --> DevBuildReact["Build React App"]
+        DevBuildReact --> DevFrontEndTests[Run Tests]
+        DevFrontEndTests --> DeployFEToDev{Pass?}
+        DeployFEToDev -- yes --> DeployFEDev["Deploy to dev.doesbitcoinhelp.com"]
+        DeployFEToDev -- no --> EndFEDev["End Process with failure"]
+      end
+      devBackend --> devFrontend
+    end
 
-You will note that the only way to employ such an argument, sans AI, is to have what amounts to "unlimited money". The playbook is easy and powerful (but expensive): this is how CocaCola convinces the world sugar is good. Likewise, I assert that the only way fiat has been able to dominate the academic and intellectual stage is because it is indeed, exactly that, _unlimited money_, which can always pay more for more bullshit. Perhaps the arguments herein are also bullshit, but I suppose that is the point: now the fiat-opposition can begin to have a just, and not wildly distorted, playing field. Problematically, if fiat apologists were to fork and deploy this very same project to prove fiat is good, they will soon find out "fiat good" is an impossible premise because it fundamentally disagrees with reality where bitcoin does not. But why would they do that? After all, they already have over a century of academic rigor to draw from, making it absolutely astonishing that an oppositional opinion exists at all.
+    devCICD -->|If dev deployment succeeds| ProdPR[Open PR to Master]
+    ProdPR --> ProdApproval{Approved?}
+    ProdApproval -- yes --> ProdMerge[Merge PR]
+    ProdApproval -- no --> EndMasterDeploy["PR Rejected"]
 
-...yet here we are.
+    subgraph ProdMerge["Production Pipeline (same as above)"]
+      direction LR
+      subgraph prodBackend["Backend"]
+        ProdTypeGen[Generate Types]
+        ProdTypeGen --> ProdSeedVerify["Verify Prompt Seeding"]
+        ProdSeedVerify --> ProdPrismaCmd[Run Prisma Commands]
+        ProdPrismaCmd --> ProdTests[Run Tests]
+        ProdTests --> DeployToProd{Pass?}
+        DeployToProd -- yes --> DeployProd["Deploy backend"]
+        DeployToProd -- no --> EndProd["End Process with failure"]
+      end
+      subgraph prodFrontend["Frontend"]
+        ProdBuild[Generate Types]
+        ProdBuild --> ProdBuildReact["Build React App"]
+        ProdBuildReact --> ProdFrontEndTests[Run Tests]
+        ProdFrontEndTests --> DeployFEToProd{Pass?}
+        DeployFEToProd -- yes --> DeployFEProd["Deploy to doesbitcoinhelp.com"]
+        DeployFEToProd -- no --> EndFEProd["End Process with failure"]
+      end
+      prodBackend --> prodFrontend
+    end
 
-# Why?
-
-This project is a result of reading C. Jason Mailer's [book](https://www.amazon.com/Progressives-Case-Bitcoin-Equitable-Peaceful/dp/B0C1J3DC2X) "A Progressive's Case for Bitcoin" and having the thought, "It is compelling that both a libertarian and progressive case can be made for Bitcoin. Indeed, both of those ideologies are radically opposed. What ideology does bitcoin not apply to?" Naturally, I started exploring this concept and found that there are no ideologies that do not agree with and benefit from Bitcoin, even ardent Central Bankers themselves could benefit as it removes moral hazard from their job affording them new-found integrity. Even absurdists benefit, for its hilarious that novel internet nerd money works better than credit cards, treasuries, and remittance combined. Naturally, the next step was to expand the search, to all people groups, and all languages. This project is the result.
-
-But more than all of that, I simply got tired of writing hundreds of these essay by hands for friends and family. The templates used in the prompts herein are the culmination of years of writing and finding patterns in the stories I have told over and over about how important Bitcoin is for so many of the circumstances I have come across.
-
-Oh, and I wanted to put together a portfolio project that combined Bitcoin and AI.
-
-**Do you get it yet?**
+```
