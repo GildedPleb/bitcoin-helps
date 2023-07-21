@@ -14,6 +14,6 @@ else
   exit 1
 fi
 
-npm run build
-# ephemeral change 2
+npm run generate
 
+npm run build
