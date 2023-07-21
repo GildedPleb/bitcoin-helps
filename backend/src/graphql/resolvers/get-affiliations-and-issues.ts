@@ -1,7 +1,7 @@
 import { type Affiliation, type Issue, type Language } from "@prisma/client";
 import tags from "language-tags";
 
-import { acquireLock } from "../../aws/dynamo";
+import { acquireLock, databaseClient } from "../../aws/dynamo";
 import awsInvoke from "../../aws/invoke";
 import { type LanguageSelectors } from "../../generated/graphql";
 import { reactSelectorMap } from "../../helpers";
@@ -49,7 +49,7 @@ export const getAfffiliationsAndIssues = async (
     console.error(error);
     return undefined;
   }
-  if (await acquireLock(language))
+  if (await acquireLock(language, databaseClient))
     await getNewLanguageAffiliationsAndIssues(language);
   else console.log("Another function is already creating language:", language);
 

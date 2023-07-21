@@ -67,4 +67,8 @@ rm -rf ./src/layers/endpoint/nodejs/node_modules
 
 echo "...Endpoint Layer initialized!"
 
+echo "...Running Tests..."
+
+npm test
+
 echo "\n\nENDING: Pre-install COMPLETE\n\n"

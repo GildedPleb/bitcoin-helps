@@ -4,7 +4,7 @@ import {
 } from "@aws-sdk/client-apigatewaymanagementapi";
 
 import { type Message } from "../graphql/types";
-import { getConnection, removeConnection } from "./dynamo";
+import { databaseClient, getConnection, removeConnection } from "./dynamo";
 
 const PUBLISH_ENDPOINT =
   process.env.PUBLISH_ENDPOINT ?? "ERROR: PUBLISH_ENDPOINT env not provided";
@@ -21,7 +21,7 @@ const createSendMessage = (connectionId: string) => {
   });
 
   return async (message: Message) => {
-    if (!(await getConnection(connectionId))) {
+    if (!(await getConnection(connectionId, databaseClient))) {
       console.log("No connection, can not send. Skipping send.");
       return;
     }
@@ -47,7 +47,7 @@ const createSendMessage = (connectionId: string) => {
         "statusCode" in error &&
         error.statusCode === 410
       )
-        await removeConnection(connectionId);
+        await removeConnection(connectionId, databaseClient);
     }
   };
 };

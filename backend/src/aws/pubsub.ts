@@ -3,7 +3,7 @@ import { iot, mqtt } from "aws-crt";
 import fs from "graceful-fs";
 
 import { FINISHED_STREEM, MESSAGE_QUEUE_TIMEOUT } from "../constants";
-import { addStreamContent } from "./dynamo";
+import { addStreamContent, databaseClient } from "./dynamo";
 
 // dotenv.config();
 
@@ -46,7 +46,6 @@ const createPubSub = (topic: string, id: string): PubSub => {
 
   configBuilder.with_clean_session(false);
   configBuilder.with_client_id(clientId);
-  // configBuilder.with_keep_alive_seconds(100);
   configBuilder.with_endpoint(AWS_IOT_HOST);
   const config = configBuilder.build();
   const client = new mqtt.MqttClient();
@@ -73,7 +72,7 @@ const createPubSub = (topic: string, id: string): PubSub => {
 
   const publish = async (message: string): Promise<void> => {
     console.log(`Attempting to publish '${message}' to '${topic}'`);
-    await addStreamContent(topic, publishSequence, message);
+    await addStreamContent(topic, publishSequence, message, databaseClient);
     await connect();
     const gossip: Gossip = { message, sequence: publishSequence };
     await connection.publish(topic, gossip, mqtt.QoS.AtLeastOnce);

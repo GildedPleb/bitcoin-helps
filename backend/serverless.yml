@@ -44,8 +44,8 @@ custom:
   logRetentionInDays: 1
   scriptable:
     hooks:
-      before:package:initialize: "sh ./ci/pre-install.sh"
-      package:initialize: "sh ./ci/post-install.sh"
+      before:package:initialize: "STAGE=${self:provider.stage} sh ./ci/pre-install.sh"
+      package:initialize: "STAGE=${self:provider.stage} sh ./ci/post-install.sh"
   prune:
     automatic: true
     number: 3
