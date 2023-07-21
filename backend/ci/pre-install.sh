@@ -4,6 +4,12 @@ set -e
 
 echo "\n\nSTARTING: Pre-install...\n\n"
 
+if [[ "$STAGE" == "prod" && -z "$GITHUB_ACTIONS" ]]
+then
+  echo "Prod deployments should only be executed in GitHub Actions."
+  exit 1
+fi
+
 ###### TYPES ######
 
 echo "...Generating Types..."

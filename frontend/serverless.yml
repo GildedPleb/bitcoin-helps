@@ -21,7 +21,7 @@ custom:
     dev: dev.${env:DOMAIN}
   scriptable:
     hooks:
-      package:initialize: "sh ./ci/build.sh"
+      package:initialize: "STAGE=${self:provider.stage} sh ./ci/build.sh"
 
 constructs:
   website:
