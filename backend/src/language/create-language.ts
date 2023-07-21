@@ -1,6 +1,6 @@
 import { type LanguagePrompt } from "@prisma/client";
 
-import { releaseLock } from "../aws/dynamo";
+import { databaseClient, releaseLock } from "../aws/dynamo";
 import awsInvoke from "../aws/invoke";
 import { type TranslationTypeMapped } from "../generated/graphql";
 import affiliationPromises from "./affiliation";
@@ -54,7 +54,7 @@ export const handler = async ({ language }: Event) => {
   } catch (error) {
     console.error(`Error Generating language model for: ${language}`, error);
   } finally {
-    await releaseLock(language);
+    await releaseLock(language, databaseClient);
   }
 };
 

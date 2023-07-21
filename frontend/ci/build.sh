@@ -1,6 +1,5 @@
 # ./frontend/ci/build.sh
 
-echo "...Building React App..."
 echo "STAGE: ${STAGE}"
 
 if [[ "$STAGE" == "prod" && -z "$GITHUB_ACTIONS" ]]
@@ -22,6 +21,8 @@ else
   exit 1
 fi
 
+echo "...Generating Types..."
 npx graphql-codegen
 
+echo "...Building React App..."
 npm run build

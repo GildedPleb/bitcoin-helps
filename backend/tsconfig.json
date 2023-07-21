@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "types": ["node"],
+    "types": ["node", "jest"],
     "module": "ESNext",
     "lib": ["es2018", "esnext.asynciterable", "dom"],
     "experimentalDecorators": true,
@@ -17,5 +17,12 @@
     "allowSyntheticDefaultImports": true
   },
   "exclude": ["node_modules"],
-  "include": ["src", "esbuild-plugins.cjs", "prompts.ts", "update.ts"]
+  "include": [
+    "src",
+    "esbuild-plugins.cjs",
+    "prompts.ts",
+    "update.ts",
+    "jest.config.js",
+    "test"
+  ]
 }

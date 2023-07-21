@@ -7,50 +7,59 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
-const localConfig = {
+export const localConfig = {
   region: "localhost",
   endpoint: "http://localhost:8000",
   accessKeyId: "DEFAULT_ACCESS_KEY",
   secretAccessKey: "DEFAULT_SECRET",
 };
 
-const remoteConfig = { region: process.env.AWS_REGION };
+export const remoteConfig = { region: process.env.AWS_REGION };
 
-const databaseClient = new DynamoDBClient(
+export const databaseClient = new DynamoDBClient(
   process.env.IS_OFFLINE === undefined ? remoteConfig : localConfig
 );
 
-const ttl = Math.floor(Date.now() / 1000) + 60 * 60 * 2; // 2 hours
+export const ttl = Math.floor(Date.now() / 1000) + 60 * 60 * 2; // 2 hours
 
-const CONNECTIONS_TABLE = process.env.CONNECTIONS_TABLE ?? "CONNECTIONS";
+export const CONNECTIONS_TABLE = process.env.CONNECTIONS_TABLE ?? "CONNECTIONS";
 
-export const addConnection = async (connectionId: string) => {
+export const addConnection = async (
+  connectionId: string,
+  client: DynamoDBClient
+) => {
   console.log("adding connection:", connectionId);
   const parameters = {
     Item: marshall({ connectionId, ttl }),
     TableName: CONNECTIONS_TABLE,
   };
   const command = new PutItemCommand(parameters);
-  await databaseClient.send(command);
+  await client.send(command);
 };
 
-export const removeConnection = async (connectionId: string) => {
+export const removeConnection = async (
+  connectionId: string,
+  client: DynamoDBClient
+) => {
   console.log("removing connection:", connectionId);
   const parameters = {
     Key: marshall({ connectionId }),
     TableName: CONNECTIONS_TABLE,
   };
   const command = new DeleteItemCommand(parameters);
-  await databaseClient.send(command);
+  await client.send(command);
 };
 
-export const getConnection = async (connectionId: string) => {
+export const getConnection = async (
+  connectionId: string,
+  client: DynamoDBClient
+) => {
   const parameters = {
     Key: marshall({ connectionId }),
     TableName: CONNECTIONS_TABLE,
   };
   const command = new GetItemCommand(parameters);
-  const response = await databaseClient.send(command);
+  const response = await client.send(command);
   return response.Item ? unmarshall(response.Item) : undefined;
 };
 
@@ -63,25 +72,27 @@ export interface StreamContent {
   ttl: number;
 }
 
-const STREAM_CONTENT_TABLE =
+export const STREAM_CONTENT_TABLE =
   process.env.STREAM_CONTENT_TABLE ?? "STREAM_CONTENT";
 
 export const addStreamContent = async (
   streamId: string,
   sequenceNumber: number,
-  content: string
+  content: string,
+  client: DynamoDBClient
 ) => {
   const parameters = {
     Item: marshall({ streamId, sequenceNumber, content, ttl }),
     TableName: STREAM_CONTENT_TABLE,
   };
   const command = new PutItemCommand(parameters);
-  await databaseClient.send(command);
+  await client.send(command);
 };
 
 export const getStreamContent = async (
   streamId: string,
-  sequenceNumber: number
+  sequenceNumber: number,
+  client: DynamoDBClient
 ): Promise<StreamContent[]> => {
   const parameters = {
     KeyConditionExpression: "streamId = :sid and sequenceNumber <= :sn",
@@ -92,16 +103,16 @@ export const getStreamContent = async (
     TableName: STREAM_CONTENT_TABLE,
   };
   const command = new QueryCommand(parameters);
-  const response = await databaseClient.send(command);
+  const response = await client.send(command);
   return response.Items?.map((item) => unmarshall(item) as StreamContent) ?? [];
 };
 
 // Language locks
 
-const LANGUAGE_LOCKS_TABLE =
+export const LANGUAGE_LOCKS_TABLE =
   process.env.LANGUAGE_LOCKS_TABLE ?? "LANGUAGE_LOCK";
 
-export const acquireLock = async (language: string) => {
+export const acquireLock = async (language: string, client: DynamoDBClient) => {
   try {
     const parameters = {
       Item: marshall({
@@ -115,7 +126,7 @@ export const acquireLock = async (language: string) => {
       },
     };
     const command = new PutItemCommand(parameters);
-    await databaseClient.send(command);
+    await client.send(command);
     console.log("Acquired lock for language:", language);
     return true;
   } catch (error) {
@@ -125,12 +136,12 @@ export const acquireLock = async (language: string) => {
   }
 };
 
-export const releaseLock = async (language: string) => {
+export const releaseLock = async (language: string, client: DynamoDBClient) => {
   const parameters = {
     Key: marshall({ language }),
     TableName: LANGUAGE_LOCKS_TABLE,
   };
   const command = new DeleteItemCommand(parameters);
-  await databaseClient.send(command);
+  await client.send(command);
   console.log("Released language lock for:", language);
 };

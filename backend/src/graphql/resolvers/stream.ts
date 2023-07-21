@@ -12,6 +12,7 @@ import { GraphQLError } from "graphql";
 import Handlebars from "handlebars";
 
 import {
+  databaseClient,
   getConnection,
   getStreamContent,
   type StreamContent,
@@ -100,7 +101,11 @@ const retrieveMissedContent = async (
   sequence: number,
   retries = 0
 ): Promise<StreamContent[]> => {
-  const missedContent = await getStreamContent(streamId, sequence);
+  const missedContent = await getStreamContent(
+    streamId,
+    sequence,
+    databaseClient
+  );
   if (missedContent.length > 0) return missedContent;
   await delay(INITIAL_BACKOFF_MS * 2 ** retries);
   return retrieveMissedContent(streamId, sequence, retries + 1);
@@ -148,7 +153,7 @@ export const handler = async ({
     console.log("Prev items processed, sending new items.");
 
     for await (const payload of sub) {
-      if (!(await getConnection(connectionId))) {
+      if (!(await getConnection(connectionId, databaseClient))) {
         console.log("No connection, skipping send.");
         break;
       }
@@ -179,7 +184,7 @@ export const handler = async ({
     const finalResultPromise = fetchGptResponseFull(PopulatedPrompt, pubSub);
     console.log("Awaiting new streem...");
     for await (const payload of sub) {
-      if (!(await getConnection(connectionId))) {
+      if (!(await getConnection(connectionId, databaseClient))) {
         console.log("No connection, skipping send.");
         break;
       }

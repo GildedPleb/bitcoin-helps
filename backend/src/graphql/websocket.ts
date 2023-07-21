@@ -10,7 +10,12 @@ import {
   validate,
 } from "graphql";
 
-import { addConnection, getConnection, removeConnection } from "../aws/dynamo";
+import {
+  addConnection,
+  databaseClient,
+  getConnection,
+  removeConnection,
+} from "../aws/dynamo";
 import createSendMessage from "../aws/gateway";
 import awsInvoke from "../aws/invoke";
 import { type Event } from "./types";
@@ -58,7 +63,7 @@ const streamRouting = async (
     return response;
   }
   if (type === "stop") return response;
-  const client = await getConnection(connectionId);
+  const client = await getConnection(connectionId, databaseClient);
   if (!client) throw new Error("Unknown client");
 
   if (type === "ping") {
@@ -117,14 +122,16 @@ export const handler = async (
   const { routeKey } = event.requestContext;
   console.log(routeKey, awsRequestId, connectionId);
   try {
-    if (routeKey === "$connect") await addConnection(connectionId);
-    else if (routeKey === "$disconnect") await removeConnection(connectionId);
+    if (routeKey === "$connect")
+      await addConnection(connectionId, databaseClient);
+    else if (routeKey === "$disconnect")
+      await removeConnection(connectionId, databaseClient);
     // Route is therefore $default:
     else await streamRouting(event, connectionId, awsRequestId);
     return response;
   } catch (error) {
     console.error("Connection level Error occurred:", error);
-    await removeConnection(connectionId);
+    await removeConnection(connectionId, databaseClient);
     return response;
   }
 };
