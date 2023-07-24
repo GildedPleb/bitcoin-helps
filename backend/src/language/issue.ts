@@ -19,42 +19,55 @@ const issuePromises = (language: string, prompts: LanguagePrompt) => {
   return prompts.issueExample.map(
     async (
       category
-    ): Promise<IssueCategoryCreateWithoutLanguageInput | null> => {
+    ): Promise<IssueCategoryCreateWithoutLanguageInput | undefined> => {
       const categoryString = JSON.stringify(category);
-      const aiResponse = await fetchQualityAIResults(
-        Handlebars.compile(prompts.issueCategoryPrompt)({
-          language,
-          example: categoryString,
-        }),
-        [verifyBaseAffiliationIssue]
-      );
-      const data = extractJSONFromString<BaseAffiliationIssue>(aiResponse);
-      if (data === undefined)
-        throw new Error(`Issue extract ${language}: ${categoryString}`);
-      const populatedDescription = `${
-        data.description
-      }. Examples: ${data.examples.join(", ")}`;
-      const aiAffiliationListRaw = await fetchQualityAIResults(
-        Handlebars.compile(prompts.issuePrompt)({
-          language,
+      try {
+        const aiResponse = await fetchQualityAIResults(
+          Handlebars.compile(prompts.issueCategoryPrompt)({
+            language,
+            example: categoryString,
+          }),
+          [verifyBaseAffiliationIssue]
+        );
+        const data = extractJSONFromString<BaseAffiliationIssue>(aiResponse);
+        if (data === undefined) {
+          console.error(`Issue extract ${language}: ${categoryString}`);
+          return undefined;
+        }
+        const populatedDescription = `${
+          data.description
+        }. Examples: ${data.examples.join(", ")}`;
+        const aiAffiliationListRaw = await fetchQualityAIResults(
+          Handlebars.compile(prompts.issuePrompt)({
+            language,
+            name: data.name,
+            description: populatedDescription,
+          }),
+          [verifyAffiliationIssueList]
+        );
+        const dataList = extractJSONListFromString(aiAffiliationListRaw);
+        if (dataList === undefined) {
+          console.error(`Affiliation list ${language} for ${categoryString}`);
+          return undefined;
+        }
+        console.log("SUCESS: Final Issue:", data, dataList);
+        return {
           name: data.name,
           description: populatedDescription,
-        }),
-        [verifyAffiliationIssueList]
-      );
-      const dataList = extractJSONListFromString(aiAffiliationListRaw);
-      if (dataList === undefined)
-        throw new Error(`Affiliation list ${language} for ${categoryString}`);
-      console.log("SUCESS: Final Issue:", data, dataList);
-      return {
-        name: data.name,
-        description: populatedDescription,
-        issues: {
-          create: dataList.map((item) => ({
-            name: item,
-          })),
-        },
-      };
+          issues: {
+            create: dataList.map((item) => ({
+              name: item,
+            })),
+          },
+        };
+      } catch (error) {
+        console.error(
+          "Error generating affiliation for",
+          categoryString,
+          error
+        );
+        return undefined;
+      }
     }
   );
 };
