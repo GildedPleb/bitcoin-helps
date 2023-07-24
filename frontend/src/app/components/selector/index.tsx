@@ -21,9 +21,8 @@ const StyledSelect = styled.select<{ valueNotNull: boolean; isRtl: boolean }>`
   max-width: 50vw;
   padding: 0 1em;
   border-radius: 3em;
-  border-color: ${(properties) =>
-    properties.valueNotNull ? "black" : "lightgray"};
-  color: ${(properties) => (properties.valueNotNull ? "black" : "lightgray")};
+  border-color: black;
+  color: ${(properties) => (properties.valueNotNull ? "black" : "#D0D0D0")};
   outline: none;
   box-shadow: none;
   transition: all 0.3s;
@@ -49,14 +48,16 @@ const inputStyles = (
     ...base,
     height: "100%",
   }),
-  valueContainer: (base) => ({
+  placeholder: (base) => ({
     ...base,
+    color: valueNotNull ? "black" : "#D0D0D0",
   }),
   control: (base, { isFocused }) => ({
     ...base,
+    maxWidth: "calc(min(1300px, 50vw))",
     borderRadius: "3em",
+    borderColor: "black",
     padding: "0 1em",
-    maxWidth: "50vw",
     margin: "0",
     marginRight: isRtl ? ".3em" : "0",
     marginLeft: isRtl ? "0" : ".3em",
@@ -82,8 +83,8 @@ const inputStyles = (
 
     return {
       ...provided,
-      width: "75vw", // Set the width to 100%
-      maxWidth: "none", // Disable the maximum width restriction
+      width: "75vw",
+      maxWidth: "1300px",
       lineHeight: "1",
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       textAlign,
@@ -96,6 +97,7 @@ const inputStyles = (
     return {
       ...provided,
       position: "fixed",
+      maxWidth: "1300px",
       width: "75vw",
       left: "50%",
       top: `${selectBoxRect.bottom}px`,
