@@ -18,16 +18,18 @@ interface Event {
 const createNewLanguage = async (
   language: string,
   [affiliationTypeData, issueCategoryData, translations]: [
-    Array<AffiliationTypeCreateWithoutLanguageInput | null>,
-    Array<IssueCategoryCreateWithoutLanguageInput | null>,
+    Array<AffiliationTypeCreateWithoutLanguageInput | undefined>,
+    Array<IssueCategoryCreateWithoutLanguageInput | undefined>,
     TranslationTypeMapped
   ],
   promptsId: string
 ) =>
   awsInvoke(process.env.SAVE_LANGUAGE_FUNCTION_NAME, "Event", {
     language,
-    affiliationTypeData: affiliationTypeData.filter((item) => item !== null),
-    issueCategoryData: issueCategoryData.filter((item) => item !== null),
+    affiliationTypeData: affiliationTypeData.filter(
+      (item) => item !== undefined
+    ),
+    issueCategoryData: issueCategoryData.filter((item) => item !== undefined),
     translations,
     promptsId,
   });
@@ -43,7 +45,7 @@ export const handler = async ({ language }: Event) => {
   try {
     const prompts = await findLanguagePrompt();
     if (!prompts) throw new Error("There should be prompts");
-    // Create the 13 Affiliations + 14 Issues + 1 Translation = 28 'SUCCESS' logs
+    // Create the 14 Affiliations + 15 Issues + 1 Translation = 30 'SUCCESS' logs
     const resolved = await Promise.all([
       Promise.all(affiliationPromises(language, prompts)),
       Promise.all(issuePromises(language, prompts)),
