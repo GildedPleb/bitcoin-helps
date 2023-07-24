@@ -1,8 +1,8 @@
 # Does Bitcoin Help?
 
-prod: [https://doesbitcoinhelp.com](https://doesbitcoinhelp.com)
+Production: [https://doesbitcoinhelp.com](https://doesbitcoinhelp.com) (GPT-4)
 
-dev: [https://dev.doesbitcoinhelp.com](https://doesbitcoinhelp.com)
+Development: [https://dev.doesbitcoinhelp.com](https://doesbitcoinhelp.com) (GPT-3.5 Turbo)
 
 "Does Bitcoin Help?" is a unique project that uses generative AI to illustrate how Bitcoin can be beneficial to, not _various_, but _ALL_ facets of humanity worldwide. The central objective is to generate and/or distribute compelling, context-specific arguments to demonstrate Bitcoin's universal applicability and utility for any chosen input.
 
