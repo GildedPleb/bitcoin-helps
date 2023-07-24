@@ -133,5 +133,5 @@ dist
 backend/prompts.ts
 backend/update.ts
 backend/.esbuild/
-backend/.jest-cache
+**/.jest-cache
 .vscode/settings.json

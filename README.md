@@ -1,8 +1,8 @@
 # Does Bitcoin Help?
 
-prod: [https://doesbitcoinhelp.com](https://doesbitcoinhelp.com)
+Production: [https://doesbitcoinhelp.com](https://doesbitcoinhelp.com) (GPT-4)
 
-dev: [https://dev.doesbitcoinhelp.com](https://doesbitcoinhelp.com)
+Development: [https://dev.doesbitcoinhelp.com](https://doesbitcoinhelp.com) (GPT-3.5 Turbo)
 
 "Does Bitcoin Help?" is a unique project that uses generative AI to illustrate how Bitcoin can be beneficial to, not _various_, but _ALL_ facets of humanity worldwide. The central objective is to generate and/or distribute compelling, context-specific arguments to demonstrate Bitcoin's universal applicability and utility for any chosen input.
 
@@ -64,7 +64,7 @@ Oh, and I wanted to put together a portfolio project that combined Bitcoin and A
 
 # Architecture
 
-The base architecture is AWS Lambda as managed by Serverless, but there were some serious difficulties and concerns in the delivery and access of AI Streaming data: streaming AI data feels like a modern day Ticker Tape Machine. Publishing that stream, and then hooking into that stream requires a PubSub framework and stream caching. The general flow is as follows:
+The base architecture is AWS Lambda as managed by Serverless with a React Frontend connected via Apollo server/client. The app reads browser set language, and begins generating that specific Language, defaulting to English. The user chooses and submits inputs, and if those inputs have not been generated before, OpenAI begins streaming a new essay to all subscribers listening at doesbitcoinhelp.com/{id}. Results are cached in PostgreSQL for future lookup. There were some serious difficulties and concerns in the delivery and access of AI Streaming data: streaming AI data feels like a modern day Ticker Tape Machine. Publishing that stream, ensuring its correct order, and then hooking into that stream requires a PubSub framework and stream caching. The general flow is as follows:
 
 ### Frontend
 
