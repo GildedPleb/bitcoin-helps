@@ -1,4 +1,25 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npm build:test && npm run test:e2e
+# cd frontend && npm run build:test && npm run test:e2e
+
+# 1) Run build:test
+cd frontend && npm run build:test
+
+# 2) Serve the result at localhost:3000 in the background
+npm run start:test &
+
+# Capture the PID of the server process
+SERVER_PID=$!
+
+# Give the server some time to start
+sleep 3
+
+# 3) & 4) Run the tests, exit with code 1 if they fail
+npx jest --all --env node --testMatch "**/?(*.)+(e2e.test).[jt]s?(x)" || exit 1
+
+# 5) Once the test finishes and succeeds, shut down the server gracefully
+kill $SERVER_PID
+
+# 6) Exit the Husky script with code 0
+exit 0
