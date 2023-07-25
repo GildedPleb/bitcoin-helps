@@ -3,7 +3,7 @@
 
 # Check for uncommitted changes
 if ! git diff-index --quiet HEAD --; then
-    echo "You have uncommitted changes in your workspace. Please commit or stash them before pushing."
+    echo "You have uncommitted changes in your workspace. Please commit or stash them before pushing to ensure e2e tests reflect code to be pushed. I know. It's not ideal, but its better than the 2 alternatives: git worktree and docker."
     exit 1
 fi
 
