@@ -1,5 +1,3 @@
-import React from "react";
-
 import MinimalButton from "./styles/minimal";
 
 interface BackButtonProperties {

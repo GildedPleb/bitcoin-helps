@@ -1,5 +1,4 @@
 import styled from "@emotion/styled";
-import React from "react";
 
 import { type LeftToRightOrRightToLeft } from "../../../types";
 import BackButton from "../buttons/back";
