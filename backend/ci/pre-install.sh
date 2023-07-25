@@ -4,8 +4,7 @@ set -e
 
 echo "\n\nSTARTING: Pre-install...\n\n"
 
-if [[ "$STAGE" == "prod" && -z "$GITHUB_ACTIONS" ]]
-then
+if [ "$STAGE" = "prod" && -z "$GITHUB_ACTIONS" ]; then
   echo "Prod deployments should only be executed in GitHub Actions."
   exit 1
 fi
@@ -21,10 +20,8 @@ echo "...Deleting prisma layer node_module..."
 rm -rf ./src/layers/prisma/nodejs/node_modules
 
 echo "...Migrating DB and Generating Prisma Client..."
-if [ "$STAGE" = "dev" ]
-then
-  if [ -z "$DATABASE_URL_dev" ]
-  then
+if [ "$STAGE" = "dev" ]; then
+  if [ -z "$DATABASE_URL_dev" ]; then
     echo "Missing DATABASE_URL_dev env variable"
     exit 1
   fi
@@ -33,10 +30,8 @@ then
   DATABASE_URL=$DATABASE_URL_dev PRISMA_CLIENT_ENGINE_TYPE=binary npx prisma migrate dev
   echo "...Verifying seeds..."
   DATABASE_URL=$DATABASE_URL_dev npm run verify-seeds
-elif [ "$STAGE" = "prod" ]
-then
-  if [ -z "$DATABASE_URL_prod" ]
-  then
+elif [ "$STAGE" = "prod" ]; then
+  if [ -z "$DATABASE_URL_prod" ]; then
     echo "Missing DATABASE_URL_prod env variable"
     exit 1
   fi
