@@ -23,11 +23,8 @@ fi
 echo "...Generating Types..."
 npx graphql-codegen
 
-echo "...Building Tests..."
-npm run build:test
-
 echo "...Running Tests..."
-npm run test:e2e
+npm run test
 
 echo "...Building React App..."
 npm run build:deploy

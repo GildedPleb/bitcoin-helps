@@ -19,7 +19,7 @@ fi
 
 echo "Deploying to $STAGE..."
 echo "Deploying $STAGE backend..."
-(cd "${SCRIPT_DIR}/backend" && npm ci && npx sls deploy --stage $STAGE)
+(cd "${SCRIPT_DIR}/backend" && npm ci --omit=dev --ignore-scripts && npx sls deploy --stage $STAGE)
 echo "Deploying $STAGE frontend..."
-(cd "${SCRIPT_DIR}/frontend" && npm ci && npx sls deploy --stage $STAGE)
+(cd "${SCRIPT_DIR}/frontend" && npm ci --omit=dev --ignore-scripts && npx sls deploy --stage $STAGE)
 echo "$STAGE deployment complete!"

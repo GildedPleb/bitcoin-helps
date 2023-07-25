@@ -139,3 +139,4 @@ frontend/test-dist/
 
 **/*/.DS_Store
 frontend-old/
+frontend/src/test/__image_snapshots__/

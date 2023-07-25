@@ -68,10 +68,3 @@ jobs:
       - name: Revoke GitHub traffic
         if: always()
         run: aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_VPC_SECURITY_GROUP_GITHUB }} --protocol tcp --port ${{ secrets.AWS_SECURITY_GROUP_PORT }} --cidr ${{ secrets.AWS_SECURITY_GROUP_CIDR }}
-
-      - name: Upload Screenshots
-        uses: actions/upload-artifact@v2
-        if: failure() # Only run this step if previous steps failed
-        with:
-          name: screenshot
-          path: frontend/src/test/__image_snapshots__/__diff_output__
