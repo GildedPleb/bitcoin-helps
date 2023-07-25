@@ -1,6 +1,6 @@
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import fadeIn from "../../../styles/fade-in";
 import fadeOut from "../../../styles/fade-out";

@@ -1,5 +1,3 @@
-import React from "react";
-
 import { type LeftToRightOrRightToLeft } from "../../../types";
 import LoadingDots from "../loading-dots";
 import AlternateButton from "./styles/alternate";

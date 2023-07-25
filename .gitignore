@@ -135,3 +135,8 @@ backend/update.ts
 backend/.esbuild/
 **/.jest-cache
 .vscode/settings.json
+frontend/test-dist/
+
+**/*/.DS_Store
+frontend-old/
+frontend/src/test/__image_snapshots__/

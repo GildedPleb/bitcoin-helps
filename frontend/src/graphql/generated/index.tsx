@@ -5,29 +5,31 @@ export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: string;
-  String: string;
-  Boolean: boolean;
-  Int: number;
-  Float: number;
+  ID: { input: string; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
 };
 
 export type Argument = {
   __typename?: 'Argument';
-  content: Scalars['String'];
+  content: Scalars['String']['output'];
 };
 
 export type ArgumentId = {
   __typename?: 'ArgumentId';
-  id: Scalars['Int'];
+  id: Scalars['Int']['output'];
 };
 
 export type GroupType = {
   __typename?: 'GroupType';
-  label: Scalars['String'];
+  label: Scalars['String']['output'];
   options: Array<OptionType>;
 };
 
@@ -41,44 +43,44 @@ export type InputPairOrJob = InputPair | Job;
 
 export type Job = {
   __typename?: 'Job';
-  argumentId: Scalars['Int'];
-  jobId: Scalars['String'];
+  argumentId: Scalars['Int']['output'];
+  jobId: Scalars['String']['output'];
   language: LanguageMinimal;
 };
 
 export type LanguageMinimal = {
   __typename?: 'LanguageMinimal';
-  name: Scalars['String'];
+  name: Scalars['String']['output'];
 };
 
 export type LanguageSelectors = {
   __typename?: 'LanguageSelectors';
   affiliationTypes: Array<GroupType>;
-  id: Scalars['String'];
+  id: Scalars['String']['output'];
   issueCategories: Array<GroupType>;
   translations: TranslationTypeMapped;
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
-  dislike?: Maybe<Scalars['Int']>;
-  like?: Maybe<Scalars['Int']>;
+  dislike?: Maybe<Scalars['Int']['output']>;
+  like?: Maybe<Scalars['Int']['output']>;
 };
 
 
 export type MutationDislikeArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 
 export type MutationLikeArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 export type OptionType = {
   __typename?: 'OptionType';
-  label: Scalars['String'];
-  value: Scalars['String'];
+  label: Scalars['String']['output'];
+  value: Scalars['String']['output'];
 };
 
 export type Query = {
@@ -86,24 +88,24 @@ export type Query = {
   getAfffiliationsAndIssues?: Maybe<LanguageSelectors>;
   getArgumentId?: Maybe<ArgumentId>;
   getInputPairByArgumentId?: Maybe<InputPairOrJob>;
-  hello?: Maybe<Scalars['String']>;
+  hello?: Maybe<Scalars['String']['output']>;
 };
 
 
 export type QueryGetAfffiliationsAndIssuesArgs = {
-  language: Scalars['String'];
+  language: Scalars['String']['input'];
 };
 
 
 export type QueryGetArgumentIdArgs = {
-  affiliationId?: InputMaybe<Scalars['String']>;
-  issueId?: InputMaybe<Scalars['String']>;
-  languageId?: InputMaybe<Scalars['String']>;
+  affiliationId?: InputMaybe<Scalars['String']['input']>;
+  issueId?: InputMaybe<Scalars['String']['input']>;
+  languageId?: InputMaybe<Scalars['String']['input']>;
 };
 
 
 export type QueryGetInputPairByArgumentIdArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 export type Subscription = {
@@ -113,68 +115,68 @@ export type Subscription = {
 
 
 export type SubscriptionSubscribeToArgumentArgs = {
-  jobId: Scalars['String'];
+  jobId: Scalars['String']['input'];
 };
 
 export type TranslationTypeMapped = {
   __typename?: 'TranslationTypeMapped';
-  andICareAbout: Scalars['String'];
-  findingArgument: Scalars['String'];
-  iAmAffiliatedWith: Scalars['String'];
-  loading: Scalars['String'];
-  selectAffiliation: Scalars['String'];
-  selectIssue: Scalars['String'];
-  selectNoMatch: Scalars['String'];
-  speak: Scalars['String'];
-  whyCare: Scalars['String'];
+  andICareAbout: Scalars['String']['output'];
+  findingArgument: Scalars['String']['output'];
+  iAmAffiliatedWith: Scalars['String']['output'];
+  loading: Scalars['String']['output'];
+  selectAffiliation: Scalars['String']['output'];
+  selectIssue: Scalars['String']['output'];
+  selectNoMatch: Scalars['String']['output'];
+  speak: Scalars['String']['output'];
+  whyCare: Scalars['String']['output'];
 };
 
 export type Update = {
   __typename?: 'Update';
-  message: Scalars['String'];
-  sequence: Scalars['Int'];
-  type: Scalars['String'];
+  message: Scalars['String']['output'];
+  sequence: Scalars['Int']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type GetInputPairByArgumentIdQueryVariables = Exact<{
-  getInputPairByArgumentIdId: Scalars['Int'];
+  getInputPairByArgumentIdId: Scalars['Int']['input'];
 }>;
 
 
 export type GetInputPairByArgumentIdQuery = { __typename?: 'Query', getInputPairByArgumentId?: { __typename?: 'InputPair', arguments: Array<{ __typename?: 'Argument', content: string }>, language: { __typename?: 'LanguageMinimal', name: string } } | { __typename?: 'Job', jobId: string, argumentId: number, language: { __typename?: 'LanguageMinimal', name: string } } | null };
 
 export type SubscribeToArgumentSubscriptionVariables = Exact<{
-  jobId: Scalars['String'];
+  jobId: Scalars['String']['input'];
 }>;
 
 
 export type SubscribeToArgumentSubscription = { __typename?: 'Subscription', subscribeToArgument?: { __typename?: 'Update', type: string, message: string, sequence: number } | null };
 
 export type DislikeArgumentMutationVariables = Exact<{
-  dislikeId: Scalars['Int'];
+  dislikeId: Scalars['Int']['input'];
 }>;
 
 
 export type DislikeArgumentMutation = { __typename?: 'Mutation', dislike?: number | null };
 
 export type LikeArgumentMutationVariables = Exact<{
-  likeId: Scalars['Int'];
+  likeId: Scalars['Int']['input'];
 }>;
 
 
 export type LikeArgumentMutation = { __typename?: 'Mutation', like?: number | null };
 
 export type GetArgumentIdQueryVariables = Exact<{
-  languageId: Scalars['String'];
-  issueId: Scalars['String'];
-  affiliationId: Scalars['String'];
+  languageId: Scalars['String']['input'];
+  issueId: Scalars['String']['input'];
+  affiliationId: Scalars['String']['input'];
 }>;
 
 
 export type GetArgumentIdQuery = { __typename?: 'Query', getArgumentId?: { __typename?: 'ArgumentId', id: number } | null };
 
 export type GetAfffiliationsAndIssuesQueryVariables = Exact<{
-  language: Scalars['String'];
+  language: Scalars['String']['input'];
 }>;
 
 

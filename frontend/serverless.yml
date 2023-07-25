@@ -26,7 +26,7 @@ custom:
 constructs:
   website:
     type: single-page-app
-    path: build
+    path: dist
     domain: ${self:custom.domain.${self:provider.stage}}
     certificate: arn:aws:acm:us-east-1:${env:AWS_ACCOUNT_ID}:certificate/${env:CERTIFICATE_ID}
     redirectToMainDomain: true

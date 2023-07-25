@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Check if we just did a git pull
+if git diff ORIG_HEAD HEAD > /dev/null; then
+  # Run the command to clear and regenerate visual diffs
+  npm run test:clear && npm run test:e2e
+fi

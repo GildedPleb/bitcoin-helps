@@ -14,6 +14,8 @@ export default [
         },
       ],
       "no-console": ["error", { allow: ["warn", "error"] }],
+      "react/react-in-jsx-scope": 0,
+      "react/jsx-uses-react": 0,
     },
   },
 ];

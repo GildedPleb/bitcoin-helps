@@ -55,10 +55,10 @@ jobs:
 
           # Frontend
           DISABLE_ESLINT_PLUGIN: true
-          REACT_APP_API_URL_HTTP_DEV: ${{ secrets.REACT_APP_API_URL_HTTP_DEV }}
-          REACT_APP_API_URL_HTTP_PROD: ${{ secrets.REACT_APP_API_URL_HTTP_PROD }}
-          REACT_APP_API_URL_WS_DEV: ${{ secrets.REACT_APP_API_URL_WS_DEV }}
-          REACT_APP_API_URL_WS_PROD: ${{ secrets.REACT_APP_API_URL_WS_PROD }}
+          VITE_APP_API_URL_HTTP_DEV: ${{ secrets.VITE_APP_API_URL_HTTP_DEV }}
+          VITE_APP_API_URL_HTTP_PROD: ${{ secrets.VITE_APP_API_URL_HTTP_PROD }}
+          VITE_APP_API_URL_WS_DEV: ${{ secrets.VITE_APP_API_URL_WS_DEV }}
+          VITE_APP_API_URL_WS_PROD: ${{ secrets.VITE_APP_API_URL_WS_PROD }}
           HOSTED_ZONE_ID: ${{ secrets.HOSTED_ZONE_ID }}
           DOMAIN: ${{ vars.DOMAIN }}
           CERTIFICATE_ID: ${{ secrets.CERTIFICATE_ID }}

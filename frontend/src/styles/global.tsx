@@ -1,6 +1,5 @@
 import { css, Global } from "@emotion/react";
 import emotionReset from "emotion-reset";
-import React from "react";
 
 /**
  *

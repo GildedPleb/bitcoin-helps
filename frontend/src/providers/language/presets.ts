@@ -33,7 +33,7 @@ const LANGUAGE_OPTIONS_PARTIAL: Array<Omit<LanguageOptionType, "status">> = [
     value: "es",
     label: "Español",
     direction: "ltr",
-    speak: "Yo hablo",
+    speak: "Hablo",
     loading: "Cargando configuraciones específicas del idioma",
   }, // Spanish
   {
