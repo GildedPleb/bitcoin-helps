@@ -55,10 +55,10 @@ jobs:
 
           # Frontend
           DISABLE_ESLINT_PLUGIN: true
-          VITE_APP_API_URL_HTTP_DEV: ${{ secrets.REACT_APP_API_URL_HTTP_DEV }}
-          VITE_APP_API_URL_HTTP_PROD: ${{ secrets.REACT_APP_API_URL_HTTP_PROD }}
-          VITE_APP_API_URL_WS_DEV: ${{ secrets.REACT_APP_API_URL_WS_DEV }}
-          VITE_APP_API_URL_WS_PROD: ${{ secrets.REACT_APP_API_URL_WS_PROD }}
+          VITE_APP_API_URL_HTTP_DEV: ${{ secrets.VITE_APP_API_URL_HTTP_DEV }}
+          VITE_APP_API_URL_HTTP_PROD: ${{ secrets.VITE_APP_API_URL_HTTP_PROD }}
+          VITE_APP_API_URL_WS_DEV: ${{ secrets.VITE_APP_API_URL_WS_DEV }}
+          VITE_APP_API_URL_WS_PROD: ${{ secrets.VITE_APP_API_URL_WS_PROD }}
           HOSTED_ZONE_ID: ${{ secrets.HOSTED_ZONE_ID }}
           DOMAIN: ${{ vars.DOMAIN }}
           CERTIFICATE_ID: ${{ secrets.CERTIFICATE_ID }}
@@ -68,3 +68,10 @@ jobs:
       - name: Revoke GitHub traffic
         if: always()
         run: aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_VPC_SECURITY_GROUP_GITHUB }} --protocol tcp --port ${{ secrets.AWS_SECURITY_GROUP_PORT }} --cidr ${{ secrets.AWS_SECURITY_GROUP_CIDR }}
+
+      - name: Upload Screenshots
+        uses: actions/upload-artifact@v2
+        if: failure() # Only run this step if previous steps failed
+        with:
+          name: screenshot
+          path: frontend/src/test/__image_snapshots__/__diff_output__
