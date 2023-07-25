@@ -8,7 +8,6 @@ import client from "./graphql/client";
 import { LanguageProvider } from "./providers/language";
 import { LoadingProvider } from "./providers/loading";
 import GlobalStyles from "./styles/global";
-import reportWebVitals from "./utilities/report-web-vitals";
 
 const root = ReactDOM.createRoot(
   document.querySelector("#root") as HTMLElement
@@ -28,5 +27,3 @@ root.render(
     </ApolloProvider>
   </React.StrictMode>
 );
-
-reportWebVitals();

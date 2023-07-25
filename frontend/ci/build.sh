@@ -10,12 +10,12 @@ fi
 
 if [ "${STAGE}" = "dev" ]
 then
-  echo "DEV URL: ${REACT_APP_API_URL_HTTP_DEV}"
-  export SCHEMA=${REACT_APP_API_URL_HTTP_DEV}
+  echo "DEV URL: ${VITE_APP_API_URL_HTTP_DEV}"
+  export SCHEMA=${VITE_APP_API_URL_HTTP_DEV}
 elif [ "${STAGE}" = "prod" ]
 then
-  echo "PROD URL: ${REACT_APP_API_URL_HTTP_PROD}"
-  export SCHEMA=${REACT_APP_API_URL_HTTP_PROD}
+  echo "PROD URL: ${VITE_APP_API_URL_HTTP_PROD}"
+  export SCHEMA=${VITE_APP_API_URL_HTTP_PROD}
 else
   echo "Invalid stage."
   exit 1
@@ -24,5 +24,11 @@ fi
 echo "...Generating Types..."
 npx graphql-codegen
 
+echo "...Building Tests..."
+npm run build:test
+
+echo "...Running Tests..."
+npm run test:e2e
+
 echo "...Building React App..."
-npm run build
+npm run build:deploy
