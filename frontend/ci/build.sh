@@ -1,8 +1,10 @@
 # ./frontend/ci/build.sh
 
+set -e
+
 echo "STAGE: ${STAGE}"
 
-if [[ "$STAGE" == "prod" && -z "$GITHUB_ACTIONS" ]]
+if [ "$STAGE" = "prod" && -z "$GITHUB_ACTIONS" ]
 then
   echo "Prod deployments should only be executed in GitHub Actions."
   exit 1

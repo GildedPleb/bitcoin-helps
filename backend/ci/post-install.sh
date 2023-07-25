@@ -1,3 +1,5 @@
+set -e
+
 echo "\n\nSTARTING: Post-install...\n\n"
 
 echo "...Pairing down unneeded Prisma Files..."
