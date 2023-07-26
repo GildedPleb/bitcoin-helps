@@ -2,13 +2,10 @@ import currentThing from "eslint-config-current-thing";
 
 export default [
   {
-    ignores: ["temp.js", "**/src/prisma/**/*"],
+    ignores: ["**/src/prisma/**/*"],
   },
   ...currentThing(),
   {
-    parserOptions: {
-      project: './tsconfig.eslint.json',
-    },
     rules: {
       "react/require-default-props": [
         2,
