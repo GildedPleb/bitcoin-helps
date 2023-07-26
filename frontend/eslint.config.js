@@ -6,6 +6,9 @@ export default [
   },
   ...currentThing(),
   {
+    parserOptions: {
+      project: './tsconfig.eslint.json',
+    },
     rules: {
       "react/require-default-props": [
         2,
