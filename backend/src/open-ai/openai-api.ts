@@ -103,15 +103,32 @@ export async function fetchGptResponseFull(
     const decoder = new TextDecoder();
 
     let words = "";
+    let promptTokens = 0;
+    let completionTokens = 0;
+    let result = "";
     let finished = false;
     while (!finished) {
       // eslint-disable-next-line no-await-in-loop
-      const { value } = await reader.read();
+      const { value, done: readerDone } = await reader.read();
       const text = decoder.decode(value);
-      if (text.includes("data: [DONE]")) {
+      if (readerDone) {
+        // text.includes("data: [DONE]")) {
         // console.log("Ending OpenAI call as expected", text);
         finished = true;
       }
+      if (value) {
+        // Decode the Uint8Array to a string
+
+        // Append this chunk to our existing string
+        result += text;
+
+        // Parse the chunk and add to token count
+        const parsed = JSON.parse(text) as CompletionResponse;
+        promptTokens += parsed.usage.prompt_tokens;
+        completionTokens += parsed.usage.completion_tokens;
+        console.log("tokens:", promptTokens, completionTokens);
+      }
+
       // eslint-disable-next-line no-await-in-loop
       for await (const item of text
         .split("\n")
@@ -140,9 +157,6 @@ export async function fetchGptResponseFull(
     }
     if (pubSub !== undefined) await pubSub.publish(FINISHED_STREEM);
 
-    const final = (await response.json()) as CompletionResponse;
-    console.log(`Total tokens used: ${final.usage.total_tokens}`);
-
     // calculate the cost based on your per-token rate
     let costPerInputToken: number;
     let costPerOutputToken: number;
@@ -155,8 +169,7 @@ export async function fetchGptResponseFull(
     } else throw new Error(`Unknown model: ${MODEL}`);
 
     const cost =
-      final.usage.prompt_tokens * costPerInputToken +
-      final.usage.completion_tokens * costPerOutputToken;
+      promptTokens * costPerInputToken + completionTokens * costPerOutputToken;
     const formatter = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
