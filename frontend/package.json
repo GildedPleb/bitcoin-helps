@@ -17,7 +17,7 @@
   "scripts": {
     "start:dev": "VITE_APP_STAGE=dev vite",
     "start:test": "vite preview --outDir dist-test --port 3000",
-    "build:deploy": "VITE_APP_STAGE=$STAGE tsc && vite build --outDir dist",
+    "build:deploy": "echo \"Building for stage: ${STAGE}\" && VITE_APP_STAGE=$STAGE tsc && vite build --outDir dist",
     "build:test": "VITE_APP_STAGE=dev tsc && vite build --outDir dist-test",
     "test": "jest --all --testPathIgnorePatterns '.*.e2e.test.ts'",
     "test:e2e": "concurrently --success last --kill-others \"npm run start:test\" \"jest --all --env node --testMatch \\\"**/?(*.)+(e2e.test).[jt]s?(x)\\\"\"",
