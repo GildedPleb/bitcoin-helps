@@ -1,6 +1,6 @@
 # Does Bitcoin Help?
 
-| Environment     | URL                                                      | Model           |
+|                 | URL                                                      | Model           |
 | --------------- | -------------------------------------------------------- | --------------- |
 | **Production**  | [https://doesbitcoinhelp.com](https://doesbitcoinhelp.com)  | GPT-4          |
 | **Development** | [https://dev.doesbitcoinhelp.com](https://dev.doesbitcoinhelp.com) | GPT-3.5 Turbo  |
