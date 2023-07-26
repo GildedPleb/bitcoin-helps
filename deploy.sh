@@ -21,5 +21,5 @@ echo "Deploying to $STAGE..."
 echo "Deploying $STAGE backend..."
 (cd "${SCRIPT_DIR}/backend" && npm ci --ignore-scripts && npx sls deploy --stage $STAGE)
 echo "Deploying $STAGE frontend..."
-(cd "${SCRIPT_DIR}/frontend" && npm ci --ignore-scripts && npx sls deploy --stage $STAGE --force)
+(cd "${SCRIPT_DIR}/frontend" && npm ci --ignore-scripts && npx sls deploy --stage $STAGE)
 echo "$STAGE deployment complete!"
