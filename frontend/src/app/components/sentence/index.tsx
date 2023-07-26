@@ -27,6 +27,8 @@ const Sentence = styled.div<SentanceProperties>`
     css`
       animation: ${fadeIn} ${FADE_IN_OUT / 1000}s ease;
     `};
+
+  border: 1px solid red;
 `;
 
 export default Sentence;
