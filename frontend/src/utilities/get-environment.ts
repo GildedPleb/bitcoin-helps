@@ -7,9 +7,13 @@ export default function getEnvironmentVariable(
   key: keyof ImportMeta["env"],
   fallback: string
 ): string {
-  const value = import.meta.env[key] as string;
-  if (typeof value === "string") {
-    return value;
-  }
+  if (key === "VITE_APP_STAGE") return import.meta.env.VITE_APP_STAGE as string;
+
+  if (key === "VITE_APP_API_URL_HTTP_DEV")
+    return import.meta.env.VITE_APP_API_URL_HTTP_DEV as string;
+
+  if (key === "VITE_APP_API_URL_HTTP_PROD")
+    return import.meta.env.VITE_APP_API_URL_HTTP_PROD as string;
+
   return fallback;
 }
