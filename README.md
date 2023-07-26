@@ -6,7 +6,7 @@
 | **Development** | [https://dev.doesbitcoinhelp.com](https://dev.doesbitcoinhelp.com) | GPT-3.5 Turbo  |
 
 
-"Does Bitcoin Help?" is a unique project that uses generative AI to illustrate how Bitcoin can be beneficial to, not _various_, but _ALL_ facets of humanity worldwide. The central objective is to generate and/or distribute compelling, context-specific arguments to demonstrate Bitcoin's universal applicability and utility for any chosen input.
+"Does Bitcoin Help?" uses generative AI to illustrate how Bitcoin can be beneficial to, not _various_, but _ALL_ facets of humanity worldwide. The central objective is to generate and/or distribute compelling, context-specific arguments to demonstrate Bitcoin's universal applicability and utility for any chosen input.
 
 We believe that Bitcoin, the only decentralized, transparent, permissionless, uncensorable, fixed-supply, and globally accessible digital currency, has profound implications for not just economics but justice, mercy, and overall human progress and flourishing, for every human in existence, and by extension every entity on the earth, and the earth itself. As such, we are forced to conclude that the greatest harbinger of evil ever perpetrated against humanity and reality is fiat currency. This project all but proves this to be correct.
 
