@@ -20,6 +20,8 @@ else
   exit 1
 fi
 
+export STAGE
+
 echo "...Generating Types..."
 npx graphql-codegen
 
