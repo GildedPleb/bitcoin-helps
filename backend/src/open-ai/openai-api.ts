@@ -126,7 +126,7 @@ export async function fetchGptResponseFull(
         const parsed = JSON.parse(text) as CompletionResponse;
         promptTokens += parsed.usage.prompt_tokens;
         completionTokens += parsed.usage.completion_tokens;
-        console.log("tokens:", promptTokens, completionTokens);
+        console.log("tokens:", parsed, promptTokens, completionTokens);
       }
 
       // eslint-disable-next-line no-await-in-loop
