@@ -1,6 +1,27 @@
 import { type PubSub } from "../aws/pubsub";
 import { FINISHED_STREEM, RETRIES, TIMEOUT } from "../constants";
 
+interface CompletionResponse {
+  id: string;
+  object: string;
+  created: number;
+  choices: Array<{
+    index: number;
+    message: {
+      role: string;
+      content: string;
+    };
+    finish_reason: string;
+  }>;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+const MODEL = process.env.GPT_VERSION ?? "gpt-3.5-turbo";
+
 /**
  *
  * @param userInput - The prompt
@@ -26,7 +47,7 @@ export async function fetchGptResponse(
         { role: "user", content: userInput },
       ],
       // model: "gpt-4",
-      model: process.env.GPT_VERSION ?? "gpt-3.5-turbo",
+      model: MODEL,
       stream: true,
     };
 
@@ -118,6 +139,31 @@ export async function fetchGptResponseFull(
       }
     }
     if (pubSub !== undefined) await pubSub.publish(FINISHED_STREEM);
+
+    const final = (await response.json()) as CompletionResponse;
+    console.log(`Total tokens used: ${final.usage.total_tokens}`);
+
+    // calculate the cost based on your per-token rate
+    let costPerInputToken: number;
+    let costPerOutputToken: number;
+    if (MODEL === "gpt-4") {
+      costPerInputToken = 0.03 / 1000; // $0.03 per 1K tokens for GPT-4 input
+      costPerOutputToken = 0.06 / 1000; // $0.06 per 1K tokens for GPT-4 output
+    } else if (MODEL === "gpt-3.5-turbo") {
+      costPerInputToken = 0.0015 / 1000; // $0.0015 per 1K tokens for GPT-3.5-turbo input
+      costPerOutputToken = 0.002 / 1000; // $0.002 per 1K tokens for GPT-3.5-turbo output
+    } else throw new Error(`Unknown model: ${MODEL}`);
+
+    const cost =
+      final.usage.prompt_tokens * costPerInputToken +
+      final.usage.completion_tokens * costPerOutputToken;
+    const formatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    });
+
+    console.log(`Total cost: ${formatter.format(cost)}`);
+
     return words;
   } catch (error) {
     console.error("Unexpected error fetching GPT response:", error);
