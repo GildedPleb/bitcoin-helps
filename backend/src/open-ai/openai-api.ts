@@ -103,8 +103,8 @@ export async function fetchGptResponseFull(
     const decoder = new TextDecoder();
 
     let words = "";
-    let promptTokens = 0;
-    let completionTokens = 0;
+    const promptTokens = 0;
+    const completionTokens = 0;
     let result = "";
     let finished = false;
     while (!finished) {
@@ -123,10 +123,11 @@ export async function fetchGptResponseFull(
         result += text;
 
         // Parse the chunk and add to token count
-        const parsed = JSON.parse(text) as CompletionResponse;
-        promptTokens += parsed.usage.prompt_tokens;
-        completionTokens += parsed.usage.completion_tokens;
-        console.log("tokens:", parsed, promptTokens, completionTokens);
+        console.log("recieved stream text:", text);
+        // const parsed = JSON.parse(text) as CompletionResponse;
+        // promptTokens += parsed.usage.prompt_tokens;
+        // completionTokens += parsed.usage.completion_tokens;
+        // console.log("tokens:", parsed, promptTokens, completionTokens);
       }
 
       // eslint-disable-next-line no-await-in-loop
@@ -174,7 +175,7 @@ export async function fetchGptResponseFull(
       style: "currency",
       currency: "USD",
     });
-
+    console.log("final result:", result);
     console.log(`Total cost: ${formatter.format(cost)}`);
 
     return words;
