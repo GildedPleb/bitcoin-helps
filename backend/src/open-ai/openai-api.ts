@@ -1,35 +1,42 @@
+import { encodingForModel } from "js-tiktoken";
+
 import { type PubSub } from "../aws/pubsub";
 import { FINISHED_STREEM, RETRIES, TIMEOUT } from "../constants";
 
-interface CompletionResponse {
+interface PromptMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+interface CompletionChunk {
   id: string;
   object: string;
   created: number;
+  model: string;
   choices: Array<{
     index: number;
-    message: {
-      role: string;
-      content: string;
+    delta: {
+      content?: string;
     };
-    finish_reason: string;
+    finish_reason: string | null;
   }>;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
 }
 
-const MODEL = process.env.GPT_VERSION ?? "gpt-3.5-turbo";
+const MODEL = (process.env.GPT_VERSION ?? "gpt-3.5-turbo") as
+  | "gpt-3.5-turbo"
+  | "gpt-4"
+  | "gpt2";
 
 /**
  *
- * @param userInput - The prompt
+ * @param messages - The prompt
  * @param signal - Abort signal if you want
+ * @param stream - To stream or not
  */
 export async function fetchGptResponse(
-  userInput: string,
-  signal?: AbortSignal
+  messages: PromptMessage[],
+  signal?: AbortSignal,
+  stream = true
 ): Promise<Response | undefined> {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -42,13 +49,9 @@ export async function fetchGptResponse(
     };
 
     const data = {
-      messages: [
-        { role: "system", content: "You are a helpful assistant." },
-        { role: "user", content: userInput },
-      ],
-      // model: "gpt-4",
+      messages,
       model: MODEL,
-      stream: true,
+      stream,
     };
 
     console.log("Calling OpenAI with:", data);
@@ -80,12 +83,20 @@ export async function fetchGptResponse(
  * @param signal - Abort signal if you want
  */
 export async function fetchGptResponseFull(
-  userInput: string,
+  userInput: string | PromptMessage[],
   pubSub?: PubSub,
   signal?: AbortSignal
 ): Promise<string | undefined> {
   try {
-    const response = await fetchGptResponse(userInput, signal);
+    const messages: PromptMessage[] = [
+      { role: "system", content: "You are a helpful assistant." },
+      ...(typeof userInput === "string"
+        ? [{ role: "user", content: userInput } satisfies PromptMessage]
+        : userInput),
+    ];
+
+    const response = await fetchGptResponse(messages, signal);
+
     if (response === undefined) {
       console.error("Response body is not available.");
       if (pubSub !== undefined) await pubSub.publish(FINISHED_STREEM);
@@ -103,62 +114,46 @@ export async function fetchGptResponseFull(
     const decoder = new TextDecoder();
 
     let words = "";
-    const promptTokens = 0;
-    const completionTokens = 0;
-    let result = "";
     let finished = false;
     while (!finished) {
       // eslint-disable-next-line no-await-in-loop
-      const { value, done: readerDone } = await reader.read();
+      const { value, done } = await reader.read();
+      if (done) finished = true;
+
       const text = decoder.decode(value);
-      if (readerDone) {
-        // text.includes("data: [DONE]")) {
-        // console.log("Ending OpenAI call as expected", text);
-        finished = true;
-      }
-      if (value) {
-        // Decode the Uint8Array to a string
-
-        // Append this chunk to our existing string
-        result += text;
-
-        // Parse the chunk and add to token count
-        console.log("recieved stream text:", text);
-        // const parsed = JSON.parse(text) as CompletionResponse;
-        // promptTokens += parsed.usage.prompt_tokens;
-        // completionTokens += parsed.usage.completion_tokens;
-        // console.log("tokens:", parsed, promptTokens, completionTokens);
-      }
-
-      // eslint-disable-next-line no-await-in-loop
-      for await (const item of text
+      const lines = text
         .split("\n")
         .filter(Boolean)
-        .map((thing) => thing.slice(6))) {
-        try {
-          // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access
-          const word = JSON.parse(item).choices[0].delta.content
-            ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              (JSON.parse(item).choices[0].delta.content as string)
-            : "";
-          // process.stdout.write(word);
-          // Publish the word to the subscription topic
-          if (pubSub !== undefined) await pubSub.publish(word);
+        .map((thing) => thing.slice(6));
 
-          words += word;
-        } catch (error: unknown) {
-          const isError = error instanceof Error;
-          const isLast = "Unexpected token D in JSON at position 1";
-          if (!(isError && error.message.includes(isLast))) {
-            console.error(error, item);
-            throw isError ? error : new Error("An unknown error occurred");
+      // eslint-disable-next-line no-await-in-loop
+      for await (const item of lines) {
+        if (item === "[DONE]") break;
+        try {
+          const { choices } = JSON.parse(item) as CompletionChunk;
+          const { finish_reason: isFinished, delta } = choices[0];
+          if (isFinished !== "stop" && delta.content !== undefined) {
+            if (pubSub !== undefined) await pubSub.publish(delta.content);
+            words += delta.content;
           }
+        } catch (error: unknown) {
+          console.error(error);
+          throw new Error("An unknown error occurred iterating over stream.");
         }
       }
     }
     if (pubSub !== undefined) await pubSub.publish(FINISHED_STREEM);
 
-    // calculate the cost based on your per-token rate
+    const enc = encodingForModel(MODEL);
+    const count = (text: string) => enc.encode(text).length;
+
+    const promptTokens = messages.reduce(
+      (accumulator, { role, content }) =>
+        accumulator + 3 + count(content) + count(role),
+      3
+    );
+    const completionTokens = count(words);
+
     let costPerInputToken: number;
     let costPerOutputToken: number;
     if (MODEL === "gpt-4") {
@@ -175,8 +170,11 @@ export async function fetchGptResponseFull(
       style: "currency",
       currency: "USD",
     });
-    console.log("final result:", result);
-    console.log(`Total cost: ${formatter.format(cost)}`);
+    console.log(
+      `Total cost: ${promptTokens} + ${completionTokens} = ${formatter.format(
+        cost
+      )} (${cost})`
+    );
 
     return words;
   } catch (error) {
@@ -187,10 +185,13 @@ export async function fetchGptResponseFull(
 }
 
 export const tryAndRetryFetchAI = async (
-  userInput: string,
+  userInput: PromptMessage[],
   maxRetries = RETRIES
 ): Promise<string | undefined> => {
-  const abreviation = userInput.slice(0, 100);
+  const abreviation = userInput
+    .map((item) => item.content)
+    .join(", ")
+    .slice(0, 100);
   const retryMessage = `Retrying for "${abreviation}...". ${maxRetries} retries left.`;
   const exhaustedMessage = `Retries Exhausted for "${abreviation}...". Returning undefined`;
   const controller = new AbortController();
@@ -221,16 +222,14 @@ export const tryAndRetryFetchAI = async (
 export const fetchQualityAIResults = async (
   userInput: string,
   validators: Array<(generated: string) => undefined | string>,
-  maxExchanges = 3
+  maxExchanges = 6
 ) => {
   let invalids = "false";
-  const exchanges = [`User: ${userInput}\n`];
+  const exchanges: PromptMessage[] = [{ role: "user", content: userInput }];
   let current: string | undefined = "";
   while (invalids !== "") {
-    const conversation = exchanges.join("");
-    // console.log("conversation:", conversation);
     // eslint-disable-next-line no-await-in-loop
-    current = await tryAndRetryFetchAI(conversation);
+    current = await tryAndRetryFetchAI(exchanges);
     invalids = "";
     if (current === undefined) {
       console.error(
@@ -243,10 +242,11 @@ export const fetchQualityAIResults = async (
         if (isInvalid !== undefined) invalids = `${invalids} - ${isInvalid}\n`;
       }
       exchanges.push(
-        `AI Assistant: ${current}\n\nUser: Please revise to account for:\n${invalids}`
+        { role: "assistant", content: current },
+        { role: "user", content: `Please revise to account for:\n${invalids}` }
       );
       if (exchanges.length > maxExchanges && exchanges.length > 1)
-        exchanges.splice(1, 1);
+        exchanges.splice(1, 2);
     }
   }
   return current;
