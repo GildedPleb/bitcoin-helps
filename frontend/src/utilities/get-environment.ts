@@ -15,5 +15,11 @@ export default function getEnvironmentVariable(
   if (key === "VITE_APP_API_URL_HTTP_PROD")
     return import.meta.env.VITE_APP_API_URL_HTTP_PROD as string;
 
+  if (key === "VITE_APP_API_URL_WS_DEV")
+    return import.meta.env.VITE_APP_API_URL_WS_DEV as string;
+
+  if (key === "VITE_APP_API_URL_WS_PROD")
+    return import.meta.env.VITE_APP_API_URL_WS_PROD as string;
+
   return fallback;
 }

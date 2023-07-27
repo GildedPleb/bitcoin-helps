@@ -45,7 +45,7 @@ export const handler = async ({ language }: Event) => {
   try {
     const prompts = await findLanguagePrompt();
     if (!prompts) throw new Error("There should be prompts");
-    // Create the 14 Affiliations + 15 Issues + 1 Translation = 30 'SUCCESS' logs
+    // Create the 17 Affiliations + 15 Issues + 1 Translation = 33 'SUCCESS' logs
     const resolved = await Promise.all([
       Promise.all(affiliationPromises(language, prompts)),
       Promise.all(issuePromises(language, prompts)),

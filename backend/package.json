@@ -8,6 +8,7 @@
     "update-prompts-dev": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/seed.ts dev",
     "update-prompts-prod": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/seed.ts prod",
     "verify-seeds": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/verify.ts",
+    "update": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings update.ts",
     "print-tree": "tree -I 'node_modules|build' -P '*.ts'",
     "test": "npx jest src"
   },
@@ -26,6 +27,7 @@
     "graceful-fs": "^4.2.11",
     "graphql": "^16.7.1",
     "handlebars": "^4.7.7",
+    "js-tiktoken": "^1.0.7",
     "language-tags": "^1.0.8"
   },
   "devDependencies": {
