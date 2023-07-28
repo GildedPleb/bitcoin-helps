@@ -1,11 +1,8 @@
 import { iot, mqtt } from "aws-crt";
-// import dotenv from "dotenv";
 import fs from "graceful-fs";
 
 import { FINISHED_STREEM, MESSAGE_QUEUE_TIMEOUT } from "../constants";
 import { addStreamContent, databaseClient } from "./dynamo";
-
-// dotenv.config();
 
 export interface Gossip extends Record<string, unknown> {
   message: string;
