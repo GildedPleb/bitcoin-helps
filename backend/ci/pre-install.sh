@@ -25,7 +25,7 @@ if [ "$STAGE" = "dev" ]; then
     echo "Missing DATABASE_URL_dev env variable"
     exit 1
   fi
-  echo "DATABASE: $(echo $DATABASE_URL_dev | rev | cut -c 1-10 | rev)"
+  echo "DATABASE: $(echo $DATABASE_URL_dev | rev | cut -c 1-7 | rev)"
   echo "GPT: ${GPT_VERSION_dev}"
   DATABASE_URL=$DATABASE_URL_dev PRISMA_CLIENT_ENGINE_TYPE=binary npx prisma migrate dev
   echo "...Verifying seeds..."
@@ -35,7 +35,7 @@ elif [ "$STAGE" = "prod" ]; then
     echo "Missing DATABASE_URL_prod env variable"
     exit 1
   fi
-  echo "DATABASE: $(echo $DATABASE_URL_prod | rev | cut -c 1-10 | rev)"
+  echo "DATABASE: $(echo $DATABASE_URL_prod | rev | cut -c 1-7 | rev)"
   echo "GPT: ${GPT_VERSION_prod}"
   DATABASE_URL=$DATABASE_URL_prod PRISMA_CLIENT_ENGINE_TYPE=binary npx prisma migrate deploy && npx prisma generate
   echo "...Verifying seeds..."
