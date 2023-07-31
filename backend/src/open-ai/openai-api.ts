@@ -40,7 +40,7 @@ const createCompletion = async (
   completion?: string
 ) =>
   awsInvoke<OpenAICall>(
-    process.env.CREAT_COMPLETION_FUNCTION_NAME,
+    process.env.CREATE_COMPLETION_FUNCTION_NAME,
     "RequestResponse",
     {
       promptTokens,

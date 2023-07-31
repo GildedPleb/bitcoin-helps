@@ -93,7 +93,6 @@ functions:
     environment:
       FIND_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findLanguage
       CREATE_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createLanguage
-      CREATE_COMPLETION_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createCompletion
       FIND_INPUT_PAIR_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findInputPair
       FIND_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findJob
       CREATE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createJob
@@ -152,6 +151,7 @@ functions:
     maximumRetryAttempts: 1
     environment:
       GPT_VERSION: ${env:GPT_VERSION_${self:provider.stage}}
+      CREATE_COMPLETION_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createCompletion
       OPENAI_API_KEY: ${env:OPENAI_API_KEY}
       SAVE_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-saveLanguage
       FIND_LANGUAGE_PROMPT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findLanguagePrompt
@@ -296,7 +296,6 @@ resources:
                   Action: "lambda:InvokeFunction"
                   Resource:
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createLanguage"
-                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createCompletion"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findLanguage"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findInputPair"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findJob"
@@ -436,6 +435,7 @@ resources:
                   Resource:
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-saveLanguage"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findLanguagePrompt"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createCompletion"
                 - Effect: "Allow"
                   Action:
                     - "dynamodb:PutItem"
