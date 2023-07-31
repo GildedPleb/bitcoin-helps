@@ -10,7 +10,8 @@
     "verify-seeds": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/verify.ts",
     "update": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings update.ts",
     "print-tree": "tree -I 'node_modules|build' -P '*.ts'",
-    "test": "npx jest src"
+    "test": "npx jest src",
+    "migrate:dev": "DATABASE_URL=$DATABASE_URL_dev npx prisma migrate dev"
   },
   "keywords": [],
   "author": "",
