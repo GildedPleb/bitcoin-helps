@@ -191,6 +191,7 @@ export async function fetchGptResponseFull(
       persistData ? messages : [],
       persistData ? words : undefined
     );
+    console.log("completion persisted!", completion?.id);
     if (!completion) throw new Error("Could not persist completion in AI Call");
     return { words, id: completion.id };
   } catch (error) {
