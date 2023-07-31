@@ -15,7 +15,7 @@ interface IdParameter {
 const findArgument = async (argument: IdParameter) =>
   awsInvoke<
     | (Argument & {
-        GenerateJob:
+        generateJob:
           | (GenerateJob & {
               language: Language;
             })
@@ -58,11 +58,11 @@ export const getInputPairByArgumentId = async (
     const updatedArgument = { ...argument, inputPair: argument.inputPair };
     return updateInputPairHitArguments(updatedArgument);
   }
-  if (argument.GenerateJob && argument.GenerateJob.status !== "COMPLETED")
+  if (argument.generateJob && argument.generateJob.status !== "COMPLETED")
     return {
-      jobId: argument.GenerateJob.id,
+      jobId: argument.generateJob.id,
       argumentId: argument.id,
-      language: { name: argument.GenerateJob.language.name },
+      language: { name: argument.generateJob.language.name },
     };
 
   throw new Error(
