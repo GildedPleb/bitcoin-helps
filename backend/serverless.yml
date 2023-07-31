@@ -131,7 +131,7 @@ functions:
     role: streamRole
     environment:
       FIND_JOB_BY_ID_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findJobById
-      CREAT_COMPLETION_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createCompletion
+      CREATE_COMPLETION_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createCompletion
       UPDATE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-updateJob
       FINALIZE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-finalizeJob
       TOPIC_PREFIX: ${self:custom.topicPrefix}
