@@ -158,7 +158,7 @@ functions:
     role: lambdaLanguageRole
     layers:
       - { Ref: EndpointLambdaLayer }
-    memorySize: 4096
+    memorySize: 3008
 
   findLanguage:
     handler: src/prisma/find-language.handler
