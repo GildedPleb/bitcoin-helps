@@ -173,7 +173,7 @@ model OpenAICall {
   promptTokens     Int
   completionTokens Int
   cost             Float
-  prompt           String?
+  prompt           Json[]
   completion       String?
 
   // Optional becuase it is either one prompt type or another: Argument or Language

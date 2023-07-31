@@ -25,8 +25,12 @@ const affiliationPromises = (language: string, prompts: LanguagePrompt) => {
   return prompts.affiliationExample.map(
     async (
       type
-    ): Promise<AffiliationTypeCreateWithoutLanguageInput | undefined> => {
+    ): Promise<{
+      content: AffiliationTypeCreateWithoutLanguageInput | undefined;
+      cost: string[];
+    }> => {
       const typeString = JSON.stringify(type);
+      const cost: string[] = [];
       try {
         const aiResponse = await fetchQualityAIResults(
           Handlebars.compile(prompts.affiliationTypePrompt)({
@@ -35,10 +39,13 @@ const affiliationPromises = (language: string, prompts: LanguagePrompt) => {
           }),
           [verifyBaseAffiliationIssue]
         );
-        const data = extractJSONFromString<BaseAffiliationIssue>(aiResponse);
+        cost.push(...aiResponse.ids);
+        const data = extractJSONFromString<BaseAffiliationIssue>(
+          aiResponse.words
+        );
         if (data === undefined) {
-          console.error(`Affiliation extract ${language}: ${typeString}`);
-          return undefined;
+          console.error(`Affiliation extract ${language}: ${typeString}`, cost);
+          return { content: undefined, cost };
         }
         const populatedDescription = `${
           data.description
@@ -51,24 +58,28 @@ const affiliationPromises = (language: string, prompts: LanguagePrompt) => {
           }),
           [verifyAffiliationIssueList]
         );
-        const dataList = extractJSONListFromString(aiAffiliationListRaw);
+        cost.push(...aiAffiliationListRaw.ids);
+        const dataList = extractJSONListFromString(aiAffiliationListRaw.words);
         if (dataList === undefined) {
-          console.error(`Affiliation list ${language} for ${typeString}`);
-          return undefined;
+          console.error(`Affiliation list ${language} for ${typeString}`, cost);
+          return { content: undefined, cost };
         }
         console.log("SUCESS: Final Affiliation:", data, dataList);
         return {
-          name: data.name,
-          description: populatedDescription,
-          affiliations: {
-            create: dataList.map((item) => ({
-              name: item,
-            })),
+          content: {
+            name: data.name,
+            description: populatedDescription,
+            affiliations: {
+              create: dataList.map((item) => ({
+                name: item,
+              })),
+            },
           },
+          cost,
         };
       } catch (error) {
-        console.error("Error generating affiliation for", typeString, error);
-        return undefined;
+        console.error("Error generating affiliation", typeString, error, cost);
+        return { content: undefined, cost };
       }
     }
   );

@@ -66,7 +66,7 @@ export const getInputPairByArgumentId = async (
     };
 
   throw new Error(
-    "We should never hit this error because InputPairs are created before generate jobs are deleted. But just in case..."
+    "We should never hit this error because InputPairs are created before generate jobs are completed. But just in case..."
   );
 };
 

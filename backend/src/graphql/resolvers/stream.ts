@@ -44,10 +44,15 @@ const updateJob = async (jobId: string, state: JobStatus) =>
     }
   >(process.env.UPDATE_JOB_FUNCTION_NAME, "RequestResponse", { jobId, state });
 
-const finalizeJob = async (job: GenerateJob, finalResult: string) =>
+const finalizeJob = async (
+  job: GenerateJob,
+  finalResult: string,
+  cost: string
+) =>
   awsInvoke(process.env.FINALIZE_JOB_FUNCTION_NAME, "RequestResponse", {
     job,
     finalResult,
+    cost,
   });
 
 interface Event {
@@ -121,11 +126,15 @@ export const handler = async ({
   console.log("job:", job);
 
   const sendMessage = createSendMessage(connectionId);
-  if (!job) {
+  if (!job || job.status === "COMPLETED") {
     await sendMessage({
       type: "error",
       id: graphQLId,
-      payload: [new GraphQLError(`Job ${jobId} does not exist.`)],
+      payload: [
+        new GraphQLError(
+          `Job ${jobId} does not exist, or has already completed.`
+        ),
+      ],
     });
     return;
   }
@@ -137,7 +146,7 @@ export const handler = async ({
   console.log("Topic has been subscribed");
 
   const sendUpdate = createUpdater(sendMessage, graphQLId);
-  if (job.status !== "PENDING") {
+  if (job.status === "PROCESSING") {
     await sendUpdate("", "MissedContent");
     console.log("Awaiting prev stream...");
 
@@ -195,7 +204,7 @@ export const handler = async ({
     const finalResult = await finalResultPromise;
     console.log("New AI response finished");
     if (finalResult === undefined) throw new Error("AI generated nothing");
-    else await finalizeJob(fullJob, finalResult);
+    else await finalizeJob(fullJob, finalResult.words, finalResult.id);
   } catch (error) {
     console.error(error);
     await updateJob(jobId, "PENDING");

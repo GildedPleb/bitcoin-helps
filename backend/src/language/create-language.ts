@@ -18,21 +18,44 @@ interface Event {
 const createNewLanguage = async (
   language: string,
   [affiliationTypeData, issueCategoryData, translations]: [
-    Array<AffiliationTypeCreateWithoutLanguageInput | undefined>,
-    Array<IssueCategoryCreateWithoutLanguageInput | undefined>,
-    TranslationTypeMapped
+    Array<{
+      content: AffiliationTypeCreateWithoutLanguageInput | undefined;
+      cost: string[];
+    }>,
+    Array<{
+      content: IssueCategoryCreateWithoutLanguageInput | undefined;
+      cost: string[];
+    }>,
+    { content: TranslationTypeMapped; cost: string[] }
   ],
   promptsId: string
-) =>
-  awsInvoke(process.env.SAVE_LANGUAGE_FUNCTION_NAME, "Event", {
+) => {
+  const affiliationTypeList: AffiliationTypeCreateWithoutLanguageInput[] = [];
+  const issueCategoryList: IssueCategoryCreateWithoutLanguageInput[] = [];
+  const cost: string[] = [];
+
+  for (const affiliationItem of affiliationTypeData) {
+    if (affiliationItem.content)
+      affiliationTypeList.push(affiliationItem.content);
+    cost.push(...affiliationItem.cost);
+  }
+
+  for (const issueItem of issueCategoryData) {
+    if (issueItem.content) issueCategoryList.push(issueItem.content);
+    cost.push(...issueItem.cost);
+  }
+
+  cost.push(...translations.cost);
+
+  return awsInvoke(process.env.SAVE_LANGUAGE_FUNCTION_NAME, "Event", {
     language,
-    affiliationTypeData: affiliationTypeData.filter(
-      (item) => item !== undefined
-    ),
-    issueCategoryData: issueCategoryData.filter((item) => item !== undefined),
-    translations,
+    affiliationTypeData: affiliationTypeList,
+    issueCategoryData: issueCategoryList,
+    translations: translations.content,
     promptsId,
+    cost,
   });
+};
 
 const findLanguagePrompt = async () =>
   awsInvoke<LanguagePrompt>(
@@ -54,6 +77,7 @@ export const handler = async ({ language }: Event) => {
     await createNewLanguage(languageTag, resolved, prompts.id);
     console.log(`Successfully generated language model for: ${language}`);
   } catch (error) {
+    // TODO: consider adding a "${id}-ERRORED-en-US" langauge to record costs is the case of failure.
     console.error(`Error Generating language model for: ${language}`, error);
   } finally {
     await releaseLock(language, databaseClient);

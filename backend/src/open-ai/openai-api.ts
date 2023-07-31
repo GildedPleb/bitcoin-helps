@@ -1,9 +1,12 @@
+import { type OpenAICall } from "@prisma/client";
 import { encodingForModel } from "js-tiktoken";
 
+import awsInvoke from "../aws/invoke";
 import { type PubSub } from "../aws/pubsub";
 import { FINISHED_STREEM, RETRIES, TIMEOUT } from "../constants";
 
-interface PromptMessage {
+export interface PromptMessage {
+  [x: string]: string;
   role: "system" | "user" | "assistant";
   content: string;
 }
@@ -27,6 +30,27 @@ const MODEL = (process.env.GPT_VERSION ?? "gpt-3.5-turbo") as
   | "gpt-4"
   | "gpt2";
 
+const URL = "https://api.openai.com/v1/chat/completions";
+
+const createCompletion = async (
+  promptTokens: number,
+  completionTokens: number,
+  cost: number,
+  prompt: PromptMessage[],
+  completion?: string
+) =>
+  awsInvoke<OpenAICall>(
+    process.env.CREAT_COMPLETION_FUNCTION_NAME,
+    "RequestResponse",
+    {
+      promptTokens,
+      completionTokens,
+      cost,
+      prompt,
+      completion,
+    }
+  );
+
 /**
  *
  * @param messages - The prompt
@@ -43,29 +67,14 @@ export async function fetchGptResponse(
     if (apiKey === undefined || apiKey === "")
       throw new Error("Open API key required to run");
 
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    };
+    const Authorization = `Bearer ${apiKey}`;
+    const headers = { "Content-Type": "application/json", Authorization };
+    const method = "POST";
+    const body = JSON.stringify({ messages, model: MODEL, stream });
+    const data = { headers, method, body, signal };
 
-    const data = {
-      messages,
-      model: MODEL,
-      stream,
-    };
-
-    console.log("Calling OpenAI with:", data);
-
-    // Use the ChatGPT model with chat completions
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers,
-      body: JSON.stringify(data),
-      signal,
-    });
-
-    // console.log(response);
-
+    console.log("Calling OpenAI with:", body);
+    const response = await fetch(URL, data);
     if (response.ok) return response;
 
     console.error("Error fetching GPT response:", await response.json());
@@ -81,12 +90,14 @@ export async function fetchGptResponse(
  * @param userInput - The prompt
  * @param pubSub - the pubsub context
  * @param signal - Abort signal if you want
+ * @param persistData - whether or not to persist text data
  */
 export async function fetchGptResponseFull(
   userInput: string | PromptMessage[],
   pubSub?: PubSub,
-  signal?: AbortSignal
-): Promise<string | undefined> {
+  signal?: AbortSignal,
+  persistData = false
+): Promise<{ words: string; id: string } | undefined> {
   try {
     const messages: PromptMessage[] = [
       { role: "system", content: "You are a helpful assistant." },
@@ -166,17 +177,22 @@ export async function fetchGptResponseFull(
 
     const cost =
       promptTokens * costPerInputToken + completionTokens * costPerOutputToken;
-    const formatter = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    });
+    const format = { style: "currency", currency: "USD" };
+    const formatter = new Intl.NumberFormat("en-US", format);
+    const formatted = formatter.format(cost);
     console.log(
-      `Total cost: ${promptTokens} + ${completionTokens} = ${formatter.format(
-        cost
-      )} (${cost})`
+      `Total cost: (${promptTokens} * ${costPerInputToken}) + (${completionTokens} * ${costPerOutputToken}) = ${formatted} ($${cost})`
     );
 
-    return words;
+    const completion = await createCompletion(
+      promptTokens,
+      completionTokens,
+      cost,
+      persistData ? messages : [],
+      persistData ? words : undefined
+    );
+    if (!completion) throw new Error("Could not persist completion in AI Call");
+    return { words, id: completion.id };
   } catch (error) {
     console.error("Unexpected error fetching GPT response:", error);
     if (pubSub !== undefined) await pubSub.publish(FINISHED_STREEM);
@@ -187,7 +203,7 @@ export async function fetchGptResponseFull(
 export const tryAndRetryFetchAI = async (
   userInput: PromptMessage[],
   maxRetries = RETRIES
-): Promise<string | undefined> => {
+): Promise<{ words: string; id: string } | undefined> => {
   const abreviation = userInput
     .map((item) => item.content)
     .join(", ")
@@ -200,7 +216,12 @@ export const tryAndRetryFetchAI = async (
     controller.abort();
   }, TIMEOUT);
   try {
-    const result = await fetchGptResponseFull(userInput, undefined, signal);
+    const result = await fetchGptResponseFull(
+      userInput,
+      undefined,
+      signal,
+      true
+    );
     if (result !== undefined) return result;
     if (maxRetries > 0) {
       console.log(retryMessage);
@@ -226,7 +247,8 @@ export const fetchQualityAIResults = async (
 ) => {
   let invalids = "false";
   const exchanges: PromptMessage[] = [{ role: "user", content: userInput }];
-  let current: string | undefined = "";
+  let current: { words: string; id: string } | undefined;
+  const ids: string[] = [];
   while (invalids !== "") {
     // eslint-disable-next-line no-await-in-loop
     current = await tryAndRetryFetchAI(exchanges);
@@ -237,17 +259,19 @@ export const fetchQualityAIResults = async (
         userInput.slice(0, 100)
       );
     } else {
+      ids.push(current.id);
       for (const validator of validators) {
-        const isInvalid = validator(current);
+        const isInvalid = validator(current.words);
         if (isInvalid !== undefined) invalids = `${invalids} - ${isInvalid}\n`;
       }
       exchanges.push(
-        { role: "assistant", content: current },
+        { role: "assistant", content: current.words },
         { role: "user", content: `Please revise to account for:\n${invalids}` }
       );
       if (exchanges.length > maxExchanges && exchanges.length > 1)
         exchanges.splice(1, 2);
     }
   }
-  return current;
+  if (current === undefined) return { words: "", ids };
+  return { words: current.words, ids };
 };

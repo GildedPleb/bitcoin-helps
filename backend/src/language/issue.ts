@@ -19,8 +19,12 @@ const issuePromises = (language: string, prompts: LanguagePrompt) => {
   return prompts.issueExample.map(
     async (
       category
-    ): Promise<IssueCategoryCreateWithoutLanguageInput | undefined> => {
+    ): Promise<{
+      content: IssueCategoryCreateWithoutLanguageInput | undefined;
+      cost: string[];
+    }> => {
       const categoryString = JSON.stringify(category);
+      const cost: string[] = [];
       try {
         const aiResponse = await fetchQualityAIResults(
           Handlebars.compile(prompts.issueCategoryPrompt)({
@@ -29,10 +33,13 @@ const issuePromises = (language: string, prompts: LanguagePrompt) => {
           }),
           [verifyBaseAffiliationIssue]
         );
-        const data = extractJSONFromString<BaseAffiliationIssue>(aiResponse);
+        cost.push(...aiResponse.ids);
+        const data = extractJSONFromString<BaseAffiliationIssue>(
+          aiResponse.words
+        );
         if (data === undefined) {
           console.error(`Issue extract ${language}: ${categoryString}`);
-          return undefined;
+          return { content: undefined, cost };
         }
         const populatedDescription = `${
           data.description
@@ -45,20 +52,24 @@ const issuePromises = (language: string, prompts: LanguagePrompt) => {
           }),
           [verifyAffiliationIssueList]
         );
-        const dataList = extractJSONListFromString(aiAffiliationListRaw);
+        cost.push(...aiAffiliationListRaw.ids);
+        const dataList = extractJSONListFromString(aiAffiliationListRaw.words);
         if (dataList === undefined) {
           console.error(`Affiliation list ${language} for ${categoryString}`);
-          return undefined;
+          return { content: undefined, cost };
         }
         console.log("SUCESS: Final Issue:", data, dataList);
         return {
-          name: data.name,
-          description: populatedDescription,
-          issues: {
-            create: dataList.map((item) => ({
-              name: item,
-            })),
+          content: {
+            name: data.name,
+            description: populatedDescription,
+            issues: {
+              create: dataList.map((item) => ({
+                name: item,
+              })),
+            },
           },
+          cost,
         };
       } catch (error) {
         console.error(
@@ -66,7 +77,7 @@ const issuePromises = (language: string, prompts: LanguagePrompt) => {
           categoryString,
           error
         );
-        return undefined;
+        return { content: undefined, cost };
       }
     }
   );

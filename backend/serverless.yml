@@ -93,6 +93,7 @@ functions:
     environment:
       FIND_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findLanguage
       CREATE_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createLanguage
+      CREATE_COMPLETION_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createCompletion
       FIND_INPUT_PAIR_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findInputPair
       FIND_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findJob
       CREATE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createJob
@@ -131,6 +132,7 @@ functions:
     role: streamRole
     environment:
       FIND_JOB_BY_ID_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findJobById
+      CREAT_COMPLETION_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createCompletion
       UPDATE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-updateJob
       FINALIZE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-finalizeJob
       TOPIC_PREFIX: ${self:custom.topicPrefix}
@@ -208,6 +210,10 @@ functions:
 
   findLatestArgumentPrompts:
     handler: src/prisma/find-latest-argument-prompts.handler
+    <<: *prismaDefaults
+
+  createCompletion:
+    handler: src/prisma/create-completion.handler
     <<: *prismaDefaults
 
 resources:
@@ -290,6 +296,7 @@ resources:
                   Action: "lambda:InvokeFunction"
                   Resource:
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createLanguage"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createCompletion"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findLanguage"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findInputPair"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findJob"
@@ -371,6 +378,7 @@ resources:
                   Action: "lambda:InvokeFunction"
                   Resource:
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findJobById"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createCompletion"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-updateJob"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-finalizeJob"
                 - Effect: "Allow"
