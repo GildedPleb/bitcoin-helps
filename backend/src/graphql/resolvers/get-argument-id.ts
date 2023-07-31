@@ -52,28 +52,28 @@ export const getArgumentId = async (
     inputPair === undefined ? "Didn't find it" : "Found: ",
     inputPair
   );
+  if (inputPair !== undefined && inputPair.arguments.length > 0)
+    return { id: inputPair.arguments[0].id };
 
-  if (inputPair === undefined || inputPair.arguments.length === 0) {
-    console.log("Checking if a job for this pair exists ...");
-    const existingJob = await findJob(ids);
-    console.log(
-      "Result:",
-      existingJob === undefined ? "Didn't find it" : "Found: ",
-      existingJob
-    );
-    if (existingJob && existingJob.status !== "COMPLETED")
-      return { id: existingJob.argumentId };
-    console.log("Creating a new job...");
-    const argumentPrompts = await getArgumentPrompts();
-    if (argumentPrompts === undefined)
-      throw new Error("There should always be prompts for arguments");
-    // Replace with user logic later on
-    const randomIndex = Math.floor(Math.random() * argumentPrompts.length);
-    const newJob = await createJob(ids, argumentPrompts[randomIndex].id);
-    if (newJob === undefined) throw new Error("Couldnt create a new job");
-    return { id: newJob.argumentId };
-  }
-  return { id: inputPair.arguments[0].id };
+  console.log("Checking if a job for this pair exists ...");
+  const existingJob = await findJob(ids);
+  console.log(
+    "Result:",
+    existingJob === undefined ? "Didn't find it" : "Found: ",
+    existingJob
+  );
+  if (existingJob && existingJob.status !== "COMPLETED")
+    return { id: existingJob.argumentId };
+
+  console.log("Creating a new job...");
+  const argumentPrompts = await getArgumentPrompts();
+  if (argumentPrompts === undefined)
+    throw new Error("There should always be prompts for arguments");
+  // Replace with user logic later on
+  const randomIndex = Math.floor(Math.random() * argumentPrompts.length);
+  const newJob = await createJob(ids, argumentPrompts[randomIndex].id);
+  if (newJob === undefined) throw new Error("Couldnt create a new job");
+  return { id: newJob.argumentId };
 };
 
 export default getArgumentId;
