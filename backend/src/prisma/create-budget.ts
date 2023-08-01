@@ -6,12 +6,10 @@ export const handler = async () => {
       {
         budgetType: "ESSAY",
         amount: 50,
-        spent: 0,
       },
       {
         budgetType: "LANGUAGE",
         amount: 50,
-        spent: 0,
       },
     ],
   });

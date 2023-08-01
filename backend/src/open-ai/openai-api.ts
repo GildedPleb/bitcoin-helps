@@ -1,4 +1,4 @@
-import { type OpenAICall } from "@prisma/client";
+import { type BudgetType, type OpenAICall } from "@prisma/client";
 import { encodingForModel } from "js-tiktoken";
 
 import awsInvoke from "../aws/invoke";
@@ -36,6 +36,7 @@ const createCompletion = async (
   promptTokens: number,
   completionTokens: number,
   cost: number,
+  budgetType: BudgetType,
   prompt: PromptMessage[],
   completion?: string
 ) =>
@@ -48,6 +49,7 @@ const createCompletion = async (
       cost,
       prompt,
       completion,
+      budgetType,
     }
   );
 
@@ -91,12 +93,14 @@ export async function fetchGptResponse(
  * @param pubSub - the pubsub context
  * @param signal - Abort signal if you want
  * @param persistData - whether or not to persist text data
+ * @param budgetType - the type of the call
  */
 export async function fetchGptResponseFull(
   userInput: string | PromptMessage[],
   pubSub?: PubSub,
   signal?: AbortSignal,
-  persistData = false
+  persistData = false,
+  budgetType: BudgetType = "ESSAY"
 ): Promise<{ words: string; id: string } | undefined> {
   try {
     const messages: PromptMessage[] = [
@@ -188,6 +192,7 @@ export async function fetchGptResponseFull(
       promptTokens,
       completionTokens,
       cost,
+      budgetType,
       persistData ? messages : [],
       persistData ? words : undefined
     );
@@ -221,7 +226,8 @@ export const tryAndRetryFetchAI = async (
       userInput,
       undefined,
       signal,
-      true
+      true,
+      "LANGUAGE"
     );
     if (result !== undefined) return result;
     if (maxRetries > 0) {
