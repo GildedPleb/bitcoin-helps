@@ -250,13 +250,16 @@ export const tryAndRetryFetchAI = async (
 export const fetchQualityAIResults = async (
   userInput: string,
   validators: Array<(generated: string) => undefined | string>,
-  maxExchanges = 6
+  maxExchanges = 6,
+  maxLoops = 10
 ) => {
   let invalids = "false";
+  let loops = maxLoops;
   const exchanges: PromptMessage[] = [{ role: "user", content: userInput }];
   let current: { words: string; id: string } | undefined;
   const ids: string[] = [];
-  while (invalids !== "") {
+  while (invalids !== "" && loops > 0) {
+    loops -= 1;
     // eslint-disable-next-line no-await-in-loop
     current = await tryAndRetryFetchAI(exchanges);
     invalids = "";
