@@ -70,7 +70,7 @@ const affiliationPromises = (language: string, prompts: LanguagePrompt) => {
             name: data.name,
             description: populatedDescription,
             affiliations: {
-              create: dataList.map((item) => ({
+              create: [...new Set(dataList)].map((item) => ({
                 name: item,
               })),
             },

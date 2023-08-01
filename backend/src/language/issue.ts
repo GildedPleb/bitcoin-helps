@@ -64,7 +64,7 @@ const issuePromises = (language: string, prompts: LanguagePrompt) => {
             name: data.name,
             description: populatedDescription,
             issues: {
-              create: dataList.map((item) => ({
+              create: [...new Set(dataList)].map((item) => ({
                 name: item,
               })),
             },
