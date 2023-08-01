@@ -77,7 +77,6 @@ export const handler = async ({ language }: Event) => {
     await createNewLanguage(languageTag, resolved, prompts.id);
     console.log(`Successfully generated language model for: ${language}`);
   } catch (error) {
-    // TODO: consider adding a "${id}-ERRORED-en-US" langauge to record costs is the case of failure.
     console.error(`Error Generating language model for: ${language}`, error);
   } finally {
     await releaseLock(language, databaseClient);

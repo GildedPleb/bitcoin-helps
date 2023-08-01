@@ -251,7 +251,7 @@ export const fetchQualityAIResults = async (
   userInput: string,
   validators: Array<(generated: string) => undefined | string>,
   maxExchanges = 6,
-  maxLoops = 10
+  maxLoops = 12
 ) => {
   let invalids = "false";
   let loops = maxLoops;
@@ -274,14 +274,18 @@ export const fetchQualityAIResults = async (
         const isInvalid = validator(current.words);
         if (isInvalid !== undefined) invalids = `${invalids} - ${isInvalid}\n`;
       }
-      exchanges.push(
-        { role: "assistant", content: current.words },
-        { role: "user", content: `Please revise to account for:\n${invalids}` }
-      );
+      const newInvalids = `Please revise to account for:\n${invalids}`;
+      if (newInvalids === exchanges[exchanges.length - 1].content)
+        exchanges.splice(1, exchanges.length - 1);
+      else
+        exchanges.push(
+          { role: "assistant", content: current.words },
+          { role: "user", content: newInvalids }
+        );
       if (exchanges.length > maxExchanges && exchanges.length > 1)
         exchanges.splice(1, 2);
     }
   }
-  if (current === undefined) return { words: "", ids };
+  if (current === undefined || loops === 0) return { words: "", ids };
   return { words: current.words, ids };
 };

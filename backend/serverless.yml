@@ -103,6 +103,7 @@ functions:
       AWS_DEVICE_PRIVATE_KEY: ${ssm:DEVICE_PRIVATE_KEY, env:AWS_DEVICE_PRIVATE_KEY}
       AWS_IOT_HOST: ${env:AWS_IOT_HOST}
       AWS_IOT_CLIENT_ID: ${env:AWS_IOT_CLIENT_ID}
+      FIND_BUDGET_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findBudget
     layers:
       - { Ref: EndpointLambdaLayer }
     memorySize: 256
@@ -224,6 +225,10 @@ functions:
           enabled: true
     <<: *prismaDefaults
 
+  findBudget:
+    handler: src/prisma/find-budget.handler
+    <<: *prismaDefaults
+
 resources:
   Resources:
     ConnectionsTable:
@@ -312,6 +317,7 @@ resources:
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findArgument"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-updateInputPairHit"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-likeOrDislike"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findBudget"
                 - Effect: "Allow"
                   Action:
                     - "dynamodb:PutItem"
