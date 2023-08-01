@@ -118,10 +118,11 @@ model GenerateJob {
   affiliationId    String
   status           JobStatus      @default(PENDING)
   argumentPrompt   ArgumentPrompt @relation(fields: [argumentPromptId], references: [id])
-  argumentPromptId String         @default("b8b9571d-495c-4dd2-aced-7aa402aca019")
+  argumentPromptId String
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   openAICall       OpenAICall[]
+  scheduledFor     DateTime
 
   @@unique([issueId, affiliationId, languageId])
 }

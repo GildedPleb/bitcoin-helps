@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "GenerateJob" ADD COLUMN     "scheduledFor" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
