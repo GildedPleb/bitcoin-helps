@@ -63,7 +63,9 @@ export const getInputPairByArgumentId = async (
       jobId: argument.generateJob.id,
       argumentId: argument.id,
       language: { name: argument.generateJob.language.name },
-      scheduledFor: new Date(argument.generateJob.scheduledFor).getTime(),
+      scheduledFor: String(
+        new Date(argument.generateJob.scheduledFor).getTime()
+      ),
     };
 
   throw new Error(

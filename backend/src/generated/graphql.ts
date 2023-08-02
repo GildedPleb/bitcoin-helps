@@ -45,7 +45,7 @@ export type Job = {
   argumentId: Scalars['Int']['output'];
   jobId: Scalars['String']['output'];
   language: LanguageMinimal;
-  scheduledFor: Scalars['Int']['output'];
+  scheduledFor: Scalars['String']['output'];
 };
 
 export type LanguageMinimal = {
@@ -283,7 +283,7 @@ export type JobResolvers<ContextType = any, ParentType extends ResolversParentTy
   argumentId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   jobId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   language?: Resolver<ResolversTypes['LanguageMinimal'], ParentType, ContextType>;
-  scheduledFor?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  scheduledFor?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

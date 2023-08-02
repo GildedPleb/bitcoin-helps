@@ -7,6 +7,18 @@ interface Event {
   promptId: string;
 }
 
+function formatSecondsToDHMS(seconds) {
+  const days = Math.floor(seconds / (24 * 60 * 60));
+  seconds -= days * 24 * 60 * 60;
+  const hours = Math.floor(seconds / (60 * 60));
+  seconds -= hours * 60 * 60;
+  const minutes = Math.floor(seconds / 60);
+  seconds -= minutes * 60;
+  return `${days} days, ${hours} hours, ${minutes} minutes, ${Math.round(
+    seconds
+  )} seconds`;
+}
+
 export const handler = async ({
   languageId,
   issueId,
@@ -20,7 +32,7 @@ export const handler = async ({
 
   if (!mostRecentBudget) {
     throw new Error(
-      "No budget available - there shoudl always be a current budget"
+      "No budget available - there should always be a current budget"
     );
   }
 
@@ -67,45 +79,67 @@ export const handler = async ({
   let scheduledFor;
 
   if (!weAreAboveBudget) {
-    // Schedule essay for completion at current time
     scheduledFor = now;
   } else {
-    // Get the last job in the queue
     const lastJob = await prisma.generateJob.findFirst({
-      where: { status: "PENDING" },
+      where: {
+        status: "PENDING",
+        scheduledFor: {
+          gt: now,
+        },
+      },
       orderBy: { scheduledFor: "desc" },
     });
 
     if (!lastJob) {
-      // Calculate how much we've exceeded our budget
       const overBudget = totalCostThisMonth - expectedCost;
+      const delay = (overBudget / spendRatePerSecond) * 1000;
 
-      // Calculate the delay based on the excess and the spend rate per second
-      const delay = (overBudget / spendRatePerSecond) * 1000; // convert to milliseconds
-
-      // If there are no previous jobs and this job puts us over budget,
-      // schedule it after a delay calculated based on the overbudget amount.
       scheduledFor = new Date(Date.now() + delay);
     } else {
-      // Calculate the scheduled time for the new job
       scheduledFor = new Date(
         lastJob.scheduledFor.getTime() + numberOfSecondsPerEssayPerMonth * 1000
       );
     }
   }
+
+  const budgetUsed = totalCostThisMonth / mostRecentBudget.amount;
+  const monthProgress = timeElapsedIntoMonthInSeconds / monthInSeconds;
+  const overUnderBudget = totalCostThisMonth - expectedCost;
+  const remainingBudget = mostRecentBudget.amount - totalCostThisMonth;
+  const remainingTimeThisMonthInSeconds =
+    monthInSeconds - timeElapsedIntoMonthInSeconds;
+  const availableBudgetPerSecond =
+    remainingBudget / remainingTimeThisMonthInSeconds;
+  const essaysCanBeProducedRightNow = Math.floor(
+    availableBudgetPerSecond / averageCost
+  );
+
   console.log("Timing: ", {
+    budget: mostRecentBudget.amount,
     now: now.toISOString(),
     startOfMonth: startOfMonth.toISOString(),
     endOfMonth: endOfMonth.toISOString(),
-    monthInSeconds: `${monthInSeconds} seconds`,
-    timeElapsedIntoMonthInSeconds: `${timeElapsedIntoMonthInSeconds} seconds`,
+    monthInSeconds: formatSecondsToDHMS(monthInSeconds),
+    timeElapsedIntoMonthInSeconds: formatSecondsToDHMS(
+      timeElapsedIntoMonthInSeconds
+    ),
     totalCostThisMonth: `$${totalCostThisMonth.toFixed(8)}`,
     averageCost: `$${averageCost.toFixed(8)}`,
     spendRatePerSecond: `$${spendRatePerSecond.toFixed(8)}/second`,
-    numberOfSecondsPerEssayPerMonth: `${numberOfSecondsPerEssayPerMonth} seconds`,
+    numberOfSecondsPerEssayPerMonth: formatSecondsToDHMS(
+      numberOfSecondsPerEssayPerMonth
+    ),
     expectedCost: `$${expectedCost.toFixed(8)}`,
     weAreAboveBudget: weAreAboveBudget ? "Yes" : "No",
     scheduledFor: scheduledFor.toISOString(),
+    remainingEssaysThatCanBeProducedThisMonth: Math.floor(
+      (mostRecentBudget.amount - totalCostThisMonth) / averageCost
+    ),
+    budgetUsed: `${(budgetUsed * 100).toFixed(2)}%`,
+    monthProgress: `${(monthProgress * 100).toFixed(2)}%`,
+    overUnderBudget: `$${overUnderBudget.toFixed(8)}`,
+    essaysCanBeProducedBeforeOverBudget: essaysCanBeProducedRightNow,
   });
 
   return prisma.generateJob.create({

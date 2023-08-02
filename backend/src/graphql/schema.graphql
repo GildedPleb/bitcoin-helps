@@ -28,7 +28,7 @@ type Job {
   jobId: String!
   argumentId: Int!
   language: LanguageMinimal!
-  scheduledFor: Int!
+  scheduledFor: String!
 }
 
 type Argument {
