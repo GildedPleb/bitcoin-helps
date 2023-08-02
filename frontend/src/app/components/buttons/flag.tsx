@@ -25,7 +25,7 @@ function FlagButton({
     <AlternateButton
       onClick={onClick}
       disabled={loading || disliked || disabled}
-      tooltip="❌"
+      tooltip="&#x274C;"
     >
       {loading ? (
         <LoadingDots small rightToLeft={isRtl} />

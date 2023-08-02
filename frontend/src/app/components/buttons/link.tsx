@@ -10,7 +10,7 @@ interface LinkButtonProperties {
  */
 function LinkButton({ onClick }: LinkButtonProperties) {
   return (
-    <AlternateButton onClick={onClick} tooltip="🔗">
+    <AlternateButton onClick={onClick} tooltip="&#x1F517;">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"

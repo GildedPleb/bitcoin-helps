@@ -25,7 +25,7 @@ function HeartButton({
     <AlternateButton
       onClick={onClick}
       disabled={loading || liked || disabled}
-      tooltip="❤️"
+      tooltip="&#x2764;"
     >
       {loading ? (
         <LoadingDots small rightToLeft={isRtl} />
