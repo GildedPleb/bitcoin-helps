@@ -2,8 +2,8 @@ import styled from "@emotion/styled";
 
 import { type LeftToRightOrRightToLeft } from "../../../types";
 import BackButton from "../buttons/back";
-import CopyButton from "../buttons/copy";
 import FlagButton from "../buttons/flag";
+import HeartButton from "../buttons/heart";
 import LinkButton from "../buttons/link";
 
 interface MenuBarProperties {
@@ -12,8 +12,11 @@ interface MenuBarProperties {
   onCopy: () => void;
   onLink: () => void;
   disliked: boolean;
+  liked: boolean;
   dislikeLoading: boolean;
+  likeLoading: boolean;
   isRtl: LeftToRightOrRightToLeft;
+  disabled: boolean;
 }
 
 const Container = styled.div`
@@ -22,6 +25,7 @@ const Container = styled.div`
   justify-content: space-between;
   padding: 0 2em;
   gap: 10px;
+  margin-top: 5vh;
 `;
 
 const Options = styled.div`
@@ -37,22 +41,32 @@ function MenuBar({
   onGoBack,
   onFlag,
   disliked,
+  liked,
   dislikeLoading,
+  likeLoading,
   onCopy,
   onLink,
   isRtl,
+  disabled,
 }: MenuBarProperties) {
   return (
     <Container>
       <BackButton onClick={onGoBack} />
       <Options>
+        <HeartButton
+          onClick={onCopy}
+          liked={liked}
+          disabled={disabled}
+          loading={likeLoading}
+          isRtl={isRtl}
+        />
         <FlagButton
           onClick={onFlag}
           disliked={disliked}
           loading={dislikeLoading}
           isRtl={isRtl}
+          disabled={disabled}
         />
-        <CopyButton onClick={onCopy} />
         <LinkButton onClick={onLink} />
       </Options>
     </Container>

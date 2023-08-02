@@ -54,6 +54,7 @@ interface ButtonProperties {
   children: ReactNode;
   disabled?: boolean;
   className?: string;
+  tooltip: string;
 }
 
 /**
@@ -65,6 +66,7 @@ function MyButton({
   children,
   disabled = false,
   className = "",
+  tooltip,
 }: ButtonProperties) {
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -83,6 +85,8 @@ function MyButton({
       onClick={onClick}
       type="button"
       disabled={disabled}
+      title={tooltip}
+      aria-label={tooltip}
     >
       {children}
     </StyledButton>

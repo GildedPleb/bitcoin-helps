@@ -7,6 +7,7 @@ interface FlagButtonProperties {
   loading: boolean;
   disliked: boolean;
   isRtl: LeftToRightOrRightToLeft;
+  disabled: boolean;
 }
 
 /**
@@ -18,9 +19,14 @@ function FlagButton({
   loading,
   disliked,
   isRtl,
+  disabled,
 }: FlagButtonProperties) {
   return (
-    <AlternateButton onClick={onClick} disabled={loading || disliked}>
+    <AlternateButton
+      onClick={onClick}
+      disabled={loading || disliked || disabled}
+      tooltip="❌"
+    >
       {loading ? (
         <LoadingDots small rightToLeft={isRtl} />
       ) : (
@@ -32,8 +38,18 @@ function FlagButton({
             width="50"
             height="50"
           >
-            <path d="M9 6v12" stroke="black" strokeWidth="1" fill="none" />
-            <path d="M9 6h8v6h-8z" stroke="black" strokeWidth="1" fill="red" />
+            <g fill="none">
+              <path
+                d="M7 7 L17 17 M17 7 L7 17"
+                stroke="black"
+                strokeWidth="4"
+              />
+              <path
+                d="M7.75 7.75 L16.25 16.25 M16.25 7.75 L7.75 16.25"
+                stroke={disabled ? "whitesmoke" : "red"}
+                strokeWidth="2"
+              />
+            </g>
           </svg>
         </>
       )}

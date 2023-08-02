@@ -16,8 +16,9 @@ function GoButton({ onClick, disabled, text }: GoButtonProperties) {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       onClick={onClick}
       disabled={disabled}
+      tooltip={text ?? "❓🔍💡"}
     >
-      {text}
+      {text ?? "❓🔍💡"}
     </MyButton>
   );
 }

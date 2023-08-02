@@ -15,7 +15,7 @@ import { isRtl, useLanguage } from "../../../providers/language";
 import { useLoading } from "../../../providers/loading";
 import fadeOut from "../../../styles/fade-out";
 import { FADE_IN_OUT } from "../../../utilities/constants";
-import { MenuBar, TextBlock, TextParagraph } from "../../components";
+import { Countdown, MenuBar, TextBlock, TextParagraph } from "../../components";
 import copyToClipboard from "../../utilities/copy-to-clipboard";
 import createGenerateUniqueKey from "../../utilities/key-generator";
 
@@ -28,7 +28,6 @@ const Container = styled.section<{ willUnmount: boolean }>`
   flex-direction: column;
   align-content: center;
   justify-content: flex-start;
-  padding-top: 5vh;
   padding-bottom: 10vh;
   transition: all 0.3s;
   ${(properties) =>
@@ -77,17 +76,41 @@ function ContentPage({
 
   const [dislikeArgument, { loading: dislikeLoading }] =
     useDislikeArgumentMutation();
-  const [likeArgument] = useLikeArgumentMutation();
+  const [likeArgument, { loading: likeLoading }] = useLikeArgumentMutation();
   const [disliked, setDisliked] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [startSubscription, setStartSubscription] = useState(false);
 
-  const jobId =
+  const { jobId, scheduledFor } =
     data?.getInputPairByArgumentId?.__typename === "Job"
-      ? data.getInputPairByArgumentId.jobId
-      : undefined;
+      ? data.getInputPairByArgumentId
+      : { jobId: undefined, scheduledFor: undefined };
+
+  useEffect(() => {
+    // eslint-disable-next-line no-undef
+    let timerId: NodeJS.Timeout | undefined;
+
+    if (jobId !== undefined) {
+      const timeUntilScheduledFor =
+        new Date(Number(scheduledFor)).getTime() - Date.now();
+
+      if (timeUntilScheduledFor > 0) {
+        setIsLoading(false);
+        timerId = setTimeout(() => {
+          setStartSubscription(true);
+          setIsLoading(true);
+        }, timeUntilScheduledFor);
+      } else setStartSubscription(true);
+    }
+
+    return () => {
+      if (timerId !== undefined) clearTimeout(timerId);
+    };
+  }, [jobId, scheduledFor, setIsLoading]);
 
   const { data: subscriptionData } = useSubscribeToArgumentSubscription({
     variables: { jobId: jobId ?? "empty" },
-    skip: jobId === undefined,
+    skip: !startSubscription, // subscribe when startSubscription is true
   });
 
   // This caching is needed to help Apollo find arguments or streams to
@@ -159,11 +182,12 @@ function ContentPage({
     }, FADE_IN_OUT);
   }, [navigate]);
 
-  const handleFlag = useCallback(() => {
+  const handleDislike = useCallback(() => {
     if (id !== undefined && id !== "")
       dislikeArgument({ variables: { dislikeId: Number(id) } })
         .then(() => {
           setDisliked(true);
+          setLiked(false);
           return true;
         })
         .catch((error_) => {
@@ -171,14 +195,19 @@ function ContentPage({
         });
   }, [dislikeArgument, id]);
 
-  const handleCopy = useCallback(() => {
-    if (data?.getInputPairByArgumentId?.__typename === "InputPair") {
-      copyToClipboard(data.getInputPairByArgumentId.arguments[0].content);
-      likeArgument({ variables: { likeId: Number(id) } }).catch((error_) => {
-        console.error(error_);
-      });
-    } else copyToClipboard(messages.map((item) => item.message).join(""));
-  }, [data?.getInputPairByArgumentId?.__typename, id, likeArgument, messages]);
+  const handleLike = useCallback(() => {
+    if (id !== undefined && id !== "") {
+      likeArgument({ variables: { likeId: Number(id) } })
+        .then(() => {
+          setLiked(true);
+          setDisliked(false);
+          return true;
+        })
+        .catch((error_) => {
+          console.error(error_);
+        });
+    }
+  }, [id, likeArgument]);
 
   const handleCopyLink = useCallback(() => {
     if (id !== undefined && id !== "") copyToClipboard(window.location.href);
@@ -191,13 +220,20 @@ function ContentPage({
     <Container willUnmount={willUnmount}>
       <MenuBar
         onGoBack={handleOnClick}
-        onFlag={handleFlag}
+        onFlag={handleDislike}
+        liked={liked}
         disliked={disliked}
         dislikeLoading={dislikeLoading}
-        onCopy={handleCopy}
+        likeLoading={likeLoading}
+        onCopy={handleLike}
         onLink={handleCopyLink}
         isRtl={direction}
+        disabled={new Date(Number(scheduledFor)).getTime() - Date.now() > 0}
       />
+      {scheduledFor !== undefined &&
+        new Date(Number(scheduledFor)) > new Date() && (
+          <Countdown targetDate={scheduledFor} locale={language.value} />
+        )}
       <TextBlock>
         {data?.getInputPairByArgumentId?.__typename === "Job" && (
           <TextParagraph isRtl={direction}>

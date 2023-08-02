@@ -3,6 +3,7 @@ export { default as FlagButton } from "./buttons/flag";
 export { default as GoButton } from "./buttons/go";
 export { default as BackButton } from "./buttons/go";
 export { default as LinkButton } from "./buttons/link";
+export { default as Countdown } from "./countdown";
 export { default as LoadingDots } from "./loading-dots";
 export { default as MenuBar } from "./menu-bar";
 export { default as Selector } from "./selector";
