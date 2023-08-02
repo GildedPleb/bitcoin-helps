@@ -12,7 +12,9 @@ expect.extend(matchers);
 describe("AlternateButton", () => {
   it("applies correct styles", () => {
     const { getByRole } = render(
-      <AlternateButton onClick={noop}>Test Button</AlternateButton>
+      <AlternateButton onClick={noop} tooltip="hello">
+        Test Button
+      </AlternateButton>
     );
     const button = getByRole("button");
     expect(button).toHaveStyleRule("border", "2px solid white");
