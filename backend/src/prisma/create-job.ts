@@ -73,8 +73,14 @@ export const handler = async ({
   const spendRatePerSecond = mostRecentBudget.amount / monthInSeconds;
   const numberOfSecondsPerEssayPerMonth = averageCost / spendRatePerSecond;
   const expectedCost = timeElapsedIntoMonthInSeconds * spendRatePerSecond;
-
   const weAreAboveBudget = totalCostThisMonth > expectedCost;
+  const overUnderBudget = totalCostThisMonth - expectedCost;
+  const budgetUsed = totalCostThisMonth / mostRecentBudget.amount;
+  const monthProgress = timeElapsedIntoMonthInSeconds / monthInSeconds;
+  const essaysCanBeProducedRightNow =
+    overUnderBudget < 0
+      ? Math.floor(Math.abs(overUnderBudget) / averageCost)
+      : 0;
 
   let scheduledFor;
 
@@ -92,8 +98,7 @@ export const handler = async ({
     });
 
     if (!lastJob) {
-      const overBudget = totalCostThisMonth - expectedCost;
-      const delay = (overBudget / spendRatePerSecond) * 1000;
+      const delay = (overUnderBudget / spendRatePerSecond) * 1000;
 
       scheduledFor = new Date(Date.now() + delay);
     } else {
@@ -102,18 +107,6 @@ export const handler = async ({
       );
     }
   }
-
-  const budgetUsed = totalCostThisMonth / mostRecentBudget.amount;
-  const monthProgress = timeElapsedIntoMonthInSeconds / monthInSeconds;
-  const overUnderBudget = totalCostThisMonth - expectedCost;
-  const remainingBudget = mostRecentBudget.amount - totalCostThisMonth;
-  const remainingTimeThisMonthInSeconds =
-    monthInSeconds - timeElapsedIntoMonthInSeconds;
-  const availableBudgetPerSecond =
-    remainingBudget / remainingTimeThisMonthInSeconds;
-  const essaysCanBeProducedRightNow = Math.floor(
-    availableBudgetPerSecond / averageCost
-  );
 
   console.log("Timing: ", {
     budget: mostRecentBudget.amount,
@@ -130,7 +123,7 @@ export const handler = async ({
     numberOfSecondsPerEssayPerMonth: formatSecondsToDHMS(
       numberOfSecondsPerEssayPerMonth
     ),
-    expectedCost: `$${expectedCost.toFixed(8)}`,
+    expectedSpendToThisPoint: `$${expectedCost.toFixed(8)}`,
     weAreAboveBudget: weAreAboveBudget ? "Yes" : "No",
     scheduledFor: scheduledFor.toISOString(),
     remainingEssaysThatCanBeProducedThisMonth: Math.floor(
