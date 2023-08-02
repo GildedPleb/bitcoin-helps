@@ -138,6 +138,21 @@ export const handler = async ({
     });
     return;
   }
+  if (job.status === "PENDING" && new Date(job.scheduledFor) > new Date()) {
+    await sendMessage({
+      type: "error",
+      id: graphQLId,
+      payload: [
+        new GraphQLError(
+          `Job ${jobId} is shceduled for ${new Date(
+            job.scheduledFor
+          ).toISOString()}, which has not occured yet.`
+        ),
+      ],
+    });
+    return;
+  }
+
   console.log("Job looks good");
   const streamId = `${topicPrefix}:${jobId}`;
   const pubSub = createPubSub(streamId, awsRequestId);
