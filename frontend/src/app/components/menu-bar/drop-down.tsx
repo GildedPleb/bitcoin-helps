@@ -76,9 +76,6 @@ const sharedButtonStyles = css`
     outline: none;
     border: 2px solid #2684ff;
   }
-  & > svg > circle {
-    r: "32";
-  }
 `;
 
 const StyledTwitterShareButton = styled(TwitterShareButton)`
