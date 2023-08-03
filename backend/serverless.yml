@@ -128,7 +128,7 @@ functions:
 
   stream:
     handler: src/graphql/resolvers/stream.handler
-    timeout: 100 # 1:40 minutes
+    timeout: 200 # 3:20 minutes
     role: streamRole
     environment:
       FIND_JOB_BY_ID_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findJobById
