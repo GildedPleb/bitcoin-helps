@@ -50,7 +50,7 @@ const StyledButton = styled.button`
 `;
 
 interface ButtonProperties {
-  onClick: () => void;
+  onClick: (event?: React.MouseEvent | React.KeyboardEvent) => void;
   children: ReactNode;
   disabled?: boolean;
   className?: string;
@@ -68,14 +68,15 @@ function MyButton({
   className = "",
   tooltip,
 }: ButtonProperties) {
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLButtonElement>) => {
-      if (event.key === "Enter") {
-        onClick();
-      }
-    },
-    [onClick]
-  );
+  const handleKeyDown: React.KeyboardEventHandler<HTMLButtonElement> =
+    useCallback(
+      (event) => {
+        if (event.key === "Enter") {
+          onClick(event);
+        }
+      },
+      [onClick]
+    );
 
   return (
     <StyledButton

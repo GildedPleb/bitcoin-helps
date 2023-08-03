@@ -1,10 +1,13 @@
 import styled from "@emotion/styled";
+import React, { useCallback, useState } from "react";
 
 import { type LeftToRightOrRightToLeft } from "../../../types";
+import { FADE_IN_OUT } from "../../../utilities/constants";
 import BackButton from "../buttons/back";
 import FlagButton from "../buttons/flag";
 import HeartButton from "../buttons/heart";
 import LinkButton from "../buttons/link";
+import DropDown from "./drop-down";
 
 interface MenuBarProperties {
   onGoBack: () => void;
@@ -49,6 +52,30 @@ function MenuBar({
   isRtl,
   disabled,
 }: MenuBarProperties) {
+  const [isShareMenuShown, setIsShareMenuShown] = useState(false);
+  const [willUnmount, setWillUnmount] = useState(false);
+
+  const toggleShareMenu = useCallback(
+    (event?: React.MouseEvent | React.KeyboardEvent) => {
+      if (
+        event &&
+        (event.type === "click" ||
+          (event.type === "keyup" && "key" in event && event.key === "Enter"))
+      ) {
+        if (isShareMenuShown) {
+          setWillUnmount(true);
+          setTimeout(() => {
+            setIsShareMenuShown(!isShareMenuShown);
+            setWillUnmount(false);
+          }, FADE_IN_OUT);
+        } else {
+          setIsShareMenuShown(!isShareMenuShown);
+        }
+      }
+    },
+    [isShareMenuShown]
+  );
+
   return (
     <Container>
       <BackButton onClick={onGoBack} />
@@ -67,7 +94,12 @@ function MenuBar({
           isRtl={isRtl}
           disabled={disabled}
         />
-        <LinkButton onClick={onLink} />
+        <LinkButton onClick={toggleShareMenu} />
+        <DropDown
+          isShown={isShareMenuShown}
+          willUnmount={willUnmount}
+          onCopy={onLink}
+        />
       </Options>
     </Container>
   );
