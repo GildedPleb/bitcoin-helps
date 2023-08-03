@@ -1,4 +1,3 @@
-export { default as CopyButton } from "./buttons/copy";
 export { default as FlagButton } from "./buttons/flag";
 export { default as GoButton } from "./buttons/go";
 export { default as BackButton } from "./buttons/go";
