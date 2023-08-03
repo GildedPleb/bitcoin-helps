@@ -103,6 +103,7 @@ functions:
       AWS_DEVICE_PRIVATE_KEY: ${ssm:DEVICE_PRIVATE_KEY, env:AWS_DEVICE_PRIVATE_KEY}
       AWS_IOT_HOST: ${env:AWS_IOT_HOST}
       AWS_IOT_CLIENT_ID: ${env:AWS_IOT_CLIENT_ID}
+      FIND_BUDGET_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findBudget
     layers:
       - { Ref: EndpointLambdaLayer }
     memorySize: 256
@@ -131,6 +132,7 @@ functions:
     role: streamRole
     environment:
       FIND_JOB_BY_ID_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findJobById
+      CREATE_COMPLETION_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createCompletion
       UPDATE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-updateJob
       FINALIZE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-finalizeJob
       TOPIC_PREFIX: ${self:custom.topicPrefix}
@@ -150,13 +152,14 @@ functions:
     maximumRetryAttempts: 1
     environment:
       GPT_VERSION: ${env:GPT_VERSION_${self:provider.stage}}
+      CREATE_COMPLETION_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createCompletion
       OPENAI_API_KEY: ${env:OPENAI_API_KEY}
       SAVE_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-saveLanguage
       FIND_LANGUAGE_PROMPT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findLanguagePrompt
     role: lambdaLanguageRole
     layers:
       - { Ref: EndpointLambdaLayer }
-    memorySize: 256
+    memorySize: 3008
 
   findLanguage:
     handler: src/prisma/find-language.handler
@@ -208,6 +211,22 @@ functions:
 
   findLatestArgumentPrompts:
     handler: src/prisma/find-latest-argument-prompts.handler
+    <<: *prismaDefaults
+
+  createCompletion:
+    handler: src/prisma/create-completion.handler
+    <<: *prismaDefaults
+
+  createBudgets:
+    handler: src/prisma/create-budget.handler
+    events:
+      - schedule:
+          rate: cron(0 0 1 * ? *)
+          enabled: true
+    <<: *prismaDefaults
+
+  findBudget:
+    handler: src/prisma/find-budget.handler
     <<: *prismaDefaults
 
 resources:
@@ -298,6 +317,7 @@ resources:
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findArgument"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-updateInputPairHit"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-likeOrDislike"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findBudget"
                 - Effect: "Allow"
                   Action:
                     - "dynamodb:PutItem"
@@ -371,6 +391,7 @@ resources:
                   Action: "lambda:InvokeFunction"
                   Resource:
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findJobById"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createCompletion"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-updateJob"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-finalizeJob"
                 - Effect: "Allow"
@@ -428,6 +449,7 @@ resources:
                   Resource:
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-saveLanguage"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findLanguagePrompt"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createCompletion"
                 - Effect: "Allow"
                   Action:
                     - "dynamodb:PutItem"

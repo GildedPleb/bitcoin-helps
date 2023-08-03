@@ -11,6 +11,7 @@ interface Event {
   issueCategoryData: IssueCategoryCreateWithoutLanguageInput[];
   translations: TranslationTypeMapped;
   promptsId: string;
+  cost: string[];
 }
 
 export const handler = async ({
@@ -19,6 +20,7 @@ export const handler = async ({
   issueCategoryData,
   translations,
   promptsId,
+  cost,
 }: Event) => {
   try {
     await prisma.language.create({
@@ -32,6 +34,9 @@ export const handler = async ({
         },
         translations,
         languagePromptId: promptsId,
+        openAICall: {
+          connect: cost.map((id) => ({ id })),
+        },
       },
       include: {
         issueCategories: {

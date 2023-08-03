@@ -53,15 +53,15 @@ export const verifyTranslationType = (object: string): undefined | string => {
 const fetchAndPrepareTranslations = async (
   language: string,
   prompts: LanguagePrompt
-): Promise<TranslationTypeMapped> => {
+): Promise<{ content: TranslationTypeMapped; cost: string[] }> => {
   const aiResponse = await fetchQualityAIResults(
     Handlebars.compile(prompts.translationPrompt)({ language }),
     [verifyTranslationType]
   );
-  const data = extractJSONFromString<TranslationTypeMapped>(aiResponse);
+  const data = extractJSONFromString<TranslationTypeMapped>(aiResponse.words);
   if (data === undefined) throw new Error(`translations ${language} `);
   console.log("SUCESS: Final translations:", data);
-  return data;
+  return { content: data, cost: aiResponse.ids };
 };
 
 export default fetchAndPrepareTranslations;

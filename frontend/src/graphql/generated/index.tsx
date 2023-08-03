@@ -46,6 +46,7 @@ export type Job = {
   argumentId: Scalars['Int']['output'];
   jobId: Scalars['String']['output'];
   language: LanguageMinimal;
+  scheduledFor: Scalars['String']['output'];
 };
 
 export type LanguageMinimal = {
@@ -143,7 +144,7 @@ export type GetInputPairByArgumentIdQueryVariables = Exact<{
 }>;
 
 
-export type GetInputPairByArgumentIdQuery = { __typename?: 'Query', getInputPairByArgumentId?: { __typename?: 'InputPair', arguments: Array<{ __typename?: 'Argument', content: string }>, language: { __typename?: 'LanguageMinimal', name: string } } | { __typename?: 'Job', jobId: string, argumentId: number, language: { __typename?: 'LanguageMinimal', name: string } } | null };
+export type GetInputPairByArgumentIdQuery = { __typename?: 'Query', getInputPairByArgumentId?: { __typename?: 'InputPair', arguments: Array<{ __typename?: 'Argument', content: string }>, language: { __typename?: 'LanguageMinimal', name: string } } | { __typename?: 'Job', jobId: string, argumentId: number, scheduledFor: string, language: { __typename?: 'LanguageMinimal', name: string } } | null };
 
 export type SubscribeToArgumentSubscriptionVariables = Exact<{
   jobId: Scalars['String']['input'];
@@ -189,6 +190,7 @@ export const GetInputPairByArgumentIdDocument = gql`
     ... on Job {
       jobId
       argumentId
+      scheduledFor
       language {
         name
       }

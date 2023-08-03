@@ -14,10 +14,11 @@ model Language {
   translations     Json
   issueCategories  IssueCategory[]
   affiliationTypes AffiliationType[]
-  InputPair        InputPair[]
-  GenerateJob      GenerateJob[]
-  LanguagePrompt   LanguagePrompt?   @relation(fields: [languagePromptId], references: [id])
+  inputPair        InputPair[]
+  generateJob      GenerateJob[]
+  languagePrompt   LanguagePrompt?   @relation(fields: [languagePromptId], references: [id])
   languagePromptId String?
+  openAICall       OpenAICall[]
 }
 
 model IssueCategory {
@@ -43,8 +44,8 @@ model Issue {
   name            String
   issueCategory   IssueCategory @relation(fields: [issueCategoryId], references: [id])
   issueCategoryId String
-  InputPair       InputPair[]
-  GenerateJob     GenerateJob[]
+  inputPair       InputPair[]
+  generateJob     GenerateJob[]
 
   @@unique([name, issueCategoryId])
 }
@@ -54,8 +55,8 @@ model Affiliation {
   name              String
   affiliationType   AffiliationType @relation(fields: [affiliationTypeId], references: [id])
   affiliationTypeId String
-  InputPair         InputPair[]
-  GenerateJob       GenerateJob[]
+  inputPair         InputPair[]
+  generateJob       GenerateJob[]
 
   @@unique([name, affiliationTypeId])
 }
@@ -88,15 +89,15 @@ model Argument {
   createdBy   User?           @relation("createdBy", fields: [createdById], references: [id])
   createdById Int?
   editedBy    User[]
-  GenerateJob GenerateJob?
+  generateJob GenerateJob?
   prompt      ArgumentPrompt? @relation(fields: [promptId], references: [id])
   promptId    String?
 }
 
 model User {
   id               Int        @id @unique @default(autoincrement())
-  CreatedArguments Argument[] @relation("createdBy")
-  EditedArguments  Argument[]
+  createdArguments Argument[] @relation("createdBy")
+  editedArguments  Argument[]
   twitterHandle    String     @unique
   email            String     @unique
   hasSignedTerms   Boolean
@@ -117,9 +118,11 @@ model GenerateJob {
   affiliationId    String
   status           JobStatus      @default(PENDING)
   argumentPrompt   ArgumentPrompt @relation(fields: [argumentPromptId], references: [id])
-  argumentPromptId String         @default("b8b9571d-495c-4dd2-aced-7aa402aca019")
+  argumentPromptId String
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+  openAICall       OpenAICall[]
+  scheduledFor     DateTime
 
   @@unique([issueId, affiliationId, languageId])
 }
@@ -131,8 +134,8 @@ model ArgumentPrompt {
   version     Int
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-  Argument    Argument[]
-  GenerateJob GenerateJob[]
+  argument    Argument[]
+  generateJob GenerateJob[]
 
   @@unique([name, version], name: "name_version")
 }
@@ -151,9 +154,42 @@ model LanguagePrompt {
   affiliationExample    Json
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
-  Language              Language[]
+  language              Language[]
 
   @@unique([name, version], name: "name_version")
+}
+
+model Budget {
+  id         String       @id @default(uuid())
+  budgetType BudgetType
+  amount     Float
+  spent      OpenAICall[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model OpenAICall {
+  id               String  @id @default(uuid())
+  promptTokens     Int
+  completionTokens Int
+  cost             Float
+  prompt           Json[]
+  completion       String?
+  budget           Budget  @relation(fields: [budgetId], references: [id])
+  budgetId         String
+
+  // Optional becuase it is either one prompt type or another: Argument or Language
+  generateJob   GenerateJob? @relation(fields: [generateJobId], references: [id])
+  generateJobId String?
+  language      Language?    @relation(fields: [languageId], references: [id])
+  languageId    String?
+
+  createdAt DateTime @default(now())
+}
+
+enum BudgetType {
+  LANGUAGE
+  ESSAY
 }
 
 enum JobStatus {

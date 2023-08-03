@@ -93,8 +93,6 @@ export const verifyBaseAffiliationIssue = (
     if (Array.isArray(json.examples)) {
       if (json.examples.length < 5)
         errors.push("Must include at least 5 examples in the JSON");
-      if (json.examples.length > 10)
-        errors.push("Must include 10 or less examples in the JSON");
       const innerErrors = json.examples
         .map((example, index) => {
           if (typeof example !== "string")

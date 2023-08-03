@@ -1,4 +1,9 @@
-import { type Affiliation, type Issue, type Language } from "@prisma/client";
+import {
+  type Affiliation,
+  type BudgetType,
+  type Issue,
+  type Language,
+} from "@prisma/client";
 import tags from "language-tags";
 
 import { acquireLock, databaseClient } from "../../aws/dynamo";
@@ -26,6 +31,12 @@ const findLanguage = async (language: string) =>
     | undefined
   >(process.env.FIND_LANGUAGE_FUNCTION_NAME, "RequestResponse", { language });
 
+const findBudget = async (budgetType: BudgetType) =>
+  awsInvoke<{
+    spent: number;
+    budget: number;
+  }>(process.env.FIND_BUDGET_FUNCTION_NAME, "RequestResponse", { budgetType });
+
 export const getAfffiliationsAndIssues = async (
   _parent: unknown,
   { language }: { language: string }
@@ -49,9 +60,20 @@ export const getAfffiliationsAndIssues = async (
     console.error(error);
     return undefined;
   }
-  if (await acquireLock(language, databaseClient))
+  if (await acquireLock(language, databaseClient)) {
+    const budget = await findBudget("LANGUAGE");
+    console.log("budget:", budget);
+    if (!budget) {
+      console.error("No budgets found");
+      return undefined;
+    }
+    if (budget.spent > budget.budget) {
+      console.log("Exceeded Language budget for this month", budget);
+      return undefined;
+    }
     await getNewLanguageAffiliationsAndIssues(language);
-  else console.log("Another function is already creating language:", language);
+  } else
+    console.log("Another function is already creating language:", language);
 
   return undefined;
 };

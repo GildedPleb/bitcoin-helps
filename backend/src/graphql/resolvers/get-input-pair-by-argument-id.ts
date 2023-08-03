@@ -15,7 +15,7 @@ interface IdParameter {
 const findArgument = async (argument: IdParameter) =>
   awsInvoke<
     | (Argument & {
-        GenerateJob:
+        generateJob:
           | (GenerateJob & {
               language: Language;
             })
@@ -58,15 +58,18 @@ export const getInputPairByArgumentId = async (
     const updatedArgument = { ...argument, inputPair: argument.inputPair };
     return updateInputPairHitArguments(updatedArgument);
   }
-  if (argument.GenerateJob && argument.GenerateJob.status !== "COMPLETED")
+  if (argument.generateJob && argument.generateJob.status !== "COMPLETED")
     return {
-      jobId: argument.GenerateJob.id,
+      jobId: argument.generateJob.id,
       argumentId: argument.id,
-      language: { name: argument.GenerateJob.language.name },
+      language: { name: argument.generateJob.language.name },
+      scheduledFor: String(
+        new Date(argument.generateJob.scheduledFor).getTime()
+      ),
     };
 
   throw new Error(
-    "We should never hit this error because InputPairs are created before generate jobs are deleted. But just in case..."
+    "We should never hit this error because InputPairs are created before generate jobs are completed. But just in case..."
   );
 };
 

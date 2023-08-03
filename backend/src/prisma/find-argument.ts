@@ -16,7 +16,7 @@ export const handler = async ({ id }: Event) =>
           language: true,
         },
       },
-      GenerateJob: {
+      generateJob: {
         include: {
           language: true,
         },

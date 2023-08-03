@@ -16,14 +16,14 @@ npm run start:test &
 # Capture the PID of the server process
 SERVER_PID=$!
 
+# Set up a trap to ensure the server is shut down when the script exits
+trap 'kill $SERVER_PID' EXIT
+
 # Give the server some time to start
 sleep 3
 
-# 3) & 4) Run the tests, exit with code 1 if they fail
+# 3) Run the tests, exit with code 1 if they fail
 npx jest --all --env node --testMatch "**/?(*.)+(e2e.test).[jt]s?(x)" || exit 1
 
-# 5) Once the test finishes and succeeds, shut down the server gracefully
-kill $SERVER_PID
-
-# 6) Exit the Husky script with code 0
+# 4) Exit the Husky script with code 0
 exit 0

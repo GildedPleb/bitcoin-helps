@@ -115,10 +115,7 @@ export const LANGUAGE_LOCKS_TABLE =
 export const acquireLock = async (language: string, client: DynamoDBClient) => {
   try {
     const parameters = {
-      Item: marshall({
-        language,
-        ttl: Math.floor(Date.now() / 1000) + 60 * 10, // 10 minutes
-      }),
+      Item: marshall({ language, ttl }),
       TableName: LANGUAGE_LOCKS_TABLE,
       ConditionExpression: "attribute_not_exists(#lang)",
       ExpressionAttributeNames: {

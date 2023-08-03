@@ -6,6 +6,7 @@ export const GET_DATA = gql`
       ... on Job {
         jobId
         argumentId
+        scheduledFor
         language {
           name
         }
