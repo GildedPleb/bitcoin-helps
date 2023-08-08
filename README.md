@@ -217,3 +217,27 @@ flowchart TB
     end
 
 ```
+
+## The Maths
+
+For the curious, the math on the potential output is,
+
+    Total BCP-47 Tags = Languages * Scripts * Regions + Other
+    Total BCP-47 Tags = 8,101 * 150 * (249+899) + 16,202
+    Total BCP-47 Tags = ~1.4 Billion
+
+    Total Affiliations = 17 categories * ~ 20 Affiliations each
+    Total Affiliations = 340
+
+    Total Issues = 15 categories * ~ 20 Issues each
+    Total Issues = 300
+
+    Total Essays = Total BCP-47 Tags * Total Affiliations * Total Issues
+    Total Essays = ~1.4 Billion * 340 * 300
+    Total Essays = ~142.2 trillion ways that Bitcoin helps!
+
+    or 17,775 ways to help per person on earth.
+
+    or given an average lifespan of 80 years, we could say, "Every 1 day and 14.6 hours, Bitcoin provides a new and unique solution to a problem for each person on Earth."
+
+    This is why they call it "falling down the rabit whole"; the revelations cascade on a daily scale!
