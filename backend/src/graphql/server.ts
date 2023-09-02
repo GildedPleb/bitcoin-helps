@@ -9,7 +9,7 @@ import fs from "graceful-fs";
 // eslint-disable-next-line @shopify/typescript/prefer-build-client-schema
 import { buildSchema, printSchema } from "graphql";
 
-import createPubSub from "../aws/pubsub";
+import { type Gossip } from "../aws/pubsub";
 import { dislike } from "./resolvers/dislike";
 import { getAfffiliationsAndIssues } from "./resolvers/get-affiliations-and-issues";
 import { getArgumentId } from "./resolvers/get-argument-id";
@@ -17,7 +17,22 @@ import { getInputPairByArgumentId } from "./resolvers/get-input-pair-by-argument
 import hello from "./resolvers/hello";
 import { like } from "./resolvers/like";
 
-const pubsub = createPubSub("fake", "dummy");
+/**
+ *
+ */
+// eslint-disable-next-line @typescript-eslint/require-await
+async function* asyncGossipGenerator(): AsyncGenerator<Gossip, void> {
+  yield { message: "Mocked message", sequence: 0 };
+}
+
+/**
+ *
+ * @param topic - mocked topic to log
+ */
+function mockSubscriptionWarning(topic: string): AsyncIterable<Gossip> {
+  console.log(`This SHOULD NOT be hit, but it might be... ${topic}`);
+  return asyncGossipGenerator();
+}
 
 const schema = buildSchema(
   // eslint-disable-next-line unicorn/prefer-module
@@ -38,10 +53,10 @@ const resolvers = {
   },
   Subscription: {
     subscribeToArgument: {
-      subscribe: async () => {
-        console.log("This SHOULDNT be hit, but it might be.... ");
-        return pubsub.subscribe();
-      },
+      subscribe: () => mockSubscriptionWarning("argument"),
+    },
+    subscribeToInvoice: {
+      subscribe: () => mockSubscriptionWarning("invoice"),
     },
   },
   InputPairOrJob: {
