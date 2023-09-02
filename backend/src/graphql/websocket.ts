@@ -13,12 +13,16 @@ import {
 import {
   addConnection,
   databaseClient,
+  deleteSubscribersByConnectionId,
   getConnection,
   removeConnection,
+  saveSubscription,
 } from "../aws/dynamo";
 import createSendMessage from "../aws/gateway";
 import awsInvoke from "../aws/invoke";
 import { type Event } from "./types";
+
+const topicPrefixInvoice = process.env.TOPIC_PREFIX_INVOICE ?? "dummy topic";
 
 const stream = async (
   connectionId: string,
@@ -51,7 +55,7 @@ const streamRouting = async (
   const { type, id, payload } = JSON.parse(event.body) as {
     type: string;
     id: string;
-    payload: {
+    payload?: {
       query: string;
       variables: Record<string, string>;
       operationName: string | undefined;
@@ -62,7 +66,10 @@ const streamRouting = async (
     await sendMessage({ type: "connection_ack" });
     return response;
   }
-  if (type === "stop") return response;
+  if (type === "stop" || type === "complete") {
+    await deleteSubscribersByConnectionId(connectionId, databaseClient);
+    return response;
+  }
   const client = await getConnection(connectionId, databaseClient);
   if (!client) throw new Error("Unknown client");
 
@@ -70,7 +77,15 @@ const streamRouting = async (
     await sendMessage({ type: "pong" });
     return response;
   }
-
+  if (!payload) {
+    await sendMessage({
+      id,
+      type: "error",
+      payload: [new GraphQLError("Expected a payload, gut empty object")],
+    });
+    return response;
+  }
+  console.log(payload);
   const { query: rawQuery, variables, operationName } = payload;
   const graphqlDocument = parse(rawQuery);
   const operationAST = getOperationAST(graphqlDocument, operationName ?? "");
@@ -91,6 +106,7 @@ const streamRouting = async (
     });
     return response;
   }
+  console.log({ type, operationName, variables });
   try {
     if (
       type === "subscribe" &&
@@ -100,6 +116,18 @@ const streamRouting = async (
       console.log("Starting to streem...");
       const { jobId } = variables;
       await stream(connectionId, jobId, awsRequestId, id);
+    }
+
+    if (
+      type === "subscribe" &&
+      operationName === "SubscribeToInvoice" &&
+      "jobId" in variables
+    ) {
+      console.log("Starting to stream invoice status...");
+      const { jobId } = variables;
+      const topic = `${topicPrefixInvoice}:${jobId}`;
+      console.log({ connectionId, topic, id });
+      await saveSubscription(connectionId, topic, id, databaseClient);
     }
   } catch (error: unknown) {
     await sendMessage({
@@ -124,14 +152,17 @@ export const handler = async (
   try {
     if (routeKey === "$connect")
       await addConnection(connectionId, databaseClient);
-    else if (routeKey === "$disconnect")
+    else if (routeKey === "$disconnect") {
       await removeConnection(connectionId, databaseClient);
+      await deleteSubscribersByConnectionId(connectionId, databaseClient);
+    }
     // Route is therefore $default:
     else await streamRouting(event, connectionId, awsRequestId);
     return response;
   } catch (error) {
     console.error("Connection level Error occurred:", error);
     await removeConnection(connectionId, databaseClient);
+    await deleteSubscribersByConnectionId(connectionId, databaseClient);
     return response;
   }
 };
