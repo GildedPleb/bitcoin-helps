@@ -292,6 +292,10 @@ functions:
     handler: src/prisma/update-invoice.handler
     <<: *prismaDefaults
 
+  updateArgument:
+    handler: src/prisma/update-argument.handler
+    <<: *prismaDefaults
+
   findTitlePrompt:
     handler: src/prisma/find-title-prompt.handler
     <<: *prismaDefaults
@@ -374,6 +378,17 @@ resources:
         KeySchema:
           - AttributeName: argumentId
             KeyType: HASH
+    LanguageTable:
+      <<: *dynamoDbTableDefaults
+      Properties:
+        <<: *commonTableProps
+        TableName: ${self:provider.environment.LANGUAGE_TABLE}
+        AttributeDefinitions:
+          - AttributeName: languageTag
+            AttributeType: S
+        KeySchema:
+          - AttributeName: languageTag
+            KeyType: HASH
 
     graphqlInvokeLanguageRole:
       Type: "AWS::IAM::Role"
@@ -390,6 +405,7 @@ resources:
                   Action: "lambda:InvokeFunction"
                   Resource:
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createLanguage"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createInvoice"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findLanguage"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findInputPair"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findJob"
@@ -399,11 +415,17 @@ resources:
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-updateInputPairHit"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-likeOrDislike"
                     - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findBudget"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findJobById"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createTitle"
                 - Effect: "Allow"
                   Action:
                     - "dynamodb:PutItem"
                     - "dynamodb:DeleteItem"
-                  Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.LANGUAGE_LOCKS_TABLE}"
+                    - "dynamodb:Query"
+                  Resource:
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.LANGUAGE_LOCKS_TABLE}"
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.TITLE_TABLE}"
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.LANGUAGE_TABLE}"
 
     graphqlInvokeSubscriptionRole:
       Type: "AWS::IAM::Role"
@@ -424,7 +446,11 @@ resources:
                     - "dynamodb:PutItem"
                     - "dynamodb:DeleteItem"
                     - "dynamodb:GetItem"
-                  Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.CONNECTIONS_TABLE}"
+                    - "dynamodb:Query"
+                  Resource:
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.CONNECTIONS_TABLE}"
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.INVOICE_SUBSCRIPTION_TABLE}"
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.INVOICE_SUBSCRIPTION_TABLE}/index/*"
                 - Effect: Allow
                   Action:
                     - "execute-api:Invoke"
