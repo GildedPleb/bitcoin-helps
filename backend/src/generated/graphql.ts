@@ -110,7 +110,6 @@ export type Query = {
   getAfffiliationsAndIssues?: Maybe<LanguageSelectors>;
   getArgumentId?: Maybe<ArgumentId>;
   getArgumentRoute?: Maybe<ArugmentRoute>;
-  getInputPairByArgumentId?: Maybe<InputPairOrJob>;
   getSpeedUpInvoice?: Maybe<Invoice>;
   hello?: Maybe<Scalars['String']['output']>;
 };
@@ -129,11 +128,6 @@ export type QueryGetArgumentIdArgs = {
 
 
 export type QueryGetArgumentRouteArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type QueryGetInputPairByArgumentIdArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -385,7 +379,6 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   getAfffiliationsAndIssues?: Resolver<Maybe<ResolversTypes['LanguageSelectors']>, ParentType, ContextType, RequireFields<QueryGetAfffiliationsAndIssuesArgs, 'language'>>;
   getArgumentId?: Resolver<Maybe<ResolversTypes['ArgumentId']>, ParentType, ContextType, Partial<QueryGetArgumentIdArgs>>;
   getArgumentRoute?: Resolver<Maybe<ResolversTypes['ArugmentRoute']>, ParentType, ContextType, RequireFields<QueryGetArgumentRouteArgs, 'id'>>;
-  getInputPairByArgumentId?: Resolver<Maybe<ResolversTypes['InputPairOrJob']>, ParentType, ContextType, RequireFields<QueryGetInputPairByArgumentIdArgs, 'id'>>;
   getSpeedUpInvoice?: Resolver<Maybe<ResolversTypes['Invoice']>, ParentType, ContextType, RequireFields<QueryGetSpeedUpInvoiceArgs, 'jobId'>>;
   hello?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };

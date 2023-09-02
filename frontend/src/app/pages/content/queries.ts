@@ -1,22 +1,21 @@
 import { gql } from "@apollo/client";
 
-export const GET_DATA = gql`
-  query GetInputPairByArgumentId($getInputPairByArgumentIdId: Int!) {
-    getInputPairByArgumentId(id: $getInputPairByArgumentIdId) {
-      ... on Job {
-        jobId
-        argumentId
-        scheduledFor
-        language {
-          name
+export const GET_ROUTE = gql`
+  query GetArgumentRoute($argumentId: Int!) {
+    getArgumentRoute(id: $argumentId) {
+      subtitle
+      title
+      language
+      route {
+        ... on Job {
+          jobId
+          argumentId
+          scheduledFor
         }
-      }
-      ... on InputPair {
-        arguments {
-          content
-        }
-        language {
-          name
+        ... on InputPair {
+          arguments {
+            content
+          }
         }
       }
     }
@@ -42,5 +41,24 @@ export const DISLIKE_ONE_ARGUMENT = gql`
 export const LIKE_ONE_ARGUMENT = gql`
   mutation LikeArgument($likeId: Int!) {
     like(id: $likeId)
+  }
+`;
+
+export const GET_SPEEDUP_INVOICE = gql`
+  query GetSpeedUpInvoice($jobId: String!) {
+    getSpeedUpInvoice(jobId: $jobId) {
+      expiresAt
+      paymentRequest
+      settled
+    }
+  }
+`;
+
+export const SUBSCRIBE_TO_INVOICE = gql`
+  subscription SubscribeToInvoice($jobId: String!) {
+    subscribeToInvoice(jobId: $jobId) {
+      message
+      type
+    }
   }
 `;

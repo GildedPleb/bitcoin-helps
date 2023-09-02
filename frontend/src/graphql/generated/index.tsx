@@ -27,6 +27,14 @@ export type ArgumentId = {
   id: Scalars['Int']['output'];
 };
 
+export type ArugmentRoute = {
+  __typename?: 'ArugmentRoute';
+  language: Scalars['String']['output'];
+  route: InputPairOrJob;
+  subtitle: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
+
 export type GroupType = {
   __typename?: 'GroupType';
   label: Scalars['String']['output'];
@@ -40,6 +48,13 @@ export type InputPair = {
 };
 
 export type InputPairOrJob = InputPair | Job;
+
+export type Invoice = {
+  __typename?: 'Invoice';
+  expiresAt: Scalars['String']['output'];
+  paymentRequest: Scalars['String']['output'];
+  settled: Scalars['Boolean']['output'];
+};
 
 export type Job = {
   __typename?: 'Job';
@@ -84,11 +99,18 @@ export type OptionType = {
   value: Scalars['String']['output'];
 };
 
+export type Paid = {
+  __typename?: 'Paid';
+  message: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   getAfffiliationsAndIssues?: Maybe<LanguageSelectors>;
   getArgumentId?: Maybe<ArgumentId>;
-  getInputPairByArgumentId?: Maybe<InputPairOrJob>;
+  getArgumentRoute?: Maybe<ArugmentRoute>;
+  getSpeedUpInvoice?: Maybe<Invoice>;
   hello?: Maybe<Scalars['String']['output']>;
 };
 
@@ -105,13 +127,19 @@ export type QueryGetArgumentIdArgs = {
 };
 
 
-export type QueryGetInputPairByArgumentIdArgs = {
+export type QueryGetArgumentRouteArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type QueryGetSpeedUpInvoiceArgs = {
+  jobId: Scalars['String']['input'];
 };
 
 export type Subscription = {
   __typename?: 'Subscription';
   subscribeToArgument?: Maybe<Update>;
+  subscribeToInvoice?: Maybe<Paid>;
 };
 
 
@@ -119,15 +147,23 @@ export type SubscriptionSubscribeToArgumentArgs = {
   jobId: Scalars['String']['input'];
 };
 
+
+export type SubscriptionSubscribeToInvoiceArgs = {
+  jobId: Scalars['String']['input'];
+};
+
 export type TranslationTypeMapped = {
   __typename?: 'TranslationTypeMapped';
   andICareAbout: Scalars['String']['output'];
-  findingArgument: Scalars['String']['output'];
+  curatingContent: Scalars['String']['output'];
   iAmAffiliatedWith: Scalars['String']['output'];
   loading: Scalars['String']['output'];
+  readNow: Scalars['String']['output'];
   selectAffiliation: Scalars['String']['output'];
   selectIssue: Scalars['String']['output'];
   selectNoMatch: Scalars['String']['output'];
+  siteDescription: Scalars['String']['output'];
+  siteTitle: Scalars['String']['output'];
   speak: Scalars['String']['output'];
   whyCare: Scalars['String']['output'];
 };
@@ -139,12 +175,12 @@ export type Update = {
   type: Scalars['String']['output'];
 };
 
-export type GetInputPairByArgumentIdQueryVariables = Exact<{
-  getInputPairByArgumentIdId: Scalars['Int']['input'];
+export type GetArgumentRouteQueryVariables = Exact<{
+  argumentId: Scalars['Int']['input'];
 }>;
 
 
-export type GetInputPairByArgumentIdQuery = { __typename?: 'Query', getInputPairByArgumentId?: { __typename?: 'InputPair', arguments: Array<{ __typename?: 'Argument', content: string }>, language: { __typename?: 'LanguageMinimal', name: string } } | { __typename?: 'Job', jobId: string, argumentId: number, scheduledFor: string, language: { __typename?: 'LanguageMinimal', name: string } } | null };
+export type GetArgumentRouteQuery = { __typename?: 'Query', getArgumentRoute?: { __typename?: 'ArugmentRoute', subtitle: string, title: string, language: string, route: { __typename?: 'InputPair', arguments: Array<{ __typename?: 'Argument', content: string }> } | { __typename?: 'Job', jobId: string, argumentId: number, scheduledFor: string } } | null };
 
 export type SubscribeToArgumentSubscriptionVariables = Exact<{
   jobId: Scalars['String']['input'];
@@ -167,6 +203,20 @@ export type LikeArgumentMutationVariables = Exact<{
 
 export type LikeArgumentMutation = { __typename?: 'Mutation', like?: number | null };
 
+export type GetSpeedUpInvoiceQueryVariables = Exact<{
+  jobId: Scalars['String']['input'];
+}>;
+
+
+export type GetSpeedUpInvoiceQuery = { __typename?: 'Query', getSpeedUpInvoice?: { __typename?: 'Invoice', expiresAt: string, paymentRequest: string, settled: boolean } | null };
+
+export type SubscribeToInvoiceSubscriptionVariables = Exact<{
+  jobId: Scalars['String']['input'];
+}>;
+
+
+export type SubscribeToInvoiceSubscription = { __typename?: 'Subscription', subscribeToInvoice?: { __typename?: 'Paid', message: string, type: string } | null };
+
 export type GetArgumentIdQueryVariables = Exact<{
   languageId: Scalars['String']['input'];
   issueId: Scalars['String']['input'];
@@ -181,26 +231,25 @@ export type GetAfffiliationsAndIssuesQueryVariables = Exact<{
 }>;
 
 
-export type GetAfffiliationsAndIssuesQuery = { __typename?: 'Query', getAfffiliationsAndIssues?: { __typename?: 'LanguageSelectors', id: string, translations: { __typename?: 'TranslationTypeMapped', selectAffiliation: string, selectIssue: string, selectNoMatch: string, speak: string, iAmAffiliatedWith: string, andICareAbout: string, loading: string, whyCare: string }, affiliationTypes: Array<{ __typename?: 'GroupType', label: string, options: Array<{ __typename?: 'OptionType', value: string, label: string }> }>, issueCategories: Array<{ __typename?: 'GroupType', label: string, options: Array<{ __typename?: 'OptionType', value: string, label: string }> }> } | null };
+export type GetAfffiliationsAndIssuesQuery = { __typename?: 'Query', getAfffiliationsAndIssues?: { __typename?: 'LanguageSelectors', id: string, translations: { __typename?: 'TranslationTypeMapped', selectAffiliation: string, selectIssue: string, selectNoMatch: string, speak: string, iAmAffiliatedWith: string, andICareAbout: string, loading: string, whyCare: string, curatingContent: string, readNow: string, siteDescription: string, siteTitle: string }, affiliationTypes: Array<{ __typename?: 'GroupType', label: string, options: Array<{ __typename?: 'OptionType', value: string, label: string }> }>, issueCategories: Array<{ __typename?: 'GroupType', label: string, options: Array<{ __typename?: 'OptionType', value: string, label: string }> }> } | null };
 
 
-export const GetInputPairByArgumentIdDocument = gql`
-    query GetInputPairByArgumentId($getInputPairByArgumentIdId: Int!) {
-  getInputPairByArgumentId(id: $getInputPairByArgumentIdId) {
-    ... on Job {
-      jobId
-      argumentId
-      scheduledFor
-      language {
-        name
+export const GetArgumentRouteDocument = gql`
+    query GetArgumentRoute($argumentId: Int!) {
+  getArgumentRoute(id: $argumentId) {
+    subtitle
+    title
+    language
+    route {
+      ... on Job {
+        jobId
+        argumentId
+        scheduledFor
       }
-    }
-    ... on InputPair {
-      arguments {
-        content
-      }
-      language {
-        name
+      ... on InputPair {
+        arguments {
+          content
+        }
       }
     }
   }
@@ -208,32 +257,32 @@ export const GetInputPairByArgumentIdDocument = gql`
     `;
 
 /**
- * __useGetInputPairByArgumentIdQuery__
+ * __useGetArgumentRouteQuery__
  *
- * To run a query within a React component, call `useGetInputPairByArgumentIdQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetInputPairByArgumentIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetArgumentRouteQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetArgumentRouteQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetInputPairByArgumentIdQuery({
+ * const { data, loading, error } = useGetArgumentRouteQuery({
  *   variables: {
- *      getInputPairByArgumentIdId: // value for 'getInputPairByArgumentIdId'
+ *      argumentId: // value for 'argumentId'
  *   },
  * });
  */
-export function useGetInputPairByArgumentIdQuery(baseOptions: Apollo.QueryHookOptions<GetInputPairByArgumentIdQuery, GetInputPairByArgumentIdQueryVariables>) {
+export function useGetArgumentRouteQuery(baseOptions: Apollo.QueryHookOptions<GetArgumentRouteQuery, GetArgumentRouteQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetInputPairByArgumentIdQuery, GetInputPairByArgumentIdQueryVariables>(GetInputPairByArgumentIdDocument, options);
+        return Apollo.useQuery<GetArgumentRouteQuery, GetArgumentRouteQueryVariables>(GetArgumentRouteDocument, options);
       }
-export function useGetInputPairByArgumentIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetInputPairByArgumentIdQuery, GetInputPairByArgumentIdQueryVariables>) {
+export function useGetArgumentRouteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetArgumentRouteQuery, GetArgumentRouteQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetInputPairByArgumentIdQuery, GetInputPairByArgumentIdQueryVariables>(GetInputPairByArgumentIdDocument, options);
+          return Apollo.useLazyQuery<GetArgumentRouteQuery, GetArgumentRouteQueryVariables>(GetArgumentRouteDocument, options);
         }
-export type GetInputPairByArgumentIdQueryHookResult = ReturnType<typeof useGetInputPairByArgumentIdQuery>;
-export type GetInputPairByArgumentIdLazyQueryHookResult = ReturnType<typeof useGetInputPairByArgumentIdLazyQuery>;
-export type GetInputPairByArgumentIdQueryResult = Apollo.QueryResult<GetInputPairByArgumentIdQuery, GetInputPairByArgumentIdQueryVariables>;
+export type GetArgumentRouteQueryHookResult = ReturnType<typeof useGetArgumentRouteQuery>;
+export type GetArgumentRouteLazyQueryHookResult = ReturnType<typeof useGetArgumentRouteLazyQuery>;
+export type GetArgumentRouteQueryResult = Apollo.QueryResult<GetArgumentRouteQuery, GetArgumentRouteQueryVariables>;
 export const SubscribeToArgumentDocument = gql`
     subscription subscribeToArgument($jobId: String!) {
   subscribeToArgument(jobId: $jobId) {
@@ -328,6 +377,74 @@ export function useLikeArgumentMutation(baseOptions?: Apollo.MutationHookOptions
 export type LikeArgumentMutationHookResult = ReturnType<typeof useLikeArgumentMutation>;
 export type LikeArgumentMutationResult = Apollo.MutationResult<LikeArgumentMutation>;
 export type LikeArgumentMutationOptions = Apollo.BaseMutationOptions<LikeArgumentMutation, LikeArgumentMutationVariables>;
+export const GetSpeedUpInvoiceDocument = gql`
+    query GetSpeedUpInvoice($jobId: String!) {
+  getSpeedUpInvoice(jobId: $jobId) {
+    expiresAt
+    paymentRequest
+    settled
+  }
+}
+    `;
+
+/**
+ * __useGetSpeedUpInvoiceQuery__
+ *
+ * To run a query within a React component, call `useGetSpeedUpInvoiceQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSpeedUpInvoiceQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSpeedUpInvoiceQuery({
+ *   variables: {
+ *      jobId: // value for 'jobId'
+ *   },
+ * });
+ */
+export function useGetSpeedUpInvoiceQuery(baseOptions: Apollo.QueryHookOptions<GetSpeedUpInvoiceQuery, GetSpeedUpInvoiceQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSpeedUpInvoiceQuery, GetSpeedUpInvoiceQueryVariables>(GetSpeedUpInvoiceDocument, options);
+      }
+export function useGetSpeedUpInvoiceLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSpeedUpInvoiceQuery, GetSpeedUpInvoiceQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSpeedUpInvoiceQuery, GetSpeedUpInvoiceQueryVariables>(GetSpeedUpInvoiceDocument, options);
+        }
+export type GetSpeedUpInvoiceQueryHookResult = ReturnType<typeof useGetSpeedUpInvoiceQuery>;
+export type GetSpeedUpInvoiceLazyQueryHookResult = ReturnType<typeof useGetSpeedUpInvoiceLazyQuery>;
+export type GetSpeedUpInvoiceQueryResult = Apollo.QueryResult<GetSpeedUpInvoiceQuery, GetSpeedUpInvoiceQueryVariables>;
+export const SubscribeToInvoiceDocument = gql`
+    subscription SubscribeToInvoice($jobId: String!) {
+  subscribeToInvoice(jobId: $jobId) {
+    message
+    type
+  }
+}
+    `;
+
+/**
+ * __useSubscribeToInvoiceSubscription__
+ *
+ * To run a query within a React component, call `useSubscribeToInvoiceSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useSubscribeToInvoiceSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSubscribeToInvoiceSubscription({
+ *   variables: {
+ *      jobId: // value for 'jobId'
+ *   },
+ * });
+ */
+export function useSubscribeToInvoiceSubscription(baseOptions: Apollo.SubscriptionHookOptions<SubscribeToInvoiceSubscription, SubscribeToInvoiceSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<SubscribeToInvoiceSubscription, SubscribeToInvoiceSubscriptionVariables>(SubscribeToInvoiceDocument, options);
+      }
+export type SubscribeToInvoiceSubscriptionHookResult = ReturnType<typeof useSubscribeToInvoiceSubscription>;
+export type SubscribeToInvoiceSubscriptionResult = Apollo.SubscriptionResult<SubscribeToInvoiceSubscription>;
 export const GetArgumentIdDocument = gql`
     query getArgumentId($languageId: String!, $issueId: String!, $affiliationId: String!) {
   getArgumentId(
@@ -382,6 +499,10 @@ export const GetAfffiliationsAndIssuesDocument = gql`
       andICareAbout
       loading
       whyCare
+      curatingContent
+      readNow
+      siteDescription
+      siteTitle
     }
     affiliationTypes {
       label
