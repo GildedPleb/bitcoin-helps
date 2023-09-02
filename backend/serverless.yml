@@ -161,6 +161,15 @@ functions:
       - { Ref: EndpointLambdaLayer }
     memorySize: 3008
 
+  createTitle:
+    handler: src/titles/create-title.handler
+    maximumRetryAttempts: 1
+    role: lambdaTitleRole
+    layers:
+      - { Ref: EndpointLambdaLayer }
+    memorySize: 256
+    timeout: 20 # 20 seconds
+
   findLanguage:
     handler: src/prisma/find-language.handler
     <<: *prismaDefaults
@@ -229,6 +238,10 @@ functions:
     handler: src/prisma/find-budget.handler
     <<: *prismaDefaults
 
+  findTitlePrompt:
+    handler: src/prisma/find-title-prompt.handler
+    <<: *prismaDefaults
+
 resources:
   Resources:
     ConnectionsTable:
@@ -276,10 +289,17 @@ resources:
         KeySchema:
           - AttributeName: language
             KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-        TimeToLiveSpecification:
-          AttributeName: "ttl"
-          Enabled: true
+    TitleTable:
+      <<: *dynamoDbTableDefaults
+      Properties:
+        <<: *commonTableProps
+        TableName: ${self:provider.environment.TITLE_TABLE}
+        AttributeDefinitions:
+          - AttributeName: argumentId
+            AttributeType: N
+        KeySchema:
+          - AttributeName: argumentId
+            KeyType: HASH
 
     graphqlInvokeLanguageRole:
       Type: "AWS::IAM::Role"
@@ -455,3 +475,27 @@ resources:
                     - "dynamodb:PutItem"
                     - "dynamodb:DeleteItem"
                   Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.LANGUAGE_LOCKS_TABLE}"
+    lambdaTitleRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: lambda-title-role-${self:provider.stage}
+        AssumeRolePolicyDocument: *assumeRolePolicyLambda
+        Policies:
+          - PolicyName: lambdaTitleRolePolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - *lambdaLoggingPermissions
+                - Effect: "Allow"
+                  Action: "lambda:InvokeFunction"
+                  Resource:
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findArgument"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-updateArgument"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-createCompletion"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findTitlePrompt"
+                - Effect: "Allow"
+                  Action:
+                    - "dynamodb:PutItem"
+                    - "dynamodb:Query"
+                  Resource:
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.TITLE_TABLE}"
