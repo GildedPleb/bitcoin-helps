@@ -9,14 +9,13 @@ interface ParagraphProperties {
 }
 
 const StyledText = styled.div<ParagraphProperties>`
-  width: calc(100vw - 50px);
+  width: calc(100vw - 4rem);
   max-width: 650px;
   font-size: 1.2rem;
-  margin-top: 25px;
 
   p {
-    margin-bottom: 31px;
-    text-indent: 20px;
+    margin-bottom: 2.5vh;
+    text-indent: 2rem;
     line-height: 1.6;
   }
 
@@ -31,7 +30,7 @@ const StyledText = styled.div<ParagraphProperties>`
 
   span:first-of-type,
   br + span {
-    margin-left: 20px;
+    margin-left: 2rem;
   }
 
   ${(properties) =>
