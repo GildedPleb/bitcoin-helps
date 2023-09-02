@@ -1,4 +1,7 @@
-import { type GroupType } from "../../graphql/generated";
+import {
+  type GroupType,
+  type TranslationTypeMapped,
+} from "../../graphql/generated";
 import { type LeftToRightOrRightToLeft } from "../../types";
 
 export type LanguageStatus = "available" | "generating";
@@ -8,17 +11,11 @@ export interface LanguageOptionType {
   value: string;
   status: LanguageStatus;
 
+  translations?: TranslationTypeMapped;
+
   direction: LeftToRightOrRightToLeft;
   speak: string;
   loading: string;
-
-  selectAffiliation?: string;
-  selectIssue?: string;
-  selectNoMatch?: string;
-  iAmAffiliatedWith?: string;
-  andICareAbout?: string;
-  whyCare?: string;
-  findingArgument?: string;
 
   affiliationTypes?: GroupType[];
   issueCategories?: GroupType[];

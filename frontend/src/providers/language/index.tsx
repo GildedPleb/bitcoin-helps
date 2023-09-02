@@ -72,7 +72,6 @@ const populateLang = (code: string): LanguageOptionType => {
 
 /**
  * Language Context
- *
  * @param props - children
  */
 function LanguageProvider({ children }: React.PropsWithChildren) {
@@ -166,7 +165,7 @@ function LanguageProvider({ children }: React.PropsWithChildren) {
           data.getAfffiliationsAndIssues;
         setLanguage((oldLang) => ({
           ...oldLang,
-          ...translations,
+          translations,
           affiliationTypes,
           issueCategories,
           id,
