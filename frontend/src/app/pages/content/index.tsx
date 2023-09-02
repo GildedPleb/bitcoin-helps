@@ -4,31 +4,28 @@ import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import useResizeObserver from "use-resize-observer";
 
-import {
-  useDislikeArgumentMutation,
-  useGetInputPairByArgumentIdQuery,
-  useLikeArgumentMutation,
-  useSubscribeToArgumentSubscription,
-} from "../../../graphql/generated";
+import { useGetArgumentRouteQuery } from "../../../graphql/generated";
 import { isRtl, useLanguage } from "../../../providers/language";
 import { useLoading } from "../../../providers/loading";
 import fadeOut from "../../../styles/fade-out";
 import { FADE_IN_OUT } from "../../../utilities/constants";
 import { MenuBar, SubMenuBar, SubTitle, Title } from "../../components";
 import copyToClipboard from "../../utilities/copy-to-clipboard";
-import createGenerateUniqueKey from "../../utilities/key-generator";
+import Argument from "./argument";
+import Job from "./job";
+import { useLikes } from "./like-dislike-hook";
 
-const generateUniqueKey = createGenerateUniqueKey();
-
-const Container = styled.section<{ willUnmount: boolean }>`
+const Container = styled.section<{ willUnmount: boolean; minHeight: number }>`
   text-align: left;
   width: 100%;
+  height: 100%;
+  min-height: ${(properties) => properties.minHeight}px;
   display: flex;
   flex-direction: column;
-  align-content: center;
-  justify-content: flex-start;
-  padding-bottom: 10vh;
+  align-items: center;
+  padding: 5vh 0;
   transition: all 0.3s;
   ${(properties) =>
     properties.willUnmount
@@ -36,6 +33,12 @@ const Container = styled.section<{ willUnmount: boolean }>`
           animation: ${fadeOut} ${FADE_IN_OUT / 1000}s forwards;
         `
       : ""}
+  & > * {
+    margin-bottom: 5vh;
+  }
+  & > *:last-child {
+    margin-top: auto;
+  }
 `;
 
 /**
@@ -48,89 +51,65 @@ function ContentPage({
   cacheReference: React.MutableRefObject<Set<string>>;
 }) {
   const [willUnmount, setWillUnmount] = useState(false);
-  const { setIsLoading, setLoadingText } = useLoading();
+  const [showLikeUnlike, setShowLikeUnlike] = useState(false);
+  const { setIsLoading } = useLoading();
   const { id } = useParams();
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<
-    Array<{ message: string; sequence: number }>
-  >([]);
-
   const {
-    loading: loadingArgument,
-    error,
-    data,
-    refetch,
-  } = useGetInputPairByArgumentIdQuery({
-    variables: {
-      getInputPairByArgumentIdId: Number(id),
-    },
+    dislikeLoading,
+    likeLoading,
+    disliked,
+    liked,
+    handleDislike,
+    handleLike,
+  } = useLikes(id);
+  const [contentHeight, setContentHeight] = useState(window.innerHeight);
+  const { ref: contentReference, height = window.innerHeight } =
+    useResizeObserver<HTMLDivElement>();
+
+  const { loading, error, data, refetch } = useGetArgumentRouteQuery({
+    variables: { argumentId: Number(id) },
     skip: Number.isNaN(Number(id)),
   });
-
   const { language } = useLanguage();
 
   const direction =
-    data?.getInputPairByArgumentId?.language === undefined
+    data?.getArgumentRoute?.language === undefined
       ? language.direction
-      : isRtl(data.getInputPairByArgumentId.language.name);
-
-  const [dislikeArgument, { loading: dislikeLoading }] =
-    useDislikeArgumentMutation();
-  const [likeArgument, { loading: likeLoading }] = useLikeArgumentMutation();
-  const [disliked, setDisliked] = useState(false);
-  const [liked, setLiked] = useState(false);
-  const [startSubscription, setStartSubscription] = useState(false);
-
-  const { jobId, scheduledFor } =
-    data?.getInputPairByArgumentId?.__typename === "Job"
-      ? data.getInputPairByArgumentId
-      : { jobId: undefined, scheduledFor: undefined };
+      : isRtl(data.getArgumentRoute.language);
 
   useEffect(() => {
-    // eslint-disable-next-line no-undef
-    let timerId: NodeJS.Timeout | undefined;
-
-    if (jobId !== undefined) {
-      const timeUntilScheduledFor =
-        new Date(Number(scheduledFor)).getTime() - Date.now();
-
-      if (timeUntilScheduledFor > 0) {
-        setIsLoading(false);
-        timerId = setTimeout(() => {
-          setStartSubscription(true);
-          setIsLoading(true);
-        }, timeUntilScheduledFor);
-      } else setStartSubscription(true);
-    }
-
-    return () => {
-      if (timerId !== undefined) clearTimeout(timerId);
-    };
-  }, [jobId, scheduledFor, setIsLoading]);
-
-  const { data: subscriptionData } = useSubscribeToArgumentSubscription({
-    variables: { jobId: jobId ?? "empty" },
-    skip: !startSubscription, // subscribe when startSubscription is true
-  });
+    if (height > contentHeight)
+      setContentHeight(
+        height + (showLikeUnlike ? 0 : window.innerHeight * 0.1)
+      );
+  }, [contentHeight, height, showLikeUnlike]);
 
   // This caching is needed to help Apollo find arguments or streams to
   // new arguments when it has already populated its cache with null responces
   // for arguments that are not yet existant, but then become existant over time.
   useEffect(() => {
-    if (loadingArgument) {
+    if (loading) {
       setIsLoading(true);
-      setLoadingText(language.findingArgument);
       return;
     }
     if (id === undefined || error) return;
-
-    const argumentData = data?.getInputPairByArgumentId;
+    const argumentData = data?.getArgumentRoute;
     const has = cacheReference.current.has(id);
+
+    // If the previous fetch was a job, we should refetch the data from the server: either the job is still active,
+    // or it has completed. Either way, if we dont refetch, we will not have the current state of the job.
+    if (argumentData?.route.__typename === "Job") {
+      refetch().catch((error_) => {
+        throw error_;
+      });
+      return;
+    }
 
     // If no data was fetched, or if the fetched data is null and the id is not in the cache, update the cache and navigate
     if (!data || (argumentData === null && !has)) {
       cacheReference.current.add(id);
-      navigate("/");
+      navigate(`/${language.value}`);
       return;
     }
 
@@ -143,7 +122,10 @@ function ContentPage({
     }
 
     // If we get here, we have recieved real data.
-    if (argumentData?.__typename === "InputPair") setIsLoading(false);
+    if (argumentData?.route.__typename === "InputPair") {
+      setShowLikeUnlike(true);
+      setIsLoading(false);
+    }
     cacheReference.current.delete(id);
   }, [
     data,
@@ -152,78 +134,68 @@ function ContentPage({
     id,
     error,
     cacheReference,
-    loadingArgument,
+    loading,
     setIsLoading,
-    setLoadingText,
-    language.findingArgument,
-  ]);
-
-  useEffect(() => {
-    if (
-      subscriptionData?.subscribeToArgument?.message !== undefined &&
-      subscriptionData.subscribeToArgument.message !== ""
-    ) {
-      const { message, sequence } = subscriptionData.subscribeToArgument;
-      setIsLoading(false);
-      setMessages((previous) => [...previous, { message, sequence }]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    refetch,
-    subscriptionData?.subscribeToArgument?.type,
-    subscriptionData?.subscribeToArgument?.message,
-    subscriptionData?.subscribeToArgument,
+    language.value,
   ]);
 
   const handleOnClick = useCallback(() => {
     setWillUnmount(true);
     setTimeout(() => {
-      navigate("/");
+      navigate(`/${language.value}`);
     }, FADE_IN_OUT);
-  }, [navigate]);
-
-  const handleDislike = useCallback(() => {
-    if (id !== undefined && id !== "")
-      dislikeArgument({ variables: { dislikeId: Number(id) } })
-        .then(() => {
-          setDisliked(true);
-          setLiked(false);
-          return true;
-        })
-        .catch((error_) => {
-          console.error(error_);
-        });
-  }, [dislikeArgument, id]);
-
-  const handleLike = useCallback(() => {
-    if (id !== undefined && id !== "") {
-      likeArgument({ variables: { likeId: Number(id) } })
-        .then(() => {
-          setLiked(true);
-          setDisliked(false);
-          return true;
-        })
-        .catch((error_) => {
-          console.error(error_);
-        });
-    }
-  }, [id, likeArgument]);
+  }, [language.value, navigate]);
 
   const handleCopyLink = useCallback(() => {
     if (id !== undefined && id !== "") copyToClipboard(window.location.href);
   }, [id]);
 
-  if (loadingArgument) return <div />;
+  if (loading) return <div />;
   if (error) return <p>Error :( {JSON.stringify(error)}</p>;
 
   return (
-    <Container willUnmount={willUnmount}>
+    <Container
+      willUnmount={willUnmount}
+      ref={contentReference}
+      minHeight={contentHeight}
+    >
       <MenuBar
         onGoBack={handleOnClick}
+        onLink={handleCopyLink}
+        title={data?.getArgumentRoute?.title ?? ""}
+        subtitle={data?.getArgumentRoute?.subtitle ?? ""}
+        direction={direction}
+      />
       <Title direction={direction}>{data?.getArgumentRoute?.title}</Title>
       <SubTitle direction={direction}>
         {data?.getArgumentRoute?.subtitle}
       </SubTitle>
+      {data?.getArgumentRoute?.route.__typename === "Job" && (
+        <Job
+          job={data.getArgumentRoute.route}
+          setShowLikeUnlike={setShowLikeUnlike}
+        />
+      )}
+      {data?.getArgumentRoute?.route.__typename === "InputPair" && (
+        <Argument
+          inputPair={data.getArgumentRoute.route}
+          language={data.getArgumentRoute.language}
+        />
+      )}
+
+      {showLikeUnlike && (
+        <SubMenuBar
+          onFlag={handleDislike}
+          liked={liked}
+          disliked={disliked}
+          dislikeLoading={dislikeLoading}
+          likeLoading={likeLoading}
+          onCopy={handleLike}
+          isRtl={direction}
+          disabled={!showLikeUnlike}
+          // show={!mountInvoice}
+        />
+      )}
     </Container>
   );
 }
