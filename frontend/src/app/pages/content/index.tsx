@@ -15,7 +15,7 @@ import { isRtl, useLanguage } from "../../../providers/language";
 import { useLoading } from "../../../providers/loading";
 import fadeOut from "../../../styles/fade-out";
 import { FADE_IN_OUT } from "../../../utilities/constants";
-import { Countdown, MenuBar, TextBlock, TextParagraph } from "../../components";
+import { MenuBar, SubMenuBar, SubTitle, Title } from "../../components";
 import copyToClipboard from "../../utilities/copy-to-clipboard";
 import createGenerateUniqueKey from "../../utilities/key-generator";
 
@@ -220,62 +220,10 @@ function ContentPage({
     <Container willUnmount={willUnmount}>
       <MenuBar
         onGoBack={handleOnClick}
-        onFlag={handleDislike}
-        liked={liked}
-        disliked={disliked}
-        dislikeLoading={dislikeLoading}
-        likeLoading={likeLoading}
-        onCopy={handleLike}
-        onLink={handleCopyLink}
-        isRtl={direction}
-        disabled={new Date(Number(scheduledFor)).getTime() - Date.now() > 0}
-      />
-      {scheduledFor !== undefined &&
-        new Date(Number(scheduledFor)) > new Date() && (
-          <Countdown targetDate={scheduledFor} locale={language.value} />
-        )}
-      <TextBlock>
-        {data?.getInputPairByArgumentId?.__typename === "Job" && (
-          <TextParagraph isRtl={direction}>
-            {messages.map(({ sequence, message }) => (
-              <React.Fragment key={sequence}>
-                {message.includes("\n") ? (
-                  message
-                    .split("\n")
-                    .flatMap((item, index, array) =>
-                      array.length - 1 === index ? (
-                        <span key={`${sequence}-${index}`}>{item}</span>
-                      ) : (
-                        [
-                          item !== "" && (
-                            <span key={`${sequence}-${index}`}>{item}</span>
-                          ),
-                          <br key={`${sequence}-${index}br`} />,
-                        ]
-                      )
-                    )
-                ) : (
-                  <span>{message}</span>
-                )}
-              </React.Fragment>
-            ))}
-          </TextParagraph>
-        )}
-        {data?.getInputPairByArgumentId?.__typename === "InputPair" && (
-          <div>
-            {data.getInputPairByArgumentId.arguments.map((arguments_) => (
-              <TextParagraph
-                isRtl={direction}
-                key={generateUniqueKey(JSON.stringify(arguments_))}
-              >
-                {arguments_.content.split(/\n+/).map((paragraph) => (
-                  <p key={generateUniqueKey(paragraph)}>{paragraph}</p>
-                ))}
-              </TextParagraph>
-            ))}
-          </div>
-        )}
-      </TextBlock>
+      <Title direction={direction}>{data?.getArgumentRoute?.title}</Title>
+      <SubTitle direction={direction}>
+        {data?.getArgumentRoute?.subtitle}
+      </SubTitle>
     </Container>
   );
 }

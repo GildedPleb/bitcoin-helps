@@ -10,3 +10,5 @@ export { default as Sentence } from "./sentence";
 export { default as Spacer } from "./spacer";
 export { default as TextBlock } from "./text/block";
 export { default as TextParagraph } from "./text/paragraph";
+export { default as SubTitle } from "./text/sub-title";
+export { default as Title } from "./text/title";
