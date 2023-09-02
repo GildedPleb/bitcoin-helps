@@ -13,7 +13,9 @@ import { type Gossip } from "../aws/pubsub";
 import { dislike } from "./resolvers/dislike";
 import { getAfffiliationsAndIssues } from "./resolvers/get-affiliations-and-issues";
 import { getArgumentId } from "./resolvers/get-argument-id";
+import { getArgumentRoute } from "./resolvers/get-argument-route";
 import { getInputPairByArgumentId } from "./resolvers/get-input-pair-by-argument-id";
+import { getSpeedUpInvoice } from "./resolvers/get-speed-up-invoice";
 import hello from "./resolvers/hello";
 import { like } from "./resolvers/like";
 
@@ -46,6 +48,8 @@ const resolvers = {
     getAfffiliationsAndIssues,
     getArgumentId,
     getInputPairByArgumentId,
+    getSpeedUpInvoice,
+    getArgumentRoute,
   },
   Mutation: {
     like,
