@@ -77,3 +77,20 @@ export const extractJSONListFromString = <T extends string[]>(
   }
   return undefined;
 };
+
+/**
+ *
+ * @param initialDelay - Delay
+ * @param maxDelay - Tiemout
+ */
+// eslint-disable-next-line @typescript-eslint/require-await
+export async function* backoffGenerator(
+  initialDelay: number,
+  maxDelay: number
+): AsyncGenerator<number> {
+  let delay = initialDelay;
+  while (delay <= maxDelay) {
+    yield delay;
+    delay += 1000;
+  }
+}
