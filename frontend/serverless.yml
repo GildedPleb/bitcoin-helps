@@ -1,5 +1,8 @@
-service: btcfix
+service: btcfix-fe
 useDotenv: true
+
+package:
+  individually: true
 
 provider:
   name: aws
@@ -8,28 +11,56 @@ provider:
   region: ${env:AWS_REGION}
   environment:
     STAGE: ${opt:stage, 'dev'}
+    TITLE_TABLE: btcfix-be-${self:provider.stage}-title
+    LANGUAGE_TABLE: btcfix-be-${self:provider.stage}-language
 
 plugins:
-  - serverless-lift
   - serverless-scriptable-plugin
+  - serverless-plugin-log-retention
+  - "@silvermine/serverless-plugin-cloudfront-lambda-edge"
+  - serverless-s3-sync
 
 custom:
+  logRetentionInDays: 1
   domain:
     prod:
       - ${env:DOMAIN}
       - www.${env:DOMAIN}
-    dev: dev.${env:DOMAIN}
+    dev:
+      - dev.${env:DOMAIN}
   scriptable:
     hooks:
-      package:initialize: "STAGE=${self:provider.stage} sh ./ci/build.sh"
+      package:initialize: "STAGE=${self:provider.stage} DOMAIN=${env:DOMAIN} sh ./ci/build.sh"
+  s3Sync:
+    - bucketName: ${self:service}-${self:provider.stage}-websitebucket9032ebb7-ek5unjsxvgo6
+      localDir: ./dist
+      deleteRemoved: true
+      params:
+        - "*.html":
+            CacheControl: "no-cache"
+        - "*.js":
+            CacheControl: "public, max-age=31536000"
+        - "*.css":
+            CacheControl: "public, max-age=31536000"
 
-constructs:
-  website:
-    type: single-page-app
-    path: dist
-    domain: ${self:custom.domain.${self:provider.stage}}
-    certificate: arn:aws:acm:us-east-1:${env:AWS_ACCOUNT_ID}:certificate/${env:CERTIFICATE_ID}
-    redirectToMainDomain: true
+# new
+functions:
+  edgeFunction:
+    name: ${self:service}-${self:provider.stage}-lambda-edge
+    role:
+      Fn::GetAtt: [LambdaEdgeRole, Arn]
+    handler: edge/dist/bundle.handler
+    memorySize: 128
+    timeout: 5
+    lambdaAtEdge:
+      distribution: "websiteCDN060D946D"
+      eventType: "viewer-request"
+    package:
+      patterns:
+        - "!**/**"
+        - "edge/dist/bundle.js"
+    logRetentionInDays: ${self:custom.logRetentionInDays}
+# end new
 
 resources:
   Conditions:
@@ -42,6 +73,121 @@ resources:
         - ${self:provider.stage}
         - dev
   Resources:
+    # Shared:
+    ServerlessDeploymentBucket:
+      Type: "AWS::S3::Bucket"
+      Properties:
+        BucketEncryption:
+          ServerSideEncryptionConfiguration:
+            - ServerSideEncryptionByDefault:
+                SSEAlgorithm: AES256
+    ServerlessDeploymentBucketPolicy:
+      Type: "AWS::S3::BucketPolicy"
+      Properties:
+        Bucket:
+          Ref: ServerlessDeploymentBucket
+        PolicyDocument:
+          Statement:
+            - Action: "s3:*"
+              Effect: Deny
+              Principal: "*"
+              Resource:
+                - "Fn::Join":
+                    - ""
+                    - - "arn:"
+                      - Ref: "AWS::Partition"
+                      - ":s3:::"
+                      - Ref: ServerlessDeploymentBucket
+                      - /*
+                - "Fn::Join":
+                    - ""
+                    - - "arn:"
+                      - Ref: "AWS::Partition"
+                      - ":s3:::"
+                      - Ref: ServerlessDeploymentBucket
+              Condition:
+                Bool:
+                  "aws:SecureTransport": false
+    websiteBucket9032EBB7:
+      Type: "AWS::S3::Bucket"
+      UpdateReplacePolicy: Delete
+      DeletionPolicy: Delete
+    websiteBucketPolicyE0AC1822:
+      Type: "AWS::S3::BucketPolicy"
+      Properties:
+        Bucket:
+          Ref: websiteBucket9032EBB7
+        PolicyDocument:
+          Statement:
+            - Action: "s3:GetObject"
+              Effect: Allow
+              Principal:
+                CanonicalUser:
+                  "Fn::GetAtt":
+                    - websiteCDNOrigin1S3Origin1987A546
+                    - S3CanonicalUserId
+              Resource:
+                "Fn::Join":
+                  - ""
+                  - - "Fn::GetAtt":
+                        - websiteBucket9032EBB7
+                        - Arn
+                    - /*
+          Version: "2012-10-17"
+    websiteCDNOrigin1S3Origin1987A546:
+      Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+      Properties:
+        CloudFrontOriginAccessIdentityConfig:
+          Comment: Identity for websiteCDNOrigin173C249FC
+    websiteCDN060D946D:
+      Type: "AWS::CloudFront::Distribution"
+      Properties:
+        DistributionConfig:
+          Aliases: ${self:custom.domain.${self:provider.stage}}
+          Comment: ${self:service}-${self:provider.stage} website website CDN
+          CustomErrorResponses:
+            - ErrorCachingMinTTL: 0
+              ErrorCode: 404
+              ResponseCode: 200
+              ResponsePagePath: /index.html
+          DefaultCacheBehavior:
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            MinTTL: 0
+            DefaultTTL: 0
+            MaxTTL: 86400
+            Compress: true
+            TargetOriginId: websiteCDNOrigin173C249FC
+            ViewerProtocolPolicy: redirect-to-https
+            ForwardedValues:
+              QueryString: true
+              Cookies:
+                Forward: "none"
+          DefaultRootObject: index.html
+          Enabled: true
+          HttpVersion: http2
+          IPV6Enabled: true
+          Origins:
+            - DomainName:
+                "Fn::GetAtt":
+                  - websiteBucket9032EBB7
+                  - RegionalDomainName
+              Id: websiteCDNOrigin173C249FC
+              S3OriginConfig:
+                OriginAccessIdentity:
+                  "Fn::Join":
+                    - ""
+                    - - origin-access-identity/cloudfront/
+                      - Ref: websiteCDNOrigin1S3Origin1987A546
+          ViewerCertificate:
+            AcmCertificateArn: >-
+              arn:aws:acm:us-east-1:${env:AWS_ACCOUNT_ID}:certificate/${env:CERTIFICATE_ID}
+            MinimumProtocolVersion: TLSv1.2_2021
+            SslSupportMethod: sni-only
+
+    # Prod
     Route53Record:
       Type: AWS::Route53::RecordSet
       Condition: IsProd
@@ -51,7 +197,10 @@ resources:
         Type: A
         AliasTarget:
           HostedZoneId: Z2FDTNDATAQYW2
-          DNSName: ${construct:website.cname}
+          DNSName:
+            "Fn::GetAtt":
+              - websiteCDN060D946D
+              - DomainName
     Route53RecordWWW:
       Type: AWS::Route53::RecordSet
       Condition: IsProd
@@ -61,7 +210,12 @@ resources:
         Type: A
         AliasTarget:
           HostedZoneId: Z2FDTNDATAQYW2
-          DNSName: ${construct:website.cname}
+          DNSName:
+            "Fn::GetAtt":
+              - websiteCDN060D946D
+              - DomainName
+
+    # Dev
     Route53RecordDev:
       Type: AWS::Route53::RecordSet
       Condition: IsNotProd
@@ -71,4 +225,90 @@ resources:
         Type: A
         AliasTarget:
           HostedZoneId: Z2FDTNDATAQYW2
-          DNSName: ${construct:website.cname}
+          DNSName:
+            "Fn::GetAtt":
+              - websiteCDN060D946D
+              - DomainName
+
+    # Roles
+    LambdaEdgeRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: edge-role-${self:provider.stage}
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+                  - edgelambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        Policies:
+          - PolicyName: edge-role-logging-policy-${self:provider.stage}
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                    - logs:PutRetentionPolicy
+                  Resource: "arn:aws:logs:*:*:*"
+                - Effect: Allow
+                  Action:
+                    - lambda:InvokeFunction
+                    - lambda:GetFunction
+                    - lambda:EnableReplication*
+                    - iam:CreateServiceLinkedRole
+                  Resource: "arn:aws:lambda:us-east-1:*:function:${self:service}-${self:provider.stage}-us-east-1-lambda-edge:*"
+                - Effect: Allow
+                  Action:
+                    - lambda:CreateFunction
+                    - lambda:DeleteFunction
+                    - lambda:DisableReplication
+                  Resource: arn:aws:lambda:*:*:function:*
+                - Effect: Allow
+                  Action:
+                    - iam:PassRole
+                    - cloudfront:ListDistributionsByLambdaFunction
+                    - cloudfront:UpdateDistribution
+                    - cloudfront:CreateDistribution
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - dynamodb:Query
+                  Resource:
+                    - !Sub "arn:aws:dynamodb:us-east-2:${AWS::AccountId}:table/${self:provider.environment.TITLE_TABLE}"
+                    - !Sub "arn:aws:dynamodb:us-east-2:${AWS::AccountId}:table/${self:provider.environment.LANGUAGE_TABLE}"
+
+  Outputs:
+    # Shared
+    ServerlessDeploymentBucketName:
+      Value:
+        Ref: ServerlessDeploymentBucket
+      Export:
+        Name: sls-${self:service}-${self:provider.stage}-ServerlessDeploymentBucketName
+    websiteBucketName1C4A852B:
+      Description: Name of the bucket that stores the static website.
+      Value:
+        Ref: websiteBucket9032EBB7
+    websiteDomainFCB9350F:
+      Description: Website domain name.
+      Value:
+        Fn::If:
+          - IsProd
+          - ${env:DOMAIN}
+          - dev.${env:DOMAIN}
+    websiteCloudFrontCNameBE0CEC1D:
+      Description: CloudFront CNAME.
+      Value:
+        "Fn::GetAtt":
+          - websiteCDN060D946D
+          - DomainName
+    websiteDistributionId8ED2D37D:
+      Description: ID of the CloudFront distribution.
+      Value:
+        Ref: websiteCDN060D946D
