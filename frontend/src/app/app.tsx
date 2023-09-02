@@ -28,14 +28,18 @@ const Overlay = styled.div`
  *
  */
 function App() {
-  const { loadingText, isLoading } = useLoading();
+  const { loadingText, isLoading, setIsLoading, setLoadingText } = useLoading();
   const [willUnmount, setWillUnmount] = useState(false);
   const [mount, setMount] = useState(false);
   const cacheReference = useRef(new Set<string>());
+  const { language, loading: languageLoading } = useLanguage();
+  const location = useLocation();
   const [tag, id] = location.pathname.split("/").filter(Boolean) as [
     string | undefined,
     string | undefined
   ];
+  const navigate = useNavigate();
+
   useEffect(() => {
     let timeout: number;
     if (!isLoading && mount) {
@@ -50,6 +54,27 @@ function App() {
       clearTimeout(timeout);
     };
   }, [isLoading, mount]);
+
+  useEffect(() => {
+    if (languageLoading) {
+      setIsLoading(true);
+      setLoadingText(language.loading);
+    } else {
+      setIsLoading(false);
+    }
+  }, [languageLoading, setIsLoading, setLoadingText, language.loading]);
+
+  // Set the URL from the language
+  useEffect(() => {
+    if (
+      tag !== undefined &&
+      tag !== "" &&
+      tag !== language.value &&
+      id === undefined
+    )
+      navigate(`/`);
+  }, [id, language.value, navigate, tag]);
+
   return (
     <>
       <Head id={id} />
@@ -64,8 +89,9 @@ function App() {
       </Overlay>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/:tag" element={<LandingPage />} />
         <Route
-          path="/:id"
+          path="/:tag/:id"
           element={<ContentPage cacheReference={cacheReference} />}
         />
       </Routes>
