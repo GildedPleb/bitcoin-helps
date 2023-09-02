@@ -66,7 +66,7 @@ const inputStyles = (
     outline: "none",
     boxShadow: "none",
     borderWidth: "2px",
-    "&:hover": !isFocused && { border: "2px solid orange" },
+    "&:hover": !isFocused && { border: "2px solid orange", cursor: "pointer" },
     "&:focus": {
       border: "2px solid #2684FF",
     },
@@ -166,8 +166,8 @@ function Selector({
     [onChange]
   );
   const noOptionsMessage = useCallback(
-    () => language.selectNoMatch,
-    [language.selectNoMatch]
+    () => language.translations?.selectNoMatch,
+    [language.translations?.selectNoMatch]
   );
   const isRtl = language.direction === "rtl";
   const valueNotNull = Boolean(value);
