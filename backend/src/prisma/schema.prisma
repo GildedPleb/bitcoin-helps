@@ -127,6 +127,7 @@ model GenerateJob {
   updatedAt        DateTime       @updatedAt
   openAICall       OpenAICall[]
   scheduledFor     DateTime
+  invoice          AlbyInvoice?
 
   @@unique([issueId, affiliationId, languageId])
 }
@@ -201,6 +202,21 @@ model OpenAICall {
   languageId    String?
 
   createdAt DateTime @default(now())
+}
+
+model AlbyInvoice {
+  id             String       @id @default(uuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  expiresAt      DateTime
+  amount         Int
+  settled        Boolean
+  paymentRequest String       @unique
+  paymentHash    String       @unique
+  generateJob    GenerateJob? @relation(fields: [generateJobId], references: [id])
+  generateJobId  String       @unique
+  verify         String
+  comment        String
 }
 
 enum BudgetType {
