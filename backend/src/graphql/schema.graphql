@@ -6,7 +6,6 @@ type Query {
     issueId: String
     affiliationId: String
   ): ArgumentId
-  getInputPairByArgumentId(id: Int!): InputPairOrJob
   getSpeedUpInvoice(jobId: String!): Invoice
   getArgumentRoute(id: Int!): ArugmentRoute
 }
