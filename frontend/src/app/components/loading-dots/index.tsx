@@ -36,13 +36,33 @@ const Loading = styled.div<{ small: boolean | string }>`
         `}
 `;
 
-const Dot = styled.div<{ fadeInDelay: number; fadeOutDelay: number }>`
+const Dot = styled.div<{
+  fadeInDelay: number;
+  fadeOutDelay: number;
+  small: boolean | string;
+}>`
   background: black;
   border-radius: 50%;
-  width: 5px;
-  height: 5px;
-  margin: 0 5px;
+  width: 10px;
+  height: 10px;
+  margin: 0 10px;
   opacity: 0;
+  ${(properties) =>
+    typeof properties.small === "boolean" && properties.small
+      ? css`
+          width: 5px;
+          height: 5px;
+          margin: 0 5px;
+        `
+      : ""}
+  ${(properties) =>
+    typeof properties.small === "string"
+      ? css`
+          width: ${properties.small};
+          height: ${properties.small};
+          margin: 0 ${properties.small};
+        `
+      : ""}
 
   animation: ${fadeIn} 1s ${(properties) => properties.fadeInDelay}s forwards,
     ${fadeOut} 1.5s ${(properties) => properties.fadeOutDelay}s forwards;
@@ -108,6 +128,7 @@ function LoadingDots({
               key={`${uniqueId}-${index}`}
               fadeInDelay={(rightToLeft === "rtl" ? 2 - index : index) / 3} // FadeIn during the first 3 seconds
               fadeOutDelay={(rightToLeft === "rtl" ? 2 - index : index) / 3 + 2} // FadeOut between 3-6 seconds
+              small={small}
             />
           ))}
         {phase !== 0 &&
