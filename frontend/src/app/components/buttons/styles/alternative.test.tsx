@@ -17,7 +17,7 @@ describe("AlternateButton", () => {
       </AlternateButton>
     );
     const button = getByRole("button");
-    expect(button).toHaveStyleRule("border", "2px solid white");
+    expect(button).toHaveStyleRule("border", "2px solid transparent");
     expect(button).toHaveStyleRule("border", "2px solid orange", {
       target: ":hover",
     });
