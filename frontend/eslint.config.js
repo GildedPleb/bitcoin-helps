@@ -18,4 +18,11 @@ export default [
       "react/jsx-uses-react": 0,
     },
   },
+  {
+    languageOptions: {
+      parserOptions: {
+        project: "./tsconfig.eslint.json",
+      },
+    },
+  },
 ];
