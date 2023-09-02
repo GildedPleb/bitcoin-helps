@@ -38,6 +38,10 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ vars.AWS_REGION }}
+          SPEEDUP_AMOUNT_SATS_dev: ${{ vars.SPEEDUP_AMOUNT_SATS_DEV }}
+          SPEEDUP_AMOUNT_SATS_prod: ${{ vars.SPEEDUP_AMOUNT_SATS_PROD }}
+          VITE_SITE_TITLE: ${{ vars.VITE_SITE_TITLE }}
+          VITE_SITE_DESCRIPTION: ${{ vars.VITE_SITE_DESCRIPTION }}
 
           # Backend
           GPT_VERSION_dev: ${{ vars.GPT_VERSION_DEV }}
@@ -52,6 +56,8 @@ jobs:
           AWS_IOT_CLIENT_ID: ${{ secrets.AWS_IOT_CLIENT_ID }}
           AWS_IOT_HOST: ${{ secrets.AWS_IOT_HOST }}
           AWS_DEVICE_PRIVATE_KEY: ${{ secrets.AWS_DEVICE_PRIVATE_KEY }}
+          WH_SECRET: ${{ secrets.WH_SECRET }}
+          ALBY_ACCOUNT_NAME: ${{ secrets.ALBY_ACCOUNT_NAME }}
 
           # Frontend
           DISABLE_ESLINT_PLUGIN: true
