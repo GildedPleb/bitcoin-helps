@@ -78,6 +78,11 @@ const createBatchLink = (
 
   const requestHandler: RequestHandler = (operation: Operation) =>
     new Observable<FetchResult>((observer) => {
+      if (operation.operationName !== "subscribeToArgument") {
+        // If not the specific subscription, bypass the batching and directly use wsLink
+        return wsLink.request(operation)?.subscribe(observer);
+      }
+
       const interval = setInterval(() => {
         sendBatch(observer);
       }, batchInterval);
