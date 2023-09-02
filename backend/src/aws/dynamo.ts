@@ -283,3 +283,26 @@ export const getTitle = async (
   if (!response.Items || response.Items.length === 0) return undefined;
   return unmarshall(response.Items[0]) as TitleEntry;
 };
+
+// Language Cache
+
+export const LANGUAGE_TABLE = process.env.LANGUAGE_TABLE ?? "LANGUAGE_TABLE";
+
+export interface LanguageCacheEntry {
+  siteTitle: string;
+  siteDescription: string;
+}
+
+export const cacheLanguage = async (
+  languageTag: string,
+  siteTitle: string,
+  siteDescription: string,
+  client: DynamoDBClient
+) => {
+  const parameters = {
+    Item: marshall({ languageTag, siteTitle, siteDescription }),
+    TableName: LANGUAGE_TABLE,
+  };
+  const command = new PutItemCommand(parameters);
+  await client.send(command);
+};
