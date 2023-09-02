@@ -1,15 +1,15 @@
 import styled from "@emotion/styled";
 import { useEffect, useRef, useState } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 import { useLanguage } from "../providers/language";
 import { useLoading } from "../providers/loading";
 import { FADE_IN_OUT } from "../utilities/constants";
 import { LoadingDots } from "./components";
+import Head from "./head";
 import ContentPage from "./pages/content";
 import LandingPage from "./pages/landing";
 
-// Overlay Styles
 const Overlay = styled.div`
   position: fixed;
   z-index: 1;
@@ -32,7 +32,10 @@ function App() {
   const [willUnmount, setWillUnmount] = useState(false);
   const [mount, setMount] = useState(false);
   const cacheReference = useRef(new Set<string>());
-  const { language } = useLanguage();
+  const [tag, id] = location.pathname.split("/").filter(Boolean) as [
+    string | undefined,
+    string | undefined
+  ];
   useEffect(() => {
     let timeout: number;
     if (!isLoading && mount) {
@@ -49,6 +52,7 @@ function App() {
   }, [isLoading, mount]);
   return (
     <>
+      <Head id={id} />
       <Overlay>
         {mount && (
           <LoadingDots
