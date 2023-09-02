@@ -7,6 +7,8 @@
     "codegen": "graphql-codegen --config codegen.ts",
     "update-prompts-dev": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/seed.ts dev",
     "update-prompts-prod": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/seed.ts prod",
+    "update-translations-dev": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/tranlation-update.ts dev",
+    "update-translations-prod": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/tranlation-update.ts prod",
     "verify-seeds": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/prisma/seeds/verify.ts",
     "update": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings update.ts",
     "print-tree": "tree -I 'node_modules|build' -P '*.ts'",
