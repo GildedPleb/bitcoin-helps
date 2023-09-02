@@ -58,10 +58,11 @@ const createNewLanguage = async (
 };
 
 const findLanguagePrompt = async () =>
-  awsInvoke<LanguagePrompt>(
-    process.env.FIND_LANGUAGE_PROMPT_FUNCTION_NAME,
-    "RequestResponse"
-  );
+  awsInvoke<
+    LanguagePrompt & {
+      translationExample: { example: TranslationTypeMapped; language: string };
+    }
+  >(process.env.FIND_LANGUAGE_PROMPT_FUNCTION_NAME, "RequestResponse");
 
 export const handler = async ({ language }: Event) => {
   const languageTag = language.split(" ")[0];
@@ -72,7 +73,7 @@ export const handler = async ({ language }: Event) => {
     const resolved = await Promise.all([
       Promise.all(affiliationPromises(language, prompts)),
       Promise.all(issuePromises(language, prompts)),
-      await fetchAndPrepareTranslations(language, prompts),
+      fetchAndPrepareTranslations(language, prompts),
     ]);
     await createNewLanguage(languageTag, resolved, prompts.id);
     console.log(`Successfully generated language model for: ${language}`);
