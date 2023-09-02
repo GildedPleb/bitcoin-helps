@@ -1,5 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { argumentPrompts, languagePrompts } from "../../../prompts";
+import {
+  argumentPrompts,
+  languagePrompts,
+  titlePrompt,
+} from "../../../prompts";
 
 import dotenv from "dotenv";
 
@@ -30,8 +34,6 @@ function deepEqual(obj1: unknown, obj2: unknown) {
 
   return true;
 }
-
-// TODO: Add validation
 
 const DATABASE_URL = process.env[`DATABASE_URL_${STAGE}`] ?? "Will fail";
 
@@ -76,6 +78,28 @@ async function main() {
         data: { ...prompt, version: version + 1 },
       });
       console.log("Updated language prompt...", prompt.name);
+    }
+  }
+
+  for (const prompt of titlePrompt) {
+    const existingPrompt = await prisma.titlePrompt.findFirst({
+      where: { name: prompt.name },
+      orderBy: { version: "desc" },
+    });
+    if (!existingPrompt) {
+      await prisma.titlePrompt.create({
+        data: { ...prompt, version: 1 },
+      });
+      console.log("Seeded first title prompt...", prompt.name);
+      return;
+    }
+    const { id, version, createdAt, updatedAt, ...existingPromptParsed } =
+      existingPrompt;
+    if (!deepEqual(existingPromptParsed, prompt)) {
+      await prisma.titlePrompt.create({
+        data: { ...prompt, version: version + 1 },
+      });
+      console.log("Updated title prompt...", prompt.name);
     }
   }
 }
