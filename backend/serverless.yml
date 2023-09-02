@@ -51,6 +51,8 @@ custom:
     number: 3
     includeLayers: true
   topicPrefix: topic/${self:service}-${self:provider.stage}/job-id
+  topicPrefixInvoice: topic/${self:service}-${self:provider.stage}/invoice-job-id
+  # Anchors
   prismaDefaults: &prismaDefaults
     vpc:
       securityGroupIds:
@@ -90,20 +92,18 @@ functions:
           path: /
           method: GET
     role: graphqlInvokeLanguageRole
-    environment:
-      FIND_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findLanguage
-      CREATE_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createLanguage
-      FIND_INPUT_PAIR_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findInputPair
-      FIND_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findJob
-      CREATE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createJob
-      FIND_ARGUMENT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findArgument
-      LIKE_OR_DISLIKE: ${self:service}-${self:provider.stage}-likeOrDislike
-      UPDATE_INPUT_PAIR_HIT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-updateInputPairHit
-      FIND_LATEST_ARGUMENT_PROMPT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findLatestArgumentPrompts
-      AWS_DEVICE_PRIVATE_KEY: ${ssm:DEVICE_PRIVATE_KEY, env:AWS_DEVICE_PRIVATE_KEY}
-      AWS_IOT_HOST: ${env:AWS_IOT_HOST}
-      AWS_IOT_CLIENT_ID: ${env:AWS_IOT_CLIENT_ID}
-      FIND_BUDGET_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findBudget
+    layers:
+      - { Ref: EndpointLambdaLayer }
+    memorySize: 256
+    timeout: 80 # 80 seconds
+
+  invoice:
+    handler: src/alby/endpoint.handler
+    role: albyInvoiceRole
+    events:
+      - httpApi:
+          path: /invoice
+          method: POST
     layers:
       - { Ref: EndpointLambdaLayer }
     memorySize: 256
@@ -238,6 +238,14 @@ functions:
     handler: src/prisma/find-budget.handler
     <<: *prismaDefaults
 
+  createInvoice:
+    handler: src/prisma/create-invoice.handler
+    <<: *prismaDefaults
+
+  updateInvoice:
+    handler: src/prisma/update-invoice.handler
+    <<: *prismaDefaults
+
   findTitlePrompt:
     handler: src/prisma/find-title-prompt.handler
     <<: *prismaDefaults
@@ -289,6 +297,34 @@ resources:
         KeySchema:
           - AttributeName: language
             KeyType: HASH
+    InvoiceSubscriptionTable:
+      <<: *dynamoDbTableDefaults
+      Properties:
+        <<: *commonTableProps
+        TableName: ${self:provider.environment.INVOICE_SUBSCRIPTION_TABLE}
+        AttributeDefinitions:
+          - AttributeName: connectionId
+            AttributeType: S
+          - AttributeName: topic
+            AttributeType: S
+        KeySchema:
+          - AttributeName: connectionId
+            KeyType: HASH
+          - AttributeName: topic
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: TopicIndex
+            KeySchema:
+              - AttributeName: topic
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ConnectionIdIndex
+            KeySchema:
+              - AttributeName: connectionId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
     TitleTable:
       <<: *dynamoDbTableDefaults
       Properties:
@@ -475,6 +511,39 @@ resources:
                     - "dynamodb:PutItem"
                     - "dynamodb:DeleteItem"
                   Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.LANGUAGE_LOCKS_TABLE}"
+
+    albyInvoiceRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: alby-invoice-role-${self:provider.stage}
+        AssumeRolePolicyDocument: *assumeRolePolicyLambda
+        Policies:
+          - PolicyName: albyInvoiceRolePolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - *lambdaLoggingPermissions
+                - Effect: "Allow"
+                  Action: "lambda:InvokeFunction"
+                  Resource:
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findJobById"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-updateJob"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-updateInvoice"
+                - Effect: "Allow"
+                  Action:
+                    - "dynamodb:Query"
+                    - "dynamodb:DeleteItem"
+                    - "dynamodb:GetItem"
+                  Resource:
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.CONNECTIONS_TABLE}"
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.INVOICE_SUBSCRIPTION_TABLE}"
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.INVOICE_SUBSCRIPTION_TABLE}/index/*"
+                - Effect: Allow
+                  Action:
+                    - "execute-api:Invoke"
+                    - "execute-api:ManageConnections"
+                  Resource: !Sub "arn:aws:execute-api:${self:provider.region}:${AWS::AccountId}:${WebsocketsApi}/${self:provider.stage}/*"
+
     lambdaTitleRole:
       Type: "AWS::IAM::Role"
       Properties:
