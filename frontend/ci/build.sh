@@ -40,5 +40,6 @@ export LANGUAGE_TABLE="btcfix-be-$STAGE-language"
 if [ "${STAGE}" = "dev" ]; then
   export DOMAIN="dev.$DOMAIN"
 fi
+npm ci
 npm run build
 cd ..

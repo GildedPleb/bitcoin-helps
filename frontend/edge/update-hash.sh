@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # update-hash.sh
+echo "...Replacing hash..."
 
 # Get the file matching the pattern
 FILE_NAME=$(ls ../dist/assets/index-*.js | xargs -n 1 basename)
@@ -12,6 +13,6 @@ echo "HASH_VALUE: ${HASH_VALUE}"
 
 # Replace in .ts file
 sed -i.bak "s/index-.*.js/index-$HASH_VALUE.js/g" bot-intercept.ts
-
+echo "...Hash replaced!"
 # Optionally, remove the backup
 # rm bot-intercept.ts.bak
