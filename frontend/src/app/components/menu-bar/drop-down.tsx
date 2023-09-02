@@ -1,6 +1,6 @@
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   EmailIcon,
   EmailShareButton,
@@ -25,25 +25,26 @@ import {
 import fadeIn from "../../../styles/fade-in";
 import fadeOut from "../../../styles/fade-out";
 import { FADE_IN_OUT } from "../../../utilities/constants";
+import getEnvironmentVariable from "../../../utilities/get-environment";
 
 const hashtag = [
+  "BitcoinFixesThis",
   "Bitcoin",
   "BitcoinHelps",
-  "BitcoinFixesThis",
   "BitcoinFixesEverything",
 ];
-const tagLine = "Bitcoin helps no matter who you are or what you care about.";
 const suggestedFollow = "gildedpleb";
-const title =
-  "You've heard it said \"Bitcoin fixes everything.\" But you know that 'everything' is hard to prove. Well...\n\nHere is the proof.\n\n";
 
-const DropDown = styled.div<{ isShown: boolean; willUnmount: boolean }>`
+const DropDown = styled.div<{
+  isShown: boolean;
+  willUnmount: boolean;
+}>`
   display: ${(properties) => (properties.isShown ? "flex" : "none")};
   flex-direction: column;
   position: absolute;
   gap: 2.5px;
-  top: calc(5vh + 65px);
-  right: 2.3em;
+  top: 55px;
+  right: 4px;
   ${({ isShown, willUnmount }) =>
     isShown && !willUnmount
       ? css`
@@ -54,7 +55,7 @@ const DropDown = styled.div<{ isShown: boolean; willUnmount: boolean }>`
         `}
   background-color: white;
   box-shadow: 0 0 10px 10px rgba(255, 255, 255, 1);
-  z-index: 100;
+  z-index: 9;
 `;
 
 const sharedButtonStyles = css`
@@ -109,130 +110,139 @@ const StyledCopyButton = styled.button`
   ${sharedButtonStyles};
 `;
 
-/**
- *
- * @param root0 - Props
- */
-function ShareMenu({
-  isShown,
-  willUnmount,
-  onCopy,
-}: {
+interface ShareMenuProperties {
+  onCopy: () => void;
   isShown: boolean;
   willUnmount: boolean;
-  onCopy: () => void;
-}) {
-  const url = window.location.href;
-
-  const iconSize = 32;
-  const [coppied, setCoppied] = useState(false);
-  const handleCopy = useCallback(() => {
-    setCoppied(true);
-    onCopy();
-    setTimeout(() => {
-      setCoppied(false);
-    }, 1000);
-  }, [onCopy]);
-
-  return (
-    <DropDown isShown={isShown} willUnmount={willUnmount}>
-      <StyledTwitterShareButton
-        url={url}
-        title={title}
-        hashtags={hashtag}
-        via={suggestedFollow}
-        resetButtonStyle={false}
-      >
-        <TwitterIcon size={iconSize} round />
-      </StyledTwitterShareButton>
-      <StyledFacebookShareButton
-        url={url}
-        quote={tagLine}
-        hashtag={`#${hashtag[0]}`}
-        resetButtonStyle={false}
-      >
-        <FacebookIcon size={iconSize} round />
-      </StyledFacebookShareButton>
-      <StyledLinkedinShareButton
-        url={url}
-        resetButtonStyle={false}
-        summary={title}
-        title={title}
-      >
-        <LinkedinIcon size={iconSize} round />
-      </StyledLinkedinShareButton>
-      <StyledTelegramShareButton
-        url={url}
-        title={tagLine}
-        resetButtonStyle={false}
-      >
-        <TelegramIcon size={iconSize} round />
-      </StyledTelegramShareButton>
-      <StyledWhatsappShareButton
-        url={url}
-        title={tagLine}
-        separator=":: "
-        resetButtonStyle={false}
-      >
-        <WhatsappIcon size={iconSize} round />
-      </StyledWhatsappShareButton>
-      <StyledPinterestShareButton
-        url={url}
-        media={`${url}/does_Bitcoin_help.png`}
-        windowWidth={1000}
-        windowHeight={730}
-        resetButtonStyle={false}
-        description={title}
-      >
-        <PinterestIcon size={iconSize} round />
-      </StyledPinterestShareButton>
-      <StyledRedditShareButton
-        url={url}
-        title={tagLine}
-        resetButtonStyle={false}
-      >
-        <RedditIcon size={iconSize} round />
-      </StyledRedditShareButton>
-      <StyledLineShareButton url={url} title={tagLine} resetButtonStyle={false}>
-        <LineIcon size={iconSize} round />
-      </StyledLineShareButton>
-      <StyledEmailShareButton
-        url={url}
-        subject={title}
-        body="body"
-        resetButtonStyle={false}
-      >
-        <EmailIcon size={iconSize} round />
-      </StyledEmailShareButton>
-      <StyledCopyButton onClick={handleCopy}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 64 64"
-          strokeWidth="3"
-          width="32"
-          height="32"
-        >
-          <circle cx="32" cy="32" r="31" fill="gray" />
-          <rect
-            x="20"
-            y="15"
-            width="18"
-            height="26"
-            fill={coppied ? "orange" : "gray"}
-            stroke="white"
-          />
-          <rect
-            x="27"
-            y="22"
-            width="18"
-            height="26"
-            fill={coppied ? "orange" : "gray"}
-            stroke="white"
-          />
-        </svg>
-      </StyledCopyButton>
-    </DropDown>
-  );
+  title: string;
+  subtitle: string;
 }
+
+// eslint-disable-next-line react/display-name
+const ShareMenu = React.forwardRef<HTMLDivElement, ShareMenuProperties>(
+  ({ isShown, willUnmount, onCopy, title, subtitle }, reference) => {
+    const url = window.location.href.includes("localhost")
+      ? getEnvironmentVariable("VITE_DOMAIN_STAGED", "")
+      : window.location.href;
+
+    const iconSize = 32;
+    const [coppied, setCoppied] = useState(false);
+    const handleCopy = useCallback(() => {
+      setCoppied(true);
+      onCopy();
+      setTimeout(() => {
+        setCoppied(false);
+      }, 1000);
+    }, [onCopy]);
+
+    return (
+      <DropDown isShown={isShown} willUnmount={willUnmount} ref={reference}>
+        <StyledTwitterShareButton
+          url={url}
+          title={`${title}: ${subtitle}`}
+          hashtags={hashtag}
+          via={suggestedFollow}
+          resetButtonStyle={false}
+        >
+          <TwitterIcon size={iconSize} round />
+        </StyledTwitterShareButton>
+        <StyledFacebookShareButton
+          url={url}
+          quote={title}
+          hashtag={`#${hashtag[0]}`}
+          resetButtonStyle={false}
+        >
+          <FacebookIcon size={iconSize} round />
+        </StyledFacebookShareButton>
+        <StyledLinkedinShareButton
+          url={url}
+          resetButtonStyle={false}
+          summary={title}
+          title={title}
+        >
+          <LinkedinIcon size={iconSize} round />
+        </StyledLinkedinShareButton>
+        <StyledTelegramShareButton
+          url={url}
+          title={title}
+          resetButtonStyle={false}
+        >
+          <TelegramIcon size={iconSize} round />
+        </StyledTelegramShareButton>
+        <StyledWhatsappShareButton
+          url={url}
+          title={title}
+          separator=":: "
+          resetButtonStyle={false}
+        >
+          <WhatsappIcon size={iconSize} round />
+        </StyledWhatsappShareButton>
+        <StyledPinterestShareButton
+          url={url}
+          media={`${url}/does_Bitcoin_help.png`}
+          windowWidth={1000}
+          windowHeight={730}
+          resetButtonStyle={false}
+          description={`${title}: ${subtitle}`}
+        >
+          <PinterestIcon size={iconSize} round />
+        </StyledPinterestShareButton>
+        <StyledRedditShareButton
+          url={url}
+          title={`${title}: ${subtitle}`}
+          resetButtonStyle={false}
+        >
+          <RedditIcon size={iconSize} round />
+        </StyledRedditShareButton>
+        <StyledLineShareButton
+          url={url}
+          title={`${title}: ${subtitle}`}
+          resetButtonStyle={false}
+        >
+          <LineIcon size={iconSize} round />
+        </StyledLineShareButton>
+        <StyledEmailShareButton
+          url={url}
+          subject={title}
+          body={`${title}
+
+${subtitle}
+
+`}
+          resetButtonStyle={false}
+        >
+          <EmailIcon size={iconSize} round />
+        </StyledEmailShareButton>
+        <StyledCopyButton onClick={handleCopy}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 64 64"
+            strokeWidth="3"
+            width="32"
+            height="32"
+          >
+            <circle cx="32" cy="32" r="31" fill="gray" />
+            <rect
+              x="20"
+              y="15"
+              width="18"
+              height="26"
+              fill={coppied ? "orange" : "gray"}
+              stroke="white"
+            />
+            <rect
+              x="27"
+              y="22"
+              width="18"
+              height="26"
+              fill={coppied ? "orange" : "gray"}
+              stroke="white"
+            />
+          </svg>
+        </StyledCopyButton>
+      </DropDown>
+    );
+  }
+);
 
 export default ShareMenu;

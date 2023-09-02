@@ -1,39 +1,42 @@
 import styled from "@emotion/styled";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { type LeftToRightOrRightToLeft } from "../../../types";
 import { FADE_IN_OUT } from "../../../utilities/constants";
 import BackButton from "../buttons/back";
-import FlagButton from "../buttons/flag";
-import HeartButton from "../buttons/heart";
 import LinkButton from "../buttons/link";
 import DropDown from "./drop-down";
 
 interface MenuBarProperties {
   onGoBack: () => void;
-  onFlag: () => void;
-  onCopy: () => void;
   onLink: () => void;
-  disliked: boolean;
-  liked: boolean;
-  dislikeLoading: boolean;
-  likeLoading: boolean;
-  isRtl: LeftToRightOrRightToLeft;
-  disabled: boolean;
+  title: string;
+  subtitle: string;
+  direction: LeftToRightOrRightToLeft;
 }
 
-const Container = styled.div`
-  min-width: calc(100vw - 6em);
+const Container = styled.div<{ direction: LeftToRightOrRightToLeft }>`
+  width: 100vw;
+  max-width: 900px;
   display: flex;
+  flex-direction: ${(properties) =>
+    properties.direction === "ltr" ? "row" : "row-reverse"};
   justify-content: space-between;
-  padding: 0 2em;
+  padding: 1rem 2rem;
   gap: 10px;
-  margin-top: 5vh;
+  z-index: 10;
+  position: fixed;
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+    align-items: ${(properties) =>
+      properties.direction === "ltr" ? "flex-end" : "flex-start"};
+    max-width: 650px;
+  }
 `;
 
-const Options = styled.div`
-  display: flex;
-  gap: 10px;
+const MenuContainer = styled.div`
+  position: relative;
 `;
 
 /**
@@ -42,18 +45,45 @@ const Options = styled.div`
  */
 function MenuBar({
   onGoBack,
-  onFlag,
-  disliked,
-  liked,
-  dislikeLoading,
-  likeLoading,
-  onCopy,
   onLink,
-  isRtl,
-  disabled,
+  title,
+  subtitle,
+  direction,
 }: MenuBarProperties) {
   const [isShareMenuShown, setIsShareMenuShown] = useState(false);
+  const [isShareMenuShownForClicks, setIsShareMenuShownForClicks] =
+    useState(false);
   const [willUnmount, setWillUnmount] = useState(false);
+  const dropdownReference = useRef<HTMLDivElement>(null);
+
+  // Handle click outside of the dropdown
+  const handleClickOutside = useCallback(
+    (event: Event) => {
+      const targetElement = event.target as HTMLElement;
+
+      if (
+        dropdownReference.current &&
+        !dropdownReference.current.contains(targetElement) &&
+        isShareMenuShown &&
+        isShareMenuShownForClicks
+      ) {
+        setWillUnmount(true);
+        setTimeout(() => {
+          setIsShareMenuShown(!isShareMenuShown);
+          setWillUnmount(false);
+          setIsShareMenuShownForClicks(false);
+        }, FADE_IN_OUT);
+      }
+    },
+    [isShareMenuShown, isShareMenuShownForClicks]
+  );
+
+  useEffect(() => {
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [handleClickOutside]);
 
   const toggleShareMenu = useCallback(
     (event?: React.MouseEvent | React.KeyboardEvent) => {
@@ -70,6 +100,9 @@ function MenuBar({
           }, FADE_IN_OUT);
         } else {
           setIsShareMenuShown(!isShareMenuShown);
+          setTimeout(() => {
+            setIsShareMenuShownForClicks(true);
+          }, FADE_IN_OUT);
         }
       }
     },
@@ -77,30 +110,19 @@ function MenuBar({
   );
 
   return (
-    <Container>
+    <Container direction={direction}>
       <BackButton onClick={onGoBack} />
-      <Options>
-        <HeartButton
-          onClick={onCopy}
-          liked={liked}
-          disabled={disabled}
-          loading={likeLoading}
-          isRtl={isRtl}
-        />
-        <FlagButton
-          onClick={onFlag}
-          disliked={disliked}
-          loading={dislikeLoading}
-          isRtl={isRtl}
-          disabled={disabled}
-        />
+      <MenuContainer>
         <LinkButton onClick={toggleShareMenu} />
         <DropDown
+          ref={dropdownReference}
           isShown={isShareMenuShown}
           willUnmount={willUnmount}
           onCopy={onLink}
+          title={title}
+          subtitle={subtitle}
         />
-      </Options>
+      </MenuContainer>
     </Container>
   );
 }
