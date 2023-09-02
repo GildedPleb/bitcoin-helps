@@ -1,17 +1,19 @@
 {
   "dependencies": {
-    "@apollo/server": "^4.9.0",
+    "@apollo/server": "^4.9.3",
     "@as-integrations/aws-lambda": "^2.0.1",
-    "@aws-sdk/client-apigatewaymanagementapi": "^3.382.0",
-    "@aws-sdk/client-dynamodb": "^3.382.0",
-    "@aws-sdk/client-lambda": "^3.382.0",
-    "@aws-sdk/util-dynamodb": "^3.382.0",
-    "aws-crt": "^1.17.0",
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.398.0",
+    "@aws-sdk/client-dynamodb": "^3.398.0",
+    "@aws-sdk/client-lambda": "^3.398.0",
+    "@aws-sdk/util-dynamodb": "^3.398.0",
+    "@getalby/lightning-tools": "^4.0.2",
+    "aws-crt": "^1.18.0",
     "graceful-fs": "^4.2.11",
-    "graphql": "^16.7.1",
+    "graphql": "^16.8.0",
     "handlebars": "^4.7.8",
     "js-tiktoken": "^1.0.7",
-    "language-tags": "^1.0.8"
+    "language-tags": "^1.0.9",
+    "light-bolt11-decoder": "^3.0.0"
   },
   "resolutions": {}
 }

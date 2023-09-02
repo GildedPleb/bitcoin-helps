@@ -23,13 +23,15 @@
     "@aws-sdk/client-dynamodb": "^3.379.1",
     "@aws-sdk/client-lambda": "^3.379.1",
     "@aws-sdk/util-dynamodb": "^3.379.1",
+    "@getalby/lightning-tools": "^4.0.2",
     "@prisma/client": "^5.1.0",
     "aws-crt": "^1.17.0",
     "graceful-fs": "^4.2.11",
     "graphql": "^16.7.1",
     "handlebars": "^4.7.7",
     "js-tiktoken": "^1.0.7",
-    "language-tags": "^1.0.8"
+    "language-tags": "^1.0.8",
+    "light-bolt11-decoder": "^3.0.0"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "4.0.1",
