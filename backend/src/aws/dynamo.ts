@@ -238,3 +238,48 @@ export const deleteSubscribersByConnectionId = async (
     );
   }
 };
+
+// Title Cache
+
+export const TITLE_TABLE = process.env.TITLE_TABLE ?? "TITLE_TABLE";
+
+type TitleStatus = "started" | "completed";
+
+interface TitleEntry {
+  title: string;
+  subtitle: string;
+  status: TitleStatus;
+}
+
+export const cacheTitle = async (
+  argumentId: number,
+  title: string,
+  subtitle: string,
+  client: DynamoDBClient,
+  status: TitleStatus
+) => {
+  const parameters = {
+    Item: marshall({ argumentId, title, subtitle, status }),
+    TableName: TITLE_TABLE,
+  };
+  const command = new PutItemCommand(parameters);
+  await client.send(command);
+};
+
+export const getTitle = async (
+  argumentId: number,
+  client: DynamoDBClient
+): Promise<TitleEntry | undefined> => {
+  const parameters = {
+    KeyConditionExpression: "argumentId = :argumentIdValue",
+    ExpressionAttributeValues: marshall({
+      ":argumentIdValue": argumentId,
+    }),
+    TableName: TITLE_TABLE,
+  };
+  const command = new QueryCommand(parameters);
+  const response = await client.send(command);
+
+  if (!response.Items || response.Items.length === 0) return undefined;
+  return unmarshall(response.Items[0]) as TitleEntry;
+};
