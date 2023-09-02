@@ -94,13 +94,15 @@ export async function fetchGptResponse(
  * @param signal - Abort signal if you want
  * @param persistData - whether or not to persist text data
  * @param budgetType - the type of the call
+ * @param persist - Weather or not to persist
  */
 export async function fetchGptResponseFull(
   userInput: string | PromptMessage[],
   pubSub?: PubSub,
   signal?: AbortSignal,
   persistData = false,
-  budgetType: BudgetType = "ESSAY"
+  budgetType: BudgetType = "ESSAY",
+  persist = true
 ): Promise<{ words: string; id: string } | undefined> {
   try {
     const messages: PromptMessage[] = [
@@ -111,6 +113,7 @@ export async function fetchGptResponseFull(
     ];
 
     const response = await fetchGptResponse(messages, signal);
+    console.log("OpenAI Response ACK");
 
     if (response === undefined) {
       console.error("Response body is not available.");
@@ -187,18 +190,21 @@ export async function fetchGptResponseFull(
     console.log(
       `Total cost: (${promptTokens} * ${costPerInputToken}) + (${completionTokens} * ${costPerOutputToken}) = ${formatted} ($${cost})`
     );
-
-    const completion = await createCompletion(
-      promptTokens,
-      completionTokens,
-      cost,
-      budgetType,
-      persistData ? messages : [],
-      persistData ? words : undefined
-    );
-    console.log("completion persisted!", completion?.id);
-    if (!completion) throw new Error("Could not persist completion in AI Call");
-    return { words, id: completion.id };
+    if (persist) {
+      const completion = await createCompletion(
+        promptTokens,
+        completionTokens,
+        cost,
+        budgetType,
+        persistData ? messages : [],
+        persistData ? words : undefined
+      );
+      console.log("completion persisted!", completion?.id);
+      if (!completion)
+        throw new Error("Could not persist completion in AI Call");
+      return { words, id: completion.id };
+    }
+    return { words, id: "NOT_PERSISTED" };
   } catch (error) {
     console.error("Unexpected error fetching GPT response:", error);
     if (pubSub !== undefined) await pubSub.publish(FINISHED_STREEM);
@@ -208,7 +214,9 @@ export async function fetchGptResponseFull(
 
 export const tryAndRetryFetchAI = async (
   userInput: PromptMessage[],
-  maxRetries = RETRIES
+  maxRetries = RETRIES,
+  persist = true,
+  budgetType: BudgetType = "LANGUAGE"
 ): Promise<{ words: string; id: string } | undefined> => {
   const abreviation = userInput
     .map((item) => item.content)
@@ -227,12 +235,18 @@ export const tryAndRetryFetchAI = async (
       undefined,
       signal,
       true,
-      "LANGUAGE"
+      budgetType,
+      persist
     );
     if (result !== undefined) return result;
     if (maxRetries > 0) {
       console.log(retryMessage);
-      return await tryAndRetryFetchAI(userInput, maxRetries - 1);
+      return await tryAndRetryFetchAI(
+        userInput,
+        maxRetries - 1,
+        persist,
+        budgetType
+      );
     }
     console.log(exhaustedMessage);
     return undefined;
@@ -240,7 +254,12 @@ export const tryAndRetryFetchAI = async (
     console.error(error);
     if (maxRetries > 0) {
       console.log(retryMessage);
-      return await tryAndRetryFetchAI(userInput, maxRetries - 1);
+      return await tryAndRetryFetchAI(
+        userInput,
+        maxRetries - 1,
+        persist,
+        budgetType
+      );
     }
     console.log(exhaustedMessage);
     return undefined;
@@ -251,7 +270,9 @@ export const fetchQualityAIResults = async (
   userInput: string,
   validators: Array<(generated: string) => undefined | string>,
   maxExchanges = 6,
-  maxLoops = 12
+  maxLoops = 12,
+  persist = true,
+  budgetType: BudgetType = "LANGUAGE"
 ) => {
   let invalids = "false";
   let loops = maxLoops;
@@ -261,7 +282,7 @@ export const fetchQualityAIResults = async (
   while (invalids !== "" && loops > 0) {
     loops -= 1;
     // eslint-disable-next-line no-await-in-loop
-    current = await tryAndRetryFetchAI(exchanges);
+    current = await tryAndRetryFetchAI(exchanges, RETRIES, persist, budgetType);
     invalids = "";
     if (current === undefined) {
       console.error(
