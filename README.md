@@ -1,10 +1,9 @@
 # Does Bitcoin Help?
 
-|                 | URL                                                      | Model           |
-| --------------- | -------------------------------------------------------- | --------------- |
-| **Production**  | [https://doesbitcoinhelp.com](https://doesbitcoinhelp.com)  | GPT-4          |
-| **Development** | [https://dev.doesbitcoinhelp.com](https://dev.doesbitcoinhelp.com) | GPT-3.5 Turbo  |
-
+|                 | URL                                                                | Model         |
+| --------------- | ------------------------------------------------------------------ | ------------- |
+| **Production**  | [https://doesbitcoinhelp.com](https://doesbitcoinhelp.com)         | GPT-4         |
+| **Development** | [https://dev.doesbitcoinhelp.com](https://dev.doesbitcoinhelp.com) | GPT-3.5 Turbo |
 
 "Does Bitcoin Help?" uses generative AI to illustrate how Bitcoin can be beneficial to, not _various_, but _ALL_ facets of humanity worldwide. The central objective is to generate and/or distribute compelling, context-specific arguments to demonstrate Bitcoin's universal applicability and utility for any chosen input.
 
@@ -40,7 +39,7 @@ Bitcoin transcends political, ethical, spiritual, religious and other not-so-pro
 
 ### Any Amount of People
 
-To ensure universal access and to cater to the global audience, this project utilizes the elasticity of AWS Lambda for backend computing, and AWS' CDN for frontend delivery. This allows us to handle any volume of requests without compromising on service quality, ensuring that the arguments generated are always available to everyone, anytime, and from anywhere around the globe. (Caveat: If the user base were to truly scale, this implies multinational amounts of money to afford the AWS costs, which we don't have.)
+To ensure universal access and to cater to the global audience, this project utilizes the elasticity of AWS Lambda for backend computing, and AWS' CloudFront for frontend delivery. This allows us to handle any volume of requests without compromising on service quality, ensuring that the arguments generated are always available to everyone, anytime, and from anywhere around the globe. To manage the AWS and OpenAI costs associated with unlimited scaling and content, we limit output and add bitcoin payments via lightning and Alby to unlock, and thus pay for, unlimited content generation and delivery.
 
 # The Argument
 
@@ -56,7 +55,7 @@ You will note that the only way to employ such an argument, sans AI, is to have 
 
 # Why?
 
-This project is a result of reading C. Jason Mailer's [book](https://www.amazon.com/Progressives-Case-Bitcoin-Equitable-Peaceful/dp/B0C1J3DC2X) "A Progressive's Case for Bitcoin" and having the thought, "It is compelling that both a libertarian and progressive case can be made for Bitcoin. Indeed, both of those ideologies are radically opposed. What ideology does bitcoin not apply to?" Naturally, I started exploring this concept and found that there are no ideologies that do not agree with and benefit from Bitcoin, even ardent Central Bankers themselves could benefit as it removes moral hazard from their job affording them new-found integrity. Even absurdists benefit, for its hilarious that novel internet nerd money works better than credit cards, treasuries, and remittance combined. Naturally, the next step was to expand the search, to all people groups, and all languages. This project is the result.
+This project is a result of reading C. Jason Mailer's [book](https://www.amazon.com/Progressives-Case-Bitcoin-Equitable-Peaceful/dp/B0C1J3DC2X) "A Progressive's Case for Bitcoin" and having the thought, "It is compelling that both a libertarian and progressive case can be made for Bitcoin. Indeed, both of those ideologies are radically opposed. What ideology does bitcoin not apply to?" Naturally, I started exploring this concept and found that there are no ideologies that do not agree with and benefit from Bitcoin, even ardent Central Bankers themselves could benefit as it removes moral hazard from their job affording them new-found integrity. Even absurdists benefit, for its hilarious that novel internet nerd money works better than credit cards, treasuries, and remittance combined. Naturally, the next step was to expand the search, to all people groups, and all languages. This project is the result. (Oh, and it was also inspired a little by [The Library of Babel](https://libraryofbabel.info))
 
 But more than all of that, I simply got tired of writing hundreds of these essay by hands for friends and family. The templates used in the prompts herein are the culmination of years of writing and finding patterns in the stories I have told over and over about how important Bitcoin is for so many of the circumstances I have come across.
 
@@ -64,7 +63,9 @@ Oh, and I wanted to put together a portfolio project that combined Bitcoin and A
 
 # Architecture
 
-The base architecture is AWS Lambda as managed by Serverless with a React Frontend connected via Apollo server/client. The app reads browser set language, and begins generating that specific Language, defaulting to English. The user chooses and submits inputs, and if those inputs have not been generated before, OpenAI begins streaming a new essay to all subscribers listening at doesbitcoinhelp.com/{id}. Results are cached in PostgreSQL for future lookup. There were some serious difficulties and concerns in the delivery and access of AI Streaming data: streaming AI data feels like a modern day Ticker Tape Machine. Publishing that stream, ensuring its correct order, and then hooking into that stream requires a PubSub framework and stream caching. The general flow is as follows:
+The base architecture is AWS Lambda as managed by Serverless with a React Frontend connected via Apollo server/client. The app reads browser set language, and begins generating that specific Language, defaulting to English. The user chooses and submits inputs, and if those inputs have not been generated before, OpenAI begins streaming a new essay to all subscribers listening at doesbitcoinhelp.com/{language}/{id}. Results are cached in PostgreSQL for future lookup. There were some serious difficulties and concerns in the delivery and access of AI Streaming data: streaming AI data feels like a modern day Ticker Tape Machine. Publishing that stream, ensuring its correct order, and then hooking into that stream requires a PubSub framework and stream caching. Further, to pay for cost overages, we add a custom lightning paywall that unlocks after a wait period or after payment.
+
+The general flow is as follows:
 
 ### Frontend
 
@@ -74,6 +75,8 @@ sequenceDiagram
   participant Client as Client Browser
   participant Route53 as AWS Route53
   participant CloudFront as AWS CloudFront
+  participant LambdaEdge as Lambda@Edge
+  participant DynamoDB as AWS DynamoDB
   participant ACM as AWS Certificate Manager
   participant S3 as AWS S3 Bucket
   participant APIG as AWS API Gateway
@@ -87,8 +90,15 @@ sequenceDiagram
   ACM-->>CloudFront: Returns SSL certificate
   CloudFront-->>Client: Send SSL certificate
   Client->>CloudFront: Secure HTTPS request for website
-  CloudFront->>S3: Retrieve website resources
-  S3-->>CloudFront: Returns resources
+  CloudFront->>LambdaEdge: Route decision based on user-agent
+  alt BOT Request
+    LambdaEdge->>DynamoDB: Query for route specific html
+    DynamoDB-->>LambdaEdge: Return route specific html
+    LambdaEdge-->>CloudFront: Serve bot-specific content
+  else Real User Request
+    CloudFront->>S3: Retrieve website resources
+    S3-->>CloudFront: Returns resources
+  end
   CloudFront-->>Client: Serve website securely
   Client-->>User: Display secure website
   Client->>APIG: HTTPS Request to Backend
@@ -111,6 +121,8 @@ flowchart TB
         subgraph "Lambdas"
           CreateLanguage["CreateLanguage"]
           Websocket["Websocket"]
+          Titling["Titling"]
+          Invoicing["Invoicing"]
           GraphQL["GraphQL"]
           Stream["Stream"]
         end
@@ -130,8 +142,8 @@ flowchart TB
   end
 
   OpenAIGPT["OpenAI ChatGPT"]
+  Alby["Alby"]
   Internet["Clients"]
-
 
   Lambdas-->|uses|Endpoint
   PrismaLambdas-->|uses|Prisma
@@ -145,18 +157,26 @@ flowchart TB
 
   Stream<-->|interacts with|OpenAIGPT
   CreateLanguage<-->|interacts with|OpenAIGPT
+  Titling<-->|interacts with|OpenAIGPT
 
   GraphQL<-->|Resolves Requests|APIG
   Websocket<-->|Resolves Requests|APIG
   Stream-->|calls|APIG
   Stream-->|Streams To|APIG
+  Invoicing-->|Streams To|APIG
 
   APIG<-->|interacts with|Internet
   AWS_IoT<-->|interacts with|Stream
 
-  Websocket-->|calls|Stream
+  Websocket-->|calls|Titling
+  Titling-->|calls|Stream
+  Titling-->|calls|Invoicing
+  Invoicing<-->|interacts with|Alby
+  Invoicing-->|calls|Stream
+
   GraphQL-->|calls|CreateLanguage
   GraphQL-->|calls|Websocket
+
 ```
 
 ### CI/CD
@@ -217,3 +237,27 @@ flowchart TB
     end
 
 ```
+
+## The Maths
+
+For the curious, the math on the potential output is,
+
+    Total BCP-47 Tags = Languages * Scripts * Regions + Other
+    Total BCP-47 Tags = 8,101 * 150 * (249+899) + 16,202
+    Total BCP-47 Tags = ~1.4 Billion
+
+    Total Affiliations = 17 categories * ~ 20 Affiliations each
+    Total Affiliations = 340
+
+    Total Issues = 15 categories * ~ 20 Issues each
+    Total Issues = 300
+
+    Total Essays = Total BCP-47 Tags * Total Affiliations * Total Issues
+    Total Essays = ~1.4 Billion * 340 * 300
+    Total Essays = ~142.2 trillion ways that Bitcoin helps!
+
+    or 17,775 ways to help per person on earth.
+
+    or given an average lifespan of 80 years, we could say, "Every 1 day and 14.6 hours, Bitcoin provides a new and unique solution to a problem for each person on Earth."
+
+    This is why they call it "falling down the rabit whole"; the revelations cascade on a daily scale!
