@@ -8,7 +8,7 @@ provider:
   name: aws
   stage: ${opt:stage, 'dev'}
   runtime: nodejs18.x
-  region: ${env:AWS_REGION}
+  region: us-east-1
   environment:
     STAGE: ${opt:stage, 'dev'}
     TITLE_TABLE: btcfix-be-${self:provider.stage}-title
