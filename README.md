@@ -184,11 +184,16 @@ flowchart TB
 
 ### CI/CD
 
+[Hook to run FE Visual Regrettion tests locally]
+|Start CI/CD pipeline which deploys to dev or fails|
+
 ```mermaid
 flowchart TB
 
-    DevCode[Develop on Dev branch] --> DevPushToGH[Push to GitHub]
-    DevPushToGH -->|Start CI/CD pipeline which deploys to dev or fails| devCICD
+    DevCode[Develop on Dev branch] --> DevPushToGH[Push to GitHub -- Hook to run FE Visual Regrettion tests locally]
+    DevPushToGH --> LocalE2E{Pass?}
+    LocalE2E -- yes --> devCICD
+    LocalE2E -- no --> EndHook["End Process with failure"]
 
     subgraph devCICD["Development Pipeline"]
       direction LR
