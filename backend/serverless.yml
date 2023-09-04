@@ -163,7 +163,7 @@ functions:
     layers:
       - { Ref: EndpointLambdaLayer }
     memorySize: 256
-    timeout: 80 # 80 seconds TODO: Warning: Function (graphql) timeout setting (80) is greater than maximum allowed timeout for HTTP API endpoint (30s). This may introduce a situation where endpoint times out for a successful lambda invocation. This may need to be re-architected...
+    timeout: 30 # 30 seconds... but was 80 seconds TODO: Warning: Function (graphql) timeout setting (80) is greater than maximum allowed timeout for HTTP API endpoint (30s). This may introduce a situation where endpoint times out for a successful lambda invocation. This may need to be re-architected...
 
   invoice:
     handler: src/alby/endpoint.handler
