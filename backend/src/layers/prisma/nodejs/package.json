@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@prisma/client": "^5.1.0"
+    "@prisma/client": "^5.2.0"
   },
   "resolutions": {}
 }

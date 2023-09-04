@@ -6,7 +6,8 @@ type Query {
     issueId: String
     affiliationId: String
   ): ArgumentId
-  getInputPairByArgumentId(id: Int!): InputPairOrJob
+  getSpeedUpInvoice(jobId: String!): Invoice
+  getArgumentRoute(id: Int!): ArugmentRoute
 }
 
 type Mutation {
@@ -16,6 +17,18 @@ type Mutation {
 
 type Subscription {
   subscribeToArgument(jobId: String!): Update
+  subscribeToInvoice(jobId: String!): Paid
+}
+
+type Invoice {
+  expiresAt: String!
+  paymentRequest: String!
+  settled: Boolean!
+}
+
+type Paid {
+  type: String!
+  message: String!
 }
 
 type Update {
@@ -46,6 +59,13 @@ type InputPair {
 
 union InputPairOrJob = Job | InputPair
 
+type ArugmentRoute {
+  title: String!
+  subtitle: String!
+  language: String!
+  route: InputPairOrJob!
+}
+
 type ArgumentId {
   id: Int!
 }
@@ -69,7 +89,10 @@ type TranslationTypeMapped {
   andICareAbout: String!
   loading: String!
   whyCare: String!
-  findingArgument: String!
+  curatingContent: String!
+  readNow: String!
+  siteTitle: String!
+  siteDescription: String!
 }
 
 type LanguageSelectors {

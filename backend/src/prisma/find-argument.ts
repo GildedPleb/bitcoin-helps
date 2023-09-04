@@ -6,19 +6,38 @@ interface Event {
 
 export const handler = async ({ id }: Event) =>
   prisma.argument.findFirst({
-    where: {
-      id,
-    },
+    where: { id },
     include: {
+      titlePrompt: true,
       inputPair: {
         include: {
           arguments: true,
           language: true,
+          issue: {
+            include: {
+              issueCategory: true,
+            },
+          },
+          affiliation: {
+            include: {
+              affiliationType: true,
+            },
+          },
         },
       },
       generateJob: {
         include: {
           language: true,
+          issue: {
+            include: {
+              issueCategory: true,
+            },
+          },
+          affiliation: {
+            include: {
+              affiliationType: true,
+            },
+          },
         },
       },
     },

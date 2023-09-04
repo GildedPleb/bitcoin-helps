@@ -6,7 +6,12 @@ import {
 } from "@prisma/client";
 import tags from "language-tags";
 
-import { acquireLock, databaseClient } from "../../aws/dynamo";
+import {
+  acquireLock,
+  cacheLanguage,
+  databaseClient,
+  type LanguageCacheEntry,
+} from "../../aws/dynamo";
 import awsInvoke from "../../aws/invoke";
 import { type LanguageSelectors } from "../../generated/graphql";
 import { reactSelectorMap } from "../../helpers";
@@ -54,8 +59,19 @@ export const getAfffiliationsAndIssues = async (
       languagePupulated === undefined ? `Couldnt find ` : `Found `,
       languageTag
     );
-    if (languagePupulated !== undefined)
+    if (languagePupulated !== undefined) {
+      const { siteTitle, siteDescription } =
+        languagePupulated.translations as unknown as LanguageCacheEntry;
+      cacheLanguage(
+        languagePupulated.name,
+        siteTitle,
+        siteDescription,
+        databaseClient
+      ).catch((error) => {
+        console.error(error);
+      });
       return reactSelectorMap(languagePupulated);
+    }
   } catch (error) {
     console.error(error);
     return undefined;

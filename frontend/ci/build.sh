@@ -3,6 +3,8 @@
 set -e
 
 echo "STAGE: ${STAGE}"
+echo "DOMAIN: ${DOMAIN}"
+
 
 if [ "$STAGE" = "prod" ] && [ -z "$GITHUB_ACTIONS" ]; then
   echo "Prod deployments should only be executed in GitHub Actions."
@@ -30,3 +32,14 @@ npm run test
 
 echo "...Building React App..."
 npm run build:deploy
+
+echo "...Building Edge Lambda Function..."
+cd edge
+export TITLE_TABLE="btcfix-be-$STAGE-title"
+export LANGUAGE_TABLE="btcfix-be-$STAGE-language"
+if [ "${STAGE}" = "dev" ]; then
+  export DOMAIN="dev.$DOMAIN"
+fi
+npm ci
+npm run build
+cd ..

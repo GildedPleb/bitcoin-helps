@@ -41,6 +41,11 @@ const getArgumentPrompts = async () =>
     "RequestResponse"
   );
 
+const createTitle = async (argumentId: number) =>
+  awsInvoke(process.env.CREATE_TITLE_FUNCTION_NAME, "Event", {
+    argumentId,
+  });
+
 export const getArgumentId = async (
   _parent: unknown,
   ids: ArgumentParameters
@@ -52,8 +57,12 @@ export const getArgumentId = async (
     inputPair === undefined ? "Didn't find it" : "Found: ",
     inputPair
   );
-  if (inputPair !== undefined && inputPair.arguments.length > 0)
-    return { id: inputPair.arguments[0].id };
+  if (inputPair !== undefined && inputPair.arguments.length > 0) {
+    const argument = inputPair.arguments[0];
+    if (argument.title === null || argument.title === "")
+      await createTitle(argument.id);
+    return { id: argument.id };
+  }
 
   console.log("Checking if a job for this pair exists ...");
   const existingJob = await findJob(ids);
@@ -62,17 +71,19 @@ export const getArgumentId = async (
     existingJob === undefined ? "Didn't find it" : "Found: ",
     existingJob
   );
+  // If a job is "COMPLETED" that implies it has an input pair, so, the below check is just in case.
   if (existingJob && existingJob.status !== "COMPLETED")
     return { id: existingJob.argumentId };
 
   console.log("Creating a new job...");
+  // getArgumentPrompts can and probably should be encapsualted in the createJob prisma function, however, it was extracted to be replaced with user logic later on (aka "pick your prompt")
   const argumentPrompts = await getArgumentPrompts();
   if (argumentPrompts === undefined)
     throw new Error("There should always be prompts for arguments");
-  // Replace with user logic later on
   const randomIndex = Math.floor(Math.random() * argumentPrompts.length);
   const newJob = await createJob(ids, argumentPrompts[randomIndex].id);
-  if (newJob === undefined) throw new Error("Couldnt create a new job");
+  if (newJob === undefined) throw new Error("Couldn't create a new job");
+  await createTitle(newJob.argumentId);
   return { id: newJob.argumentId };
 };
 

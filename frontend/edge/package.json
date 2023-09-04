@@ -1,0 +1,25 @@
+{
+  "name": "edge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bot-intercept.js",
+  "scripts": {
+    "prepair-build": "./update-hash.sh",
+    "build": "npm run prepair-build && tsc && esbuild ./dist/bot-intercept.js --bundle --minify --platform=node --define:process.env.DOMAIN=\\\"$DOMAIN\\\" --define:process.env.TITLE_TABLE=\\\"btcfix-be-$STAGE-title\\\" --define:process.env.LANGUAGE_TABLE=\\\"btcfix-be-$STAGE-language\\\" --outfile=./dist/bundle.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.398.0",
+    "@aws-sdk/util-dynamodb": "^3.398.0",
+    "isbot": "^3.6.13",
+    "language-tags": "^1.0.9"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/language-tags": "^1.0.2",
+    "esbuild": "^0.19.2",
+    "typescript": "^5.2.2"
+  }
+}

@@ -13,6 +13,10 @@ export const GET_AFFILIATIONS_ISSUES = gql`
         andICareAbout
         loading
         whyCare
+        curatingContent
+        readNow
+        siteDescription
+        siteTitle
       }
       affiliationTypes {
         label

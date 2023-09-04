@@ -1,3 +1,4 @@
+// tsconfig.eslint.json
 {
   "extends": "./tsconfig.json",
   "include": [
@@ -5,6 +6,8 @@
     "src/**/*.tsx",
     "src/**/*.js",
     "src/**/*.jsx",
-    "src/**/*.test.ts"
+    "src/**/*.test.ts",
+    "edge/**/*.ts",
+    "vite.config.ts"
   ]
 }

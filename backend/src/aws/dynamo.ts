@@ -142,3 +142,167 @@ export const releaseLock = async (language: string, client: DynamoDBClient) => {
   await client.send(command);
   console.log("Released language lock for:", language);
 };
+
+// Invoice Subscribers
+
+export const INVOICE_SUBSCRIPTION_TABLE =
+  process.env.INVOICE_SUBSCRIPTION_TABLE ?? "INVOICE_SUBSCRIPTION";
+
+export const saveSubscription = async (
+  connectionId: string,
+  topic: string,
+  subscriptionId: string,
+  client: DynamoDBClient
+) => {
+  const parameters = {
+    Item: marshall({ connectionId, topic, ttl, subscriptionId }),
+    TableName: INVOICE_SUBSCRIPTION_TABLE,
+  };
+  const command = new PutItemCommand(parameters);
+  await client.send(command);
+};
+
+export const getSubscription = async (
+  topic: string,
+  client: DynamoDBClient
+): Promise<Array<{ connectionId: string; subscriptionId: string }>> => {
+  const parameters = {
+    IndexName: "TopicIndex",
+    KeyConditionExpression: "topic = :topicValue",
+    ExpressionAttributeValues: marshall({
+      ":topicValue": topic,
+    }),
+    TableName: INVOICE_SUBSCRIPTION_TABLE,
+  };
+  const command = new QueryCommand(parameters);
+  const response = await client.send(command);
+  return (
+    response.Items?.map(
+      (item) =>
+        unmarshall(item) as { connectionId: string; subscriptionId: string }
+    ) ?? []
+  );
+};
+
+export const deleteSubscription = async (
+  topic: string,
+  client: DynamoDBClient
+) => {
+  const connections = await getSubscription(topic, client);
+  for await (const { connectionId } of connections) {
+    const parameters = {
+      Key: marshall({ connectionId, topic }),
+      TableName: INVOICE_SUBSCRIPTION_TABLE,
+    };
+    const command = new DeleteItemCommand(parameters);
+    await client.send(command);
+  }
+};
+
+export const deleteSubscribersByConnectionId = async (
+  connectionId: string,
+  client: DynamoDBClient
+) => {
+  const queryParameters = {
+    IndexName: "ConnectionIdIndex",
+    KeyConditionExpression: "connectionId = :connectionIdValue",
+    ExpressionAttributeValues: marshall({
+      ":connectionIdValue": connectionId,
+    }),
+    TableName: INVOICE_SUBSCRIPTION_TABLE,
+  };
+  const queryCommand = new QueryCommand(queryParameters);
+  const queryResponse = await client.send(queryCommand);
+
+  const deletePromises = queryResponse.Items?.map(async (item) => {
+    const unmarshalledItem = unmarshall(item) as {
+      connectionId: string;
+      topic: string;
+    };
+    const deleteParameters = {
+      Key: marshall({
+        connectionId: unmarshalledItem.connectionId,
+        topic: unmarshalledItem.topic,
+      }),
+      TableName: INVOICE_SUBSCRIPTION_TABLE,
+    };
+    const deleteCommand = new DeleteItemCommand(deleteParameters);
+    return client.send(deleteCommand);
+  });
+
+  // Wait for all delete operations to complete
+  if (deletePromises) {
+    await Promise.all(deletePromises);
+    console.log(
+      `Deleted ${deletePromises.length} subscribers for connection ID: ${connectionId}`
+    );
+  }
+};
+
+// Title Cache
+
+export const TITLE_TABLE = process.env.TITLE_TABLE ?? "TITLE_TABLE";
+
+type TitleStatus = "started" | "completed";
+
+interface TitleEntry {
+  title: string;
+  subtitle: string;
+  status: TitleStatus;
+}
+
+export const cacheTitle = async (
+  argumentId: number,
+  title: string,
+  subtitle: string,
+  client: DynamoDBClient,
+  status: TitleStatus
+) => {
+  const parameters = {
+    Item: marshall({ argumentId, title, subtitle, status }),
+    TableName: TITLE_TABLE,
+  };
+  const command = new PutItemCommand(parameters);
+  await client.send(command);
+};
+
+export const getTitle = async (
+  argumentId: number,
+  client: DynamoDBClient
+): Promise<TitleEntry | undefined> => {
+  const parameters = {
+    KeyConditionExpression: "argumentId = :argumentIdValue",
+    ExpressionAttributeValues: marshall({
+      ":argumentIdValue": argumentId,
+    }),
+    TableName: TITLE_TABLE,
+  };
+  const command = new QueryCommand(parameters);
+  const response = await client.send(command);
+
+  if (!response.Items || response.Items.length === 0) return undefined;
+  return unmarshall(response.Items[0]) as TitleEntry;
+};
+
+// Language Cache
+
+export const LANGUAGE_TABLE = process.env.LANGUAGE_TABLE ?? "LANGUAGE_TABLE";
+
+export interface LanguageCacheEntry {
+  siteTitle: string;
+  siteDescription: string;
+}
+
+export const cacheLanguage = async (
+  languageTag: string,
+  siteTitle: string,
+  siteDescription: string,
+  client: DynamoDBClient
+) => {
+  const parameters = {
+    Item: marshall({ languageTag, siteTitle, siteDescription }),
+    TableName: LANGUAGE_TABLE,
+  };
+  const command = new PutItemCommand(parameters);
+  await client.send(command);
+};

@@ -3,13 +3,17 @@ import prisma from "./context";
 
 interface Event {
   jobId: string;
-  state: JobStatus;
+  state?: JobStatus;
+  paid?: boolean;
 }
 
-export const handler = async ({ jobId, state }: Event) =>
+export const handler = async ({ jobId, state, paid }: Event) =>
   prisma.generateJob.update({
     where: { id: jobId },
-    data: { status: state },
+    data: {
+      ...(state && { status: state }),
+      ...(paid && { scheduledFor: new Date().toISOString() }),
+    },
     include: {
       affiliation: { include: { affiliationType: true } },
       issue: { include: { issueCategory: true } },

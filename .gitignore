@@ -139,3 +139,4 @@ frontend/dist-test/
 
 **/*/.DS_Store
 frontend/src/test/__image_snapshots__/
+frontend/edge/bot-intercept.ts.bak

@@ -1,15 +1,15 @@
 import styled from "@emotion/styled";
 import { useEffect, useRef, useState } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 import { useLanguage } from "../providers/language";
 import { useLoading } from "../providers/loading";
 import { FADE_IN_OUT } from "../utilities/constants";
 import { LoadingDots } from "./components";
+import Head from "./head";
 import ContentPage from "./pages/content";
 import LandingPage from "./pages/landing";
 
-// Overlay Styles
 const Overlay = styled.div`
   position: fixed;
   z-index: 1;
@@ -28,11 +28,18 @@ const Overlay = styled.div`
  *
  */
 function App() {
-  const { loadingText, isLoading } = useLoading();
+  const { loadingText, isLoading, setIsLoading, setLoadingText } = useLoading();
   const [willUnmount, setWillUnmount] = useState(false);
   const [mount, setMount] = useState(false);
   const cacheReference = useRef(new Set<string>());
-  const { language } = useLanguage();
+  const { language, loading: languageLoading } = useLanguage();
+  const location = useLocation();
+  const [tag, id] = location.pathname.split("/").filter(Boolean) as [
+    string | undefined,
+    string | undefined
+  ];
+  const navigate = useNavigate();
+
   useEffect(() => {
     let timeout: number;
     if (!isLoading && mount) {
@@ -47,8 +54,30 @@ function App() {
       clearTimeout(timeout);
     };
   }, [isLoading, mount]);
+
+  useEffect(() => {
+    if (languageLoading) {
+      setIsLoading(true);
+      setLoadingText(language.loading);
+    } else {
+      setIsLoading(false);
+    }
+  }, [languageLoading, setIsLoading, setLoadingText, language.loading]);
+
+  // Set the URL from the language
+  useEffect(() => {
+    if (
+      tag !== undefined &&
+      tag !== "" &&
+      tag !== language.value &&
+      id === undefined
+    )
+      navigate(`/`);
+  }, [id, language.value, navigate, tag]);
+
   return (
     <>
+      <Head id={id} />
       <Overlay>
         {mount && (
           <LoadingDots
@@ -60,8 +89,9 @@ function App() {
       </Overlay>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/:tag" element={<LandingPage />} />
         <Route
-          path="/:id"
+          path="/:tag/:id"
           element={<ContentPage cacheReference={cacheReference} />}
         />
       </Routes>

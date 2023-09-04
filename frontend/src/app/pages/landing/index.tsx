@@ -21,12 +21,13 @@ export interface OptionTypeMapped extends OptionType {
 }
 
 const sortGroups = (groups: GroupType[]): GroupType[] => {
-  for (const group of groups)
-    group.options.sort((a, b) => a.label.localeCompare(b.label));
-
-  groups.sort((a, b) => a.label.localeCompare(b.label));
-
-  return groups;
+  const cloneGroups = JSON.parse(JSON.stringify(groups)) as GroupType[];
+  for (const group of cloneGroups)
+    group.options.sort((a: OptionType, b: OptionType) =>
+      a.label.localeCompare(b.label)
+    );
+  cloneGroups.sort((a, b) => a.label.localeCompare(b.label));
+  return cloneGroups;
 };
 
 const Container = styled.section<{ willUnmount: boolean }>`
@@ -80,21 +81,23 @@ function LandingPage() {
         setAffiliation(undefined);
         // eslint-disable-next-line unicorn/no-useless-undefined
         setIssue(undefined);
+        navigate(`/${option.value}`);
       }
     },
-    [language, setLanguage]
+    [language.label, navigate, setLanguage]
   );
 
   const handleGoButtonClick = useCallback(async () => {
     if (affiliation && issue) {
       setWillUnmount(true);
-      setLoadingText(language.findingArgument);
+      setLoadingText(language.translations?.curatingContent);
+
       setIsLoading(true);
       const result = await getArgumentId();
       if (result.data?.getArgumentId?.id !== undefined) {
         const { id } = result.data.getArgumentId;
         setTimeout(() => {
-          navigate(`/${id}`);
+          navigate(`/${language.value}/${id}`);
         }, FADE_IN_OUT);
       }
     }
@@ -102,7 +105,8 @@ function LandingPage() {
     affiliation,
     getArgumentId,
     issue,
-    language.findingArgument,
+    language.translations?.curatingContent,
+    language.value,
     navigate,
     setIsLoading,
     setLoadingText,
@@ -143,31 +147,31 @@ function LandingPage() {
       language.issueCategories ? (
         <>
           <Sentence direction={language.direction} fadeIn>
-            {language.iAmAffiliatedWith}
+            {language.translations?.iAmAffiliatedWith}
             <Selector
               language={language}
               value={affiliation}
               onChange={setAffiliation}
               options={sortGroups(language.affiliationTypes)}
-              placeholder={language.selectAffiliation}
+              placeholder={language.translations?.selectAffiliation}
               selectorKey={1}
             />
           </Sentence>
           <Sentence direction={language.direction} fadeIn>
-            {language.andICareAbout}
+            {language.translations?.andICareAbout}
             <Selector
               language={language}
               value={issue}
               onChange={setIssue}
               options={sortGroups(language.issueCategories)}
-              placeholder={language.selectIssue}
+              placeholder={language.translations?.selectIssue}
               selectorKey={2}
             />
           </Sentence>
           <GoButton
             onClick={handleGoButtonClick}
-            disabled={!affiliation || !issue}
-            text={language.whyCare}
+            disabled={!affiliation || !issue || willUnmount}
+            text={language.translations?.whyCare}
           />
         </>
       ) : (

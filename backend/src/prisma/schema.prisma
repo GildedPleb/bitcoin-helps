@@ -78,20 +78,24 @@ model InputPair {
 }
 
 model Argument {
-  id          Int             @id @unique @default(autoincrement())
-  inputPair   InputPair?      @relation(fields: [inputPairId], references: [id])
-  inputPairId String?
-  content     String
-  like        Int             @default(0)
-  dislike     Int             @default(0)
-  created     DateTime        @default(now())
-  updated     DateTime        @updatedAt
-  createdBy   User?           @relation("createdBy", fields: [createdById], references: [id])
-  createdById Int?
-  editedBy    User[]
-  generateJob GenerateJob?
-  prompt      ArgumentPrompt? @relation(fields: [promptId], references: [id])
-  promptId    String?
+  id            Int             @id @unique @default(autoincrement())
+  inputPair     InputPair?      @relation(fields: [inputPairId], references: [id])
+  inputPairId   String?
+  content       String
+  like          Int             @default(0)
+  dislike       Int             @default(0)
+  created       DateTime        @default(now())
+  updated       DateTime        @updatedAt
+  createdBy     User?           @relation("createdBy", fields: [createdById], references: [id])
+  createdById   Int?
+  editedBy      User[]
+  generateJob   GenerateJob?
+  prompt        ArgumentPrompt? @relation(fields: [promptId], references: [id])
+  promptId      String?
+  titlePrompt   TitlePrompt?    @relation(fields: [titlePromptId], references: [id])
+  titlePromptId String?
+  title         String?
+  subtitle      String?
 }
 
 model User {
@@ -123,6 +127,7 @@ model GenerateJob {
   updatedAt        DateTime       @updatedAt
   openAICall       OpenAICall[]
   scheduledFor     DateTime
+  invoice          AlbyInvoice?
 
   @@unique([issueId, affiliationId, languageId])
 }
@@ -159,6 +164,18 @@ model LanguagePrompt {
   @@unique([name, version], name: "name_version")
 }
 
+model TitlePrompt {
+  id        String     @id @default(uuid())
+  name      String
+  content   String
+  version   Int
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  argument  Argument[]
+
+  @@unique([name, version], name: "name_version")
+}
+
 model Budget {
   id         String       @id @default(uuid())
   budgetType BudgetType
@@ -187,9 +204,25 @@ model OpenAICall {
   createdAt DateTime @default(now())
 }
 
+model AlbyInvoice {
+  id             String       @id @default(uuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  expiresAt      DateTime
+  amount         Int
+  settled        Boolean
+  paymentRequest String       @unique
+  paymentHash    String       @unique
+  generateJob    GenerateJob? @relation(fields: [generateJobId], references: [id])
+  generateJobId  String       @unique
+  verify         String
+  comment        String
+}
+
 enum BudgetType {
   LANGUAGE
   ESSAY
+  TITLE
 }
 
 enum JobStatus {

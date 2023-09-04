@@ -135,6 +135,13 @@ export const handler = async ({
     essaysCanBeProducedBeforeOverBudget: essaysCanBeProducedRightNow,
   });
 
+  const titlePrompt = await prisma.titlePrompt.findFirst({
+    where: { name: "Basic" },
+    orderBy: { version: "desc" },
+  });
+  if (!titlePrompt)
+    console.error("You should strongly consider having a title prompt");
+
   return prisma.generateJob.create({
     data: {
       scheduledFor,
@@ -156,6 +163,9 @@ export const handler = async ({
       argument: {
         create: {
           content: "",
+          ...(titlePrompt && {
+            titlePrompt: { connect: { id: titlePrompt.id } },
+          }),
         },
       },
       argumentPrompt: {
