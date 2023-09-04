@@ -265,8 +265,11 @@ export const handler = async (event: CloudFrontRequestEvent) => {
     return request;
   }
 
-  // For everyhting else, redirect
-  if (REDIRECT_REGEX.test(uri)) request.uri = "/index.html";
+  // For everything else, redirect
+  if (REDIRECT_REGEX.test(uri)) {
+    console.log("Redirecting everything else");
+    request.uri = "/index.html";
+  }
 
   // If its production domain 'www' redirect
   const hostValue = headers.host[0].value;
