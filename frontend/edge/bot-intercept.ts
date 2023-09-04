@@ -272,8 +272,7 @@ export const handler = async (event: CloudFrontRequestEvent) => {
   }
 
   // If its production domain 'www' redirect
-  const hostValue = headers.host[0].value;
-  if (hostValue === `www.${DOMAIN}`) {
+  if (headers.host[0].value === `www.${DOMAIN}`) {
     console.log("Redirect away from www");
     return {
       status: "301",
