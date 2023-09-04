@@ -33,16 +33,18 @@ custom:
       package:initialize: "STAGE=${self:provider.stage} DOMAIN=${env:DOMAIN} sh ./ci/build.sh"
       before:remove:remove: "STAGE=${self:provider.stage} sh ./ci/pre-remove.sh"
   s3Sync:
-    - bucketName: ${self:service}-${self:provider.stage}-websitebucket9032ebb7-ek5unjsxvgo6
-      localDir: ./dist
-      deleteRemoved: true
-      params:
-        - "*.html":
-            CacheControl: "no-cache"
-        - "*.js":
-            CacheControl: "public, max-age=31536000"
-        - "*.css":
-            CacheControl: "public, max-age=31536000"
+    noSync: true
+    buckets:
+      - bucketName: ${self:service}-${self:provider.stage}-websitebucket
+        localDir: ./dist
+        deleteRemoved: true
+        params:
+          - "*.html":
+              CacheControl: "no-cache"
+          - "*.js":
+              CacheControl: "public, max-age=31536000"
+          - "*.css":
+              CacheControl: "public, max-age=31536000"
 
 # new
 functions:
@@ -109,15 +111,17 @@ resources:
               Condition:
                 Bool:
                   "aws:SecureTransport": false
-    websiteBucket9032EBB7:
+    websiteBucket:
       Type: "AWS::S3::Bucket"
       UpdateReplacePolicy: Delete
       DeletionPolicy: Delete
+      Properties:
+        BucketName: ${self:service}-${self:provider.stage}-websitebucket
     websiteBucketPolicyE0AC1822:
       Type: "AWS::S3::BucketPolicy"
       Properties:
         Bucket:
-          Ref: websiteBucket9032EBB7
+          Ref: websiteBucket
         PolicyDocument:
           Statement:
             - Action: "s3:GetObject"
@@ -131,7 +135,7 @@ resources:
                 "Fn::Join":
                   - ""
                   - - "Fn::GetAtt":
-                        - websiteBucket9032EBB7
+                        - websiteBucket
                         - Arn
                     - /*
           Version: "2012-10-17"
@@ -173,7 +177,7 @@ resources:
           Origins:
             - DomainName:
                 "Fn::GetAtt":
-                  - websiteBucket9032EBB7
+                  - websiteBucket
                   - RegionalDomainName
               Id: websiteCDNOrigin173C249FC
               S3OriginConfig:
@@ -292,7 +296,7 @@ resources:
     websiteBucketName1C4A852B:
       Description: Name of the bucket that stores the static website.
       Value:
-        Ref: websiteBucket9032EBB7
+        Ref: websiteBucket
     websiteDomainFCB9350F:
       Description: Website domain name.
       Value:
