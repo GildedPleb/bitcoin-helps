@@ -267,8 +267,7 @@ resources:
                     - lambda:CreateFunction
                     - lambda:DeleteFunction
                     - lambda:DisableReplication
-                  Resource:
-                    - !Sub "arn:aws:lambda:*:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-lambda-edge:*"
+                  Resource: !Sub "arn:aws:lambda:*:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-lambda-edge:*"
                 - Effect: Allow
                   Action:
                     - iam:PassRole
