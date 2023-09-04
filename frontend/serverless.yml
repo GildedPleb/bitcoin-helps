@@ -247,7 +247,7 @@ resources:
               Action:
                 - sts:AssumeRole
         Policies:
-          - PolicyName: edge-role-logging-policy-${self:provider.stage}
+          - PolicyName: edge-role-policy-${self:provider.stage}
             PolicyDocument:
               Version: "2012-10-17"
               Statement:
