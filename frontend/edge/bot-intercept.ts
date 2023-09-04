@@ -267,7 +267,7 @@ export const handler = async (event: CloudFrontRequestEvent) => {
 
   // For everything else, redirect
   if (REDIRECT_REGEX.test(uri)) {
-    console.log("Redirecting everything else");
+    console.log("Redirecting everything else.");
     request.uri = "/index.html";
   }
 
