@@ -259,12 +259,7 @@ export const handler = async (event: CloudFrontRequestEvent) => {
   const { uri, headers } = request;
 
   // If the request is for a known static file type, forward it to S3 without modification.
-  if (
-    uri.endsWith(".js") ||
-    uri.endsWith(".png") ||
-    uri.endsWith(".ico") ||
-    uri.endsWith(".json")
-  ) {
+  if (/\.js$|\.png$|\.ico$|\.json$/.test(uri)) {
     console.log("Pass through for js/png/ico/json static files.");
     return request;
   }
