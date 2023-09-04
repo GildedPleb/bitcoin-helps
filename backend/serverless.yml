@@ -89,6 +89,7 @@ custom:
     hooks:
       before:package:initialize: "STAGE=${self:provider.stage} sh ./ci/pre-install.sh"
       package:initialize: "STAGE=${self:provider.stage} sh ./ci/post-install.sh"
+      before:remove:remove: "STAGE=${self:provider.stage} sh ./ci/pre-remove.sh"
   prune:
     automatic: true
     number: 3

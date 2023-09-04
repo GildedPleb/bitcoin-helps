@@ -31,6 +31,7 @@ custom:
   scriptable:
     hooks:
       package:initialize: "STAGE=${self:provider.stage} DOMAIN=${env:DOMAIN} sh ./ci/build.sh"
+      before:remove:remove: "STAGE=${self:provider.stage} sh ./ci/pre-remove.sh"
   s3Sync:
     - bucketName: ${self:service}-${self:provider.stage}-websitebucket9032ebb7-ek5unjsxvgo6
       localDir: ./dist
