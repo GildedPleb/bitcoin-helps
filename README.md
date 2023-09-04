@@ -116,17 +116,16 @@ flowchart TB
     subgraph "Serverless"
       APIG["AWS API Gateway"]
       DYNAMO["AWS DynamoDB Tables"]
-
-      subgraph "Non-VPC Resources"
-        subgraph "Lambdas"
-          CreateLanguage["CreateLanguage"]
-          Websocket["Websocket"]
-          Titling["Titling"]
-          Invoicing["Invoicing"]
-          GraphQL["GraphQL"]
-          Stream["Stream"]
-        end
+      subgraph "Lambdas"
+        CreateLanguage["CreateLanguage"]
+        Websocket["Websocket"]
+        Titling["Titling"]
+        Invoicing["Invoicing"]
+        GraphQL["GraphQL"]
+        Stream["Stream"]
       end
+
+      AWS_Cloudfront["AWS Cloudfront"]
 
       subgraph "VPC Resources"
         PrismaLambdas["Prisma Lambdas"]
@@ -165,14 +164,18 @@ flowchart TB
   Stream-->|Streams To|APIG
   Invoicing-->|Streams To|APIG
 
-  APIG<-->|interacts with|Internet
+  APIG<-->|Real Users|AWS_Cloudfront
+  DYNAMO<-->|Bots|AWS_Cloudfront
+  AWS_Cloudfront<-->|interacts with|Internet
   AWS_IoT<-->|interacts with|Stream
 
   Websocket-->|calls|Titling
   Titling-->|calls|Stream
   Titling-->|calls|Invoicing
+  Titling-->|Cache Titles to Bots|DYNAMO
   Invoicing<-->|interacts with|Alby
   Invoicing-->|calls|Stream
+  Invoicing-->|Listen-for-paid management|DYNAMO
 
   GraphQL-->|calls|CreateLanguage
   GraphQL-->|calls|Websocket
@@ -181,11 +184,16 @@ flowchart TB
 
 ### CI/CD
 
+[Hook to run FE Visual Regrettion tests locally]
+|Start CI/CD pipeline which deploys to dev or fails|
+
 ```mermaid
 flowchart TB
 
-    DevCode[Develop on Dev branch] --> DevPushToGH[Push to GitHub]
-    DevPushToGH -->|Start CI/CD pipeline which deploys to dev or fails| devCICD
+    DevCode[Develop on Dev branch] --> DevPushToGH[Push to GitHub -- Hook to run FE Visual Regrettion tests locally]
+    DevPushToGH --> LocalE2E{Pass?}
+    LocalE2E -- yes --> devCICD
+    LocalE2E -- no --> EndHook["End Process with failure"]
 
     subgraph devCICD["Development Pipeline"]
       direction LR
@@ -203,7 +211,8 @@ flowchart TB
         DevBuild --> DevBuildReact["Build React App"]
         DevBuildReact --> DevFrontEndTests[Run Tests]
         DevFrontEndTests --> DeployFEToDev{Pass?}
-        DeployFEToDev -- yes --> DeployFEDev["Deploy to dev.doesbitcoinhelp.com"]
+        DeployFEToDev -- yes --> DeployFELambda["Deploy Lambda@Edge"]
+        DeployFELambda --> DeployFEDev["Deploy to dev.doesbitcoinhelp.com"]
         DeployFEToDev -- no --> EndFEDev["End Process with failure"]
       end
       devBackend --> devFrontend
@@ -230,8 +239,10 @@ flowchart TB
         ProdBuild --> ProdBuildReact["Build React App"]
         ProdBuildReact --> ProdFrontEndTests[Run Tests]
         ProdFrontEndTests --> DeployFEToProd{Pass?}
-        DeployFEToProd -- yes --> DeployFEProd["Deploy to doesbitcoinhelp.com"]
+        DeployFEToProd -- yes --> DeployFELambdaProd["Deploy Lambda@Edge"]
+        DeployFELambdaProd --> DeployFEProd["Deploy to doesbitcoinhelp.com"]
         DeployFEToProd -- no --> EndFEProd["End Process with failure"]
+
       end
       prodBackend --> prodFrontend
     end

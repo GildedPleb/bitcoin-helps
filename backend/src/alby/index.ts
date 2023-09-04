@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 import { LightningAddress } from "@getalby/lightning-tools";
-import { decode } from "light-bolt11-decoder";
+import { decode } from "@holepunch/light-bolt11-decoder";
 
 // import { type Invoice } from "../generated/graphql";
 import { type OmittedInvoice } from "../graphql/resolvers/get-speed-up-invoice";

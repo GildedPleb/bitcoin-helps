@@ -31,6 +31,7 @@ custom:
   scriptable:
     hooks:
       package:initialize: "STAGE=${self:provider.stage} DOMAIN=${env:DOMAIN} sh ./ci/build.sh"
+      before:remove:remove: "STAGE=${self:provider.stage} sh ./ci/pre-remove.sh"
   s3Sync:
     - bucketName: ${self:service}-${self:provider.stage}-websitebucket9032ebb7-ek5unjsxvgo6
       localDir: ./dist
@@ -246,7 +247,7 @@ resources:
               Action:
                 - sts:AssumeRole
         Policies:
-          - PolicyName: edge-role-logging-policy-${self:provider.stage}
+          - PolicyName: edge-role-policy-${self:provider.stage}
             PolicyDocument:
               Version: "2012-10-17"
               Statement:
@@ -256,20 +257,18 @@ resources:
                     - logs:CreateLogStream
                     - logs:PutLogEvents
                     - logs:PutRetentionPolicy
-                  Resource: "arn:aws:logs:*:*:*"
+                  Resource: !Sub "arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/lambda/*:*:*"
                 - Effect: Allow
                   Action:
                     - lambda:InvokeFunction
                     - lambda:GetFunction
                     - lambda:EnableReplication*
                     - iam:CreateServiceLinkedRole
-                  Resource: "arn:aws:lambda:us-east-1:*:function:${self:service}-${self:provider.stage}-us-east-1-lambda-edge:*"
-                - Effect: Allow
-                  Action:
                     - lambda:CreateFunction
                     - lambda:DeleteFunction
                     - lambda:DisableReplication
-                  Resource: arn:aws:lambda:*:*:function:*
+                  Resource:
+                    - !Sub "arn:aws:lambda:*:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-lambda-edge:*"
                 - Effect: Allow
                   Action:
                     - iam:PassRole

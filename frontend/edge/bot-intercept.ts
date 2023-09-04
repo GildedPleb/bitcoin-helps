@@ -251,6 +251,7 @@ async function generateBotContent(id: number | undefined, language = "en") {
 
 const REDIRECT_REGEX =
   /^[^.]+$|\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|xml|pdf|webmanifest|avif|wasm)$)([^.]+$)/;
+const PASS_THROUGH_REGEX = /\.js$|\.png$|\.ico$|\.json$/;
 
 export const handler = async (event: CloudFrontRequestEvent) => {
   console.log("Recieved event:", event.Records[0].cf);
@@ -259,18 +260,16 @@ export const handler = async (event: CloudFrontRequestEvent) => {
   const { uri, headers } = request;
 
   // If the request is for a known static file type, forward it to S3 without modification.
-  if (
-    uri.endsWith(".js") ||
-    uri.endsWith(".png") ||
-    uri.endsWith(".ico") ||
-    uri.endsWith(".json")
-  ) {
+  if (PASS_THROUGH_REGEX.test(uri)) {
     console.log("Pass through for js/png/ico/json static files.");
     return request;
   }
 
-  // For everyhting else, redirect
-  if (REDIRECT_REGEX.test(uri)) request.uri = "/index.html";
+  // For everything else, redirect
+  if (REDIRECT_REGEX.test(uri)) {
+    console.log("Redirecting everything else");
+    request.uri = "/index.html";
+  }
 
   // If its production domain 'www' redirect
   const hostValue = headers.host[0].value;
