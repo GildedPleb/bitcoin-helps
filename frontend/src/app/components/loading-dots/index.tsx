@@ -39,7 +39,7 @@ const Loading = styled.div<{ small: boolean | string }>`
 const Dot = styled.div<{
   fadeInDelay: number;
   fadeOutDelay: number;
-  small: boolean | string;
+  small: boolean;
 }>`
   background: black;
   border-radius: 50%;
@@ -55,25 +55,55 @@ const Dot = styled.div<{
           margin: 0 5px;
         `
       : ""}
-  ${(properties) =>
-    typeof properties.small === "string"
-      ? css`
-          width: ${properties.small};
-          height: ${properties.small};
-          margin: 0 ${properties.small};
-        `
-      : ""}
 
   animation: ${fadeIn} 1s ${(properties) => properties.fadeInDelay}s forwards,
     ${fadeOut} 1.5s ${(properties) => properties.fadeOutDelay}s forwards;
 `;
 
-const Letter = styled.span<{ fadeInDelay: number; fadeOutDelay: number }>`
+const LetterContainer = styled.span`
+  position: relative;
+  display: inline-block;
+`;
+
+const Letter = styled.span<{
+  fadeInDelay: number;
+  fadeOutDelay: number;
+  children: string;
+}>`
+  position: relative;
   font-size: clamp(1.1rem, 3.5vw, 2rem);
   opacity: 0;
-  margin: 0 5px;
+  margin: 0 0px;
   animation: ${fadeIn} 2s ${(properties) => properties.fadeInDelay}s forwards,
     ${fadeOut} 2s ${(properties) => properties.fadeOutDelay}s forwards;
+  z-index: 10;
+  color: black;
+`;
+
+const Shadow = styled.span<{
+  fadeInDelay: number;
+  fadeOutDelay: number;
+  children: string;
+}>`
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: clamp(1.1rem, 3.5vw, 2rem);
+  opacity: 0;
+  margin: 0 1px;
+  animation: ${fadeIn} 2s ${(properties) => properties.fadeInDelay}s forwards,
+    ${fadeOut} 2s ${(properties) => properties.fadeOutDelay}s forwards;
+  z-index: 0;
+  color: transparent;
+  text-shadow: 4px 4px 10px white, -4px -4px 10px white, 4px -4px 10px white,
+    -4px 4px 10px white, 0px 0px 15px white, 0px 4px 10px white,
+    0px -4px 10px white, 4px 0px 10px white, -4px 0px 10px white,
+    2px 2px 5px white, -2px -2px 5px white, 2px -2px 5px white,
+    -2px 2px 5px white, 8px 8px 20px white, -8px -8px 20px white,
+    8px -8px 20px white, -8px 8px 20px white, 0px 0px 30px white,
+    0px 8px 20px white, 0px -8px 20px white, 8px 0px 20px white,
+    -8px 0px 20px white, 4px 4px 20px white, -4px -4px 20px white,
+    4px -4px 20px white, -4px 4px 20px white, 0px 0px 25px white;
 `;
 
 const FadeOut = styled.div<{ willUnmount: boolean }>`
@@ -114,7 +144,7 @@ function LoadingDots({
     };
   }, [interval, phase, displayedText, text]);
 
-  const words = displayedText.split(" ");
+  const words = [...displayedText];
 
   const { length } = words;
 
@@ -128,29 +158,27 @@ function LoadingDots({
               key={`${uniqueId}-${index}`}
               fadeInDelay={(rightToLeft === "rtl" ? 2 - index : index) / 3} // FadeIn during the first 3 seconds
               fadeOutDelay={(rightToLeft === "rtl" ? 2 - index : index) / 3 + 2} // FadeOut between 3-6 seconds
-              small={small}
+              small={Boolean(small)}
             />
           ))}
         {phase !== 0 &&
-          words.map((letter, index) => (
-            <Letter
+          words.map((letter, index) => {
+            const isRtl = rightToLeft === "rtl" ? length - 1 - index : index;
+            const fadeInDelay = (isRtl / length) * 2;
+            const fadeOutDelay = (isRtl / length) * 2 + 6.5;
+            const char = letter === " " ? "\u00A0" : letter;
+            return (
               // eslint-disable-next-line react/no-array-index-key
-              key={index}
-              fadeInDelay={
-                ((rightToLeft === "rtl" ? length - 1 - index : index) /
-                  length) *
-                2
-              }
-              fadeOutDelay={
-                ((rightToLeft === "rtl" ? length - 1 - index : index) /
-                  length) *
-                  2 +
-                6.5
-              }
-            >
-              {letter}
-            </Letter>
-          ))}
+              <LetterContainer key={index}>
+                <Letter fadeInDelay={fadeInDelay} fadeOutDelay={fadeOutDelay}>
+                  {char}
+                </Letter>
+                <Shadow fadeInDelay={fadeInDelay} fadeOutDelay={fadeOutDelay}>
+                  {char}
+                </Shadow>
+              </LetterContainer>
+            );
+          })}
       </Loading>
     </FadeOut>
   );

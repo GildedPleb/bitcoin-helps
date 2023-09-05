@@ -100,6 +100,7 @@ function ContentPage({
     // If the previous fetch was a job, we should refetch the data from the server: either the job is still active,
     // or it has completed. Either way, if we dont refetch, we will not have the current state of the job.
     if (argumentData?.route.__typename === "Job") {
+      setIsLoading(false);
       refetch().catch((error_) => {
         throw error_;
       });
@@ -151,7 +152,10 @@ function ContentPage({
   }, [id]);
 
   if (loading) return <div />;
-  if (error) return <p>Error :( {JSON.stringify(error)}</p>;
+  if (error) {
+    console.error(error);
+    return <div />;
+  }
 
   return (
     <Container

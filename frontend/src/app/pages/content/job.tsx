@@ -9,7 +9,13 @@ import {
 import { useLanguage } from "../../../providers/language";
 import { useLoading } from "../../../providers/loading";
 import { FADE_IN_OUT } from "../../../utilities/constants";
-import { Countdown, Invoice, TextBlock, TextParagraph } from "../../components";
+import {
+  Countdown,
+  Invoice,
+  LoadingDots,
+  TextBlock,
+  TextParagraph,
+} from "../../components";
 
 /**
  *
@@ -101,7 +107,6 @@ function Job({
 
   useEffect(() => {
     if (startSubscription) {
-      setIsLoading(true);
       setWillunmountInvoice(true);
       setTimeout(() => {
         setShowLikeUnlike(true);
@@ -147,27 +152,30 @@ function Job({
 
   return (
     <>
-      {!mountInvoice && (
-        <TextBlock>
-          <TextParagraph isRtl={direction}>
-            {messages.map(({ sequence, message }) => (
-              <React.Fragment key={sequence}>
-                {message.includes("\n") ? (
-                  message.split("\n").flatMap((item, index, array) => {
-                    const key = `${sequence}-${index}`;
-                    const base = <span key={key}>{item}</span>;
-                    return array.length - 1 === index
-                      ? base
-                      : [item !== "" && base, <br key={`${key}br`} />];
-                  })
-                ) : (
-                  <span>{message}</span>
-                )}
-              </React.Fragment>
-            ))}
-          </TextParagraph>
-        </TextBlock>
-      )}
+      {!mountInvoice &&
+        (messages.length > 0 ? (
+          <TextBlock>
+            <TextParagraph isRtl={direction}>
+              {messages.map(({ sequence, message }) => (
+                <React.Fragment key={sequence}>
+                  {message.includes("\n") ? (
+                    message.split("\n").flatMap((item, index, array) => {
+                      const key = `${sequence}-${index}`;
+                      const base = <span key={key}>{item}</span>;
+                      return array.length - 1 === index
+                        ? base
+                        : [item !== "" && base, <br key={`${key}br`} />];
+                    })
+                  ) : (
+                    <span>{message}</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </TextParagraph>
+          </TextBlock>
+        ) : (
+          <LoadingDots rightToLeft={direction} />
+        ))}
       {mountInvoice && (
         <Countdown
           targetDate={scheduledFor}
