@@ -10,6 +10,7 @@ import DropDown from "./drop-down";
 interface MenuBarProperties {
   onGoBack: () => void;
   onLink: () => void;
+  onCopyText: () => void;
   title: string;
   subtitle: string;
   direction: LeftToRightOrRightToLeft;
@@ -46,6 +47,7 @@ const MenuContainer = styled.div`
 function MenuBar({
   onGoBack,
   onLink,
+  onCopyText,
   title,
   subtitle,
   direction,
@@ -118,7 +120,8 @@ function MenuBar({
           ref={dropdownReference}
           isShown={isShareMenuShown}
           willUnmount={willUnmount}
-          onCopy={onLink}
+          onCopyLink={onLink}
+          onCopyText={onCopyText}
           title={title}
           subtitle={subtitle}
         />

@@ -16,7 +16,6 @@ import {
   RedditShareButton,
   TelegramIcon,
   TelegramShareButton,
-  TwitterIcon,
   TwitterShareButton,
   WhatsappIcon,
   WhatsappShareButton,
@@ -27,12 +26,7 @@ import fadeOut from "../../../styles/fade-out";
 import { FADE_IN_OUT } from "../../../utilities/constants";
 import getEnvironmentVariable from "../../../utilities/get-environment";
 
-const hashtag = [
-  "BitcoinFixesThis",
-  "Bitcoin",
-  "BitcoinHelps",
-  "BitcoinFixesEverything",
-];
+const hashtags = ["BitcoinFixesThis", "Bitcoin"];
 const suggestedFollow = "gildedpleb";
 
 const DropDown = styled.div<{
@@ -110,46 +104,99 @@ const StyledCopyButton = styled.button`
   ${sharedButtonStyles};
 `;
 
+const StyledLinkButton = styled.button`
+  ${sharedButtonStyles};
+`;
+
 interface ShareMenuProperties {
-  onCopy: () => void;
+  onCopyLink: () => void;
+  onCopyText: () => void;
   isShown: boolean;
   willUnmount: boolean;
   title: string;
   subtitle: string;
 }
 
+const BASE_URL = getEnvironmentVariable("VITE_DOMAIN_STAGED", "");
+
 // eslint-disable-next-line react/display-name
 const ShareMenu = React.forwardRef<HTMLDivElement, ShareMenuProperties>(
-  ({ isShown, willUnmount, onCopy, title, subtitle }, reference) => {
+  (
+    { isShown, willUnmount, onCopyText, onCopyLink, title, subtitle },
+    reference
+  ) => {
     const url = window.location.href.includes("localhost")
-      ? getEnvironmentVariable("VITE_DOMAIN_STAGED", "")
+      ? BASE_URL + new URL(window.location.href).pathname
       : window.location.href;
 
     const iconSize = 32;
     const [coppied, setCoppied] = useState(false);
+    const [coppiedLink, setCoppiedLink] = useState(false);
+
     const handleCopy = useCallback(() => {
       setCoppied(true);
-      onCopy();
+      onCopyText();
       setTimeout(() => {
         setCoppied(false);
       }, 1000);
-    }, [onCopy]);
+    }, [onCopyText]);
+
+    const handleCopyLink = useCallback(() => {
+      setCoppiedLink(true);
+      onCopyLink();
+      setTimeout(() => {
+        setCoppiedLink(false);
+      }, 1000);
+    }, [onCopyLink]);
+
+    const hashtag = hashtags[0];
+
+    const contentLength =
+      title.length +
+      ": ".length +
+      subtitle.length +
+      " ".length +
+      url.length +
+      " ".length +
+      hashtags.join(" ").length +
+      " ".length +
+      suggestedFollow.length +
+      "via ".length;
+
+    const truncatedSubtitle =
+      contentLength > 280
+        ? `${subtitle.slice(0, 280 - contentLength)}…`
+        : subtitle;
 
     return (
       <DropDown isShown={isShown} willUnmount={willUnmount} ref={reference}>
         <StyledTwitterShareButton
           url={url}
-          title={`${title}: ${subtitle}`}
-          hashtags={hashtag}
+          title={`${title}: ${truncatedSubtitle}`}
+          hashtags={hashtags}
           via={suggestedFollow}
           resetButtonStyle={false}
         >
-          <TwitterIcon size={iconSize} round />
+          {/* <!-- Font Awesome Pro 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --> */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 512 512"
+            width="32"
+            height="32"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <circle cx="256" cy="256" r="256" fill="black" />
+            <path
+              fill="white"
+              transform="translate(107, 100) scale(0.58)"
+              d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"
+            />
+          </svg>
         </StyledTwitterShareButton>
         <StyledFacebookShareButton
           url={url}
           quote={title}
-          hashtag={`#${hashtag[0]}`}
+          hashtag={`#${hashtag}`}
           resetButtonStyle={false}
         >
           <FacebookIcon size={iconSize} round />
@@ -157,7 +204,7 @@ const ShareMenu = React.forwardRef<HTMLDivElement, ShareMenuProperties>(
         <StyledLinkedinShareButton
           url={url}
           resetButtonStyle={false}
-          summary={title}
+          summary={subtitle}
           title={title}
         >
           <LinkedinIcon size={iconSize} round />
@@ -179,7 +226,7 @@ const ShareMenu = React.forwardRef<HTMLDivElement, ShareMenuProperties>(
         </StyledWhatsappShareButton>
         <StyledPinterestShareButton
           url={url}
-          media={`${url}/does_Bitcoin_help.png`}
+          media={`${BASE_URL}/does_Bitcoin_help.png`}
           windowWidth={1000}
           windowHeight={730}
           resetButtonStyle={false}
@@ -240,6 +287,29 @@ ${subtitle}
             />
           </svg>
         </StyledCopyButton>
+        <StyledLinkButton onClick={handleCopyLink}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            strokeWidth="2.25"
+            width="60"
+            height="60"
+            fill={coppiedLink ? "orange" : "none"}
+          >
+            <circle cx="12" cy="12" r="10.5" fill="gray" stroke="none" />
+            <g transform="scale(.5) translate(11 18) rotate(-45 12 12)">
+              <path
+                d="M12 12 l-4 0 a4 4 0 0 1 0 -8 l8 0 q4 0 4 4"
+                stroke="white"
+              />
+              <path
+                d="M12 12 l-4 0 a4 4 0 0 1 0 -8 l8 0 q4 0 4 4"
+                stroke="white"
+                transform="translate(12, 12) rotate(180) translate(-22.5, -4)"
+              />
+            </g>
+          </svg>
+        </StyledLinkButton>
       </DropDown>
     );
   }

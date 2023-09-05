@@ -151,6 +151,16 @@ function ContentPage({
     if (id !== undefined && id !== "") copyToClipboard(window.location.href);
   }, [id]);
 
+  const handleCopyText = useCallback(() => {
+    if (
+      id !== undefined &&
+      id !== "" &&
+      data?.getArgumentRoute?.route.__typename === "InputPair"
+    )
+      copyToClipboard(data.getArgumentRoute.route.arguments[0].content);
+    // TODO: If the type is a job, we would need to pipe the messages back here
+  }, [data?.getArgumentRoute?.route, id]);
+
   if (loading) return <div />;
   if (error) {
     console.error(error);
@@ -166,6 +176,7 @@ function ContentPage({
       <MenuBar
         onGoBack={handleOnClick}
         onLink={handleCopyLink}
+        onCopyText={handleCopyText}
         title={data?.getArgumentRoute?.title ?? ""}
         subtitle={data?.getArgumentRoute?.subtitle ?? ""}
         direction={direction}
