@@ -18,18 +18,12 @@ function LinkButton({ onClick }: LinkButtonProperties) {
         viewBox="0 0 24 24"
         fill="none"
         stroke="black"
-        strokeWidth="2"
+        strokeWidth="1"
         width="50"
         height="50"
       >
-        <g transform="scale(.5) translate(11 18) rotate(-45 12 12)">
-          <path d="M12 12 l-4 0 a4 4 0 0 1 0 -8 l8 0 q4 0 4 4" stroke="black" />
-          <path
-            d="M12 12 l-4 0 a4 4 0 0 1 0 -8 l8 0 q4 0 4 4"
-            stroke="black"
-            transform="translate(12, 12) rotate(180) translate(-22.5, -4)"
-          />
-        </g>
+        <path transform="translate(3, -.9)" d="M3 20 C 3 7, 16 10, 15 10" />
+        <path transform="translate(0, -3)" d="M14.5 9l3.5 3-3.5 3" />
       </svg>
     </AlternateButton>
   );

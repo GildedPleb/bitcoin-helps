@@ -7,9 +7,9 @@ import { defineConfig } from "vite";
 dotenv.config();
 
 const { STAGE, VITE_APP_STAGE, DOMAIN } = process.env;
-const PARSED_DOMAIN = `https://${STAGE === "dev" ? "dev." : ""}${
-  DOMAIN ?? "broken"
-}`;
+const PARSED_DOMAIN = `https://${
+  STAGE === "dev" || STAGE === "" || STAGE === undefined ? "dev." : ""
+}${DOMAIN ?? "broken"}`;
 
 // https://vitejs.dev/config/
 export default defineConfig({

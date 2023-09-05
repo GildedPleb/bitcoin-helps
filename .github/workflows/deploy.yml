@@ -2,6 +2,10 @@
 
 name: Deploy
 
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
 on:
   push:
     branches:

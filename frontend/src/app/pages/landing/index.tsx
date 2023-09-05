@@ -1,6 +1,6 @@
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -54,7 +54,7 @@ const Container = styled.section<{ willUnmount: boolean }>`
  */
 function LandingPage() {
   const [willUnmount, setWillUnmount] = useState(false);
-  const { setIsLoading, setLoadingText } = useLoading();
+  const { setIsLoading, setLoadingText, isLoading } = useLoading();
   const [affiliation, setAffiliation] = useState<OptionTypeMapped>();
   const [issue, setIssue] = useState<OptionTypeMapped>();
 
@@ -112,18 +112,9 @@ function LandingPage() {
     setLoadingText,
   ]);
 
-  useEffect(() => {
-    if (languageLoading) {
-      setIsLoading(true);
-      setLoadingText(language.loading);
-    } else {
-      setIsLoading(false);
-    }
-  }, [languageLoading, setIsLoading, setLoadingText, language.loading]);
-
   if (searchError) {
     console.error(searchError);
-    return <p>Error Search :( REKT</p>;
+    return <div />;
   }
 
   const sortedLanguageOptions = languages.sort((a, b) =>
@@ -143,6 +134,7 @@ function LandingPage() {
         />
       </Sentence>
       {!languageLoading &&
+      !isLoading &&
       language.affiliationTypes &&
       language.issueCategories ? (
         <>
