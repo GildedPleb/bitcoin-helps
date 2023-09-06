@@ -9,6 +9,7 @@ const Title = styled.h1<{ direction: LeftToRightOrRightToLeft }>`
   animation: ${fadeIn} ${FADE_IN_OUT / 1000}s forwards;
   font-size: clamp(2.5rem, 5.5vw, 3.75rem);
   font-weight: bold;
+  width: 100%;
   max-width: 650px;
   min-height: 120px;
   line-height: 1.5;
