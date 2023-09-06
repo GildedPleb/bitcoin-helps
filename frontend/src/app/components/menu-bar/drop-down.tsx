@@ -50,6 +50,7 @@ const DropDown = styled.div<{
   background-color: white;
   box-shadow: 0 0 10px 10px rgba(255, 255, 255, 1);
   z-index: 9;
+  border-radius: 50px;
 `;
 
 const sharedButtonStyles = css`

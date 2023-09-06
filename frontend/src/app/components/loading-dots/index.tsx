@@ -165,7 +165,7 @@ function LoadingDots({
           words.map((letter, index) => {
             const isRtl = rightToLeft === "rtl" ? length - 1 - index : index;
             const fadeInDelay = (isRtl / length) * 2;
-            const fadeOutDelay = (isRtl / length) * 2 + 6.5;
+            const fadeOutDelay = (isRtl / length) * 2 + 6;
             const char = letter === " " ? "\u00A0" : letter;
             return (
               // eslint-disable-next-line react/no-array-index-key
