@@ -184,9 +184,6 @@ flowchart TB
 
 ### CI/CD
 
-[Hook to run FE Visual Regrettion tests locally]
-|Start CI/CD pipeline which deploys to dev or fails|
-
 ```mermaid
 flowchart TB
 
