@@ -30,20 +30,20 @@ interface AugmentedArgument {
 
 const findArgument = async (argument: IdParameter) =>
   awsInvoke<AugmentedArgument | undefined>(
-    process.env.FIND_ARGUMENT_FUNCTION_NAME,
+    process.env.FIND_ARGUMENT_FN,
     "RequestResponse",
     argument
   );
 
 const updateInputPairHitArguments = async (argument: AugmentedArgument) =>
   awsInvoke<InputPair & { arguments: Argument[]; language: Language }>(
-    process.env.UPDATE_INPUT_PAIR_HIT_FUNCTION_NAME,
+    process.env.UPDATE_INPUT_PAIR_HIT_FN,
     "RequestResponse",
     argument
   );
 
 const createTitle = async (argumentId: number) =>
-  awsInvoke(process.env.CREATE_TITLE_FUNCTION_NAME, "Event", {
+  awsInvoke(process.env.CREATE_TITLE_FN, "Event", {
     argumentId,
   });
 

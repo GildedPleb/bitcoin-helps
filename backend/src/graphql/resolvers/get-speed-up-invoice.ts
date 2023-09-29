@@ -6,7 +6,7 @@ import { type Invoice } from "../../generated/graphql";
 
 const findUniqueJob = async (jobId: string) =>
   awsInvoke<(GenerateJob & { invoice?: AlbyInvoice }) | null>(
-    process.env.FIND_JOB_BY_ID_FUNCTION_NAME,
+    process.env.FIND_JOB_BY_ID_FN,
     "RequestResponse",
     { jobId }
   );
@@ -17,7 +17,7 @@ export type OmittedInvoice = Omit<
 >;
 
 const createInvoice = async (invoice: OmittedInvoice, jobId: string) =>
-  awsInvoke(process.env.CREATE_INVOICE_FUNCTION_NAME, "Event", {
+  awsInvoke(process.env.CREATE_INVOICE_FN, "Event", {
     invoice,
     jobId,
   });

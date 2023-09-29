@@ -45,19 +45,19 @@ const topicPrefixInvoice = process.env.TOPIC_PREFIX_INVOICE ?? "dummy topic";
 
 const findUniqueJob = async (jobId: string) =>
   awsInvoke<(GenerateJob & { invoice?: AlbyInvoice }) | null>(
-    process.env.FIND_JOB_BY_ID_FUNCTION_NAME,
+    process.env.FIND_JOB_BY_ID_FN,
     "RequestResponse",
     { jobId }
   );
 
 const updateJob = async (jobId: string) =>
-  awsInvoke(process.env.UPDATE_JOB_FUNCTION_NAME, "RequestResponse", {
+  awsInvoke(process.env.UPDATE_JOB_FN, "RequestResponse", {
     jobId,
     paid: true,
   });
 
 const updateInvoice = async (invoiceId: string) =>
-  awsInvoke(process.env.UPDATE_INVOICE_FUNCTION_NAME, "RequestResponse", {
+  awsInvoke(process.env.UPDATE_INVOICE_FN, "RequestResponse", {
     invoiceId,
   });
 

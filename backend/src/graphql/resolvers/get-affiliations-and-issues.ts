@@ -17,7 +17,7 @@ import { type LanguageSelectors } from "../../generated/graphql";
 import { reactSelectorMap } from "../../helpers";
 
 const getNewLanguageAffiliationsAndIssues = async (language: string) =>
-  awsInvoke(process.env.CREATE_LANGUAGE_FUNCTION_NAME, "Event", {
+  awsInvoke(process.env.CREATE_LANGUAGE_FN, "Event", {
     language,
   });
 
@@ -34,13 +34,13 @@ const findLanguage = async (language: string) =>
         }>;
       })
     | undefined
-  >(process.env.FIND_LANGUAGE_FUNCTION_NAME, "RequestResponse", { language });
+  >(process.env.FIND_LANGUAGE_FN, "RequestResponse", { language });
 
 const findBudget = async (budgetType: BudgetType) =>
   awsInvoke<{
     spent: number;
     budget: number;
-  }>(process.env.FIND_BUDGET_FUNCTION_NAME, "RequestResponse", { budgetType });
+  }>(process.env.FIND_BUDGET_FN, "RequestResponse", { budgetType });
 
 export const getAfffiliationsAndIssues = async (
   _parent: unknown,

@@ -37,15 +37,12 @@ const findArgument = async (argument: number) =>
           })
         | undefined;
     }
-  >(process.env.FIND_ARGUMENT_FUNCTION_NAME, "RequestResponse", {
+  >(process.env.FIND_ARGUMENT_FN, "RequestResponse", {
     id: argument,
   });
 
 const findTitlePrompt = async () =>
-  awsInvoke<TitlePrompt>(
-    process.env.FIND_TITLE_PROMPT_FUNCTION_NAME,
-    "RequestResponse"
-  );
+  awsInvoke<TitlePrompt>(process.env.FIND_TITLE_PROMPT_FN, "RequestResponse");
 
 const updateArgument = async (
   argumentId: number,
@@ -53,7 +50,7 @@ const updateArgument = async (
   subtitle: string,
   titlePromptId: string
 ) =>
-  awsInvoke(process.env.UPDATE_ARGUMENT_FUNCTION_NAME, "Event", {
+  awsInvoke(process.env.UPDATE_ARGUMENT_FN, "Event", {
     argumentId,
     title,
     subtitle,
