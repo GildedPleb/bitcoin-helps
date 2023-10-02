@@ -35,7 +35,7 @@ custom:
       - dev.${env:DOMAIN}
   scriptable:
     hooks:
-      package:initialize: "STAGE=${self:provider.stage} DOMAIN=${env:DOMAIN} sh ./ci/build.sh"
+      package:initialize: "STAGE=${self:provider.stage} DOMAIN=${env:DOMAIN} bash ./ci/build.sh"
       before:remove:remove: "STAGE=${self:provider.stage} sh ./ci/pre-remove.sh"
   s3Sync:
     # noSync: true
