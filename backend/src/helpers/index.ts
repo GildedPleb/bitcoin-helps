@@ -15,23 +15,26 @@ export const reactSelectorMap = (
       name: string;
       affiliations: Affiliation[];
     }>;
-  }
+  },
+  selectedAffTerm: string | undefined,
+  selectedIssTerm: string | undefined
 ): LanguageSelectors => {
-  // The fetched data should be structured to match the GroupType, like so:
+  let selectedAffId: string | undefined;
+  let selectedIssId: string | undefined;
   const issueCategories = toMap.issueCategories.map((category) => ({
     label: category.name,
-    options: category.issues.map((issue) => ({
-      value: issue.id, // or another unique identifier of the issue
-      label: issue.name, // or another property of the issue that you want to display
-    })),
+    options: category.issues.map((issue) => {
+      if (issue.name === selectedIssTerm) selectedIssId = issue.id;
+      return { value: issue.id, label: issue.name };
+    }),
   }));
 
   const affiliationTypes = toMap.affiliationTypes.map((affiliationType) => ({
     label: affiliationType.name,
-    options: affiliationType.affiliations.map((affiliation) => ({
-      value: affiliation.id, // or another unique identifier of the affiliation
-      label: affiliation.name, // or another property of the affiliation that you want to display
-    })),
+    options: affiliationType.affiliations.map((affiliation) => {
+      if (affiliation.name === selectedAffTerm) selectedAffId = affiliation.id;
+      return { value: affiliation.id, label: affiliation.name };
+    }),
   }));
 
   return {
@@ -39,6 +42,8 @@ export const reactSelectorMap = (
     issueCategories,
     affiliationTypes,
     translations: toMap.translations as TranslationTypeMapped,
+    selectedAffId,
+    selectedIssId,
   };
 };
 

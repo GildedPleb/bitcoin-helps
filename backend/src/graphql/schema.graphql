@@ -1,6 +1,10 @@
 type Query {
   hello: String
-  getAfffiliationsAndIssues(language: String!): LanguageSelectors
+  getAfffiliationsAndIssues(
+    language: String!
+    affiliation: String
+    issue: String
+  ): LanguageSelectors
   getArgumentId(
     languageId: String
     issueId: String
@@ -100,4 +104,6 @@ type LanguageSelectors {
   translations: TranslationTypeMapped!
   issueCategories: [GroupType!]!
   affiliationTypes: [GroupType!]!
+  selectedAffId: String
+  selectedIssId: String
 }

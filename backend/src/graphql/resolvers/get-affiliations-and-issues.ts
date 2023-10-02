@@ -10,6 +10,7 @@ import {
   acquireLock,
   cacheLanguage,
   databaseClient,
+  getAffiliationOrIssue,
   type LanguageCacheEntry,
 } from "../../aws/dynamo";
 import awsInvoke from "../../aws/invoke";
@@ -44,7 +45,15 @@ const findBudget = async (budgetType: BudgetType) =>
 
 export const getAfffiliationsAndIssues = async (
   _parent: unknown,
-  { language }: { language: string }
+  {
+    language,
+    affiliation,
+    issue,
+  }: {
+    language: string;
+    affiliation: string | undefined;
+    issue: string | undefined;
+  }
 ): Promise<LanguageSelectors | undefined> => {
   console.log("Fetching language data for:", language);
   const languageTag = language.split(" ")[0];
@@ -70,7 +79,16 @@ export const getAfffiliationsAndIssues = async (
       ).catch((error) => {
         console.error(error);
       });
-      return reactSelectorMap(languagePupulated);
+      const promises = [
+        getAffiliationOrIssue(languageTag, "A", affiliation),
+        getAffiliationOrIssue(languageTag, "I", issue),
+      ];
+      const [selectedAffTerm, selectedIssTerm] = await Promise.all(promises);
+      return reactSelectorMap(
+        languagePupulated,
+        selectedAffTerm?.response,
+        selectedIssTerm?.response
+      );
     }
   } catch (error) {
     console.error(error);
