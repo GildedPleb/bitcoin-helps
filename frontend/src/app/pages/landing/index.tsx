@@ -42,6 +42,20 @@ const findOptionById = (
   return undefined;
 };
 
+const findOptionByName = (
+  groups: GroupType[] | undefined,
+  name: string | null | undefined
+): OptionTypeMapped | undefined => {
+  if (!groups || name === undefined || name === null || name === "")
+    return undefined;
+  for (const group of groups)
+    for (const option of group.options)
+      if (option.label.toLowerCase() === name.toLowerCase())
+        return { ...option };
+
+  return undefined;
+};
+
 const Container = styled.section<{ willUnmount: boolean }>`
   width: 100%;
   height: 100vh;
@@ -83,6 +97,11 @@ function LandingPage({
     setLanguage,
     loading: languageLoading,
   } = useLanguage();
+  const queryParameters = new URLSearchParams(window.location.search);
+
+  const queryAff = queryParameters.get("a") ?? undefined;
+  const queryIss = queryParameters.get("i") ?? undefined;
+
   const [affiliation, setAffiliation] = useState<
     OptionTypeMapped | undefined
   >();
@@ -97,14 +116,13 @@ function LandingPage({
 
   useEffect(() => {
     if (firstLoad) {
-      const foundAff = findOptionById(
-        language.affiliationTypes,
-        language.selectedAffId
-      );
-      const foundIss = findOptionById(
-        language.issueCategories,
-        language.selectedIssId
-      );
+      const foundAff =
+        findOptionById(language.affiliationTypes, language.selectedAffId) ??
+        findOptionByName(language.affiliationTypes, queryAff);
+      const foundIss =
+        findOptionById(language.issueCategories, language.selectedIssId) ??
+        findOptionByName(language.issueCategories, queryIss);
+
       setAffiliation(foundAff);
       setIssue(foundIss);
       if (foundIss ?? foundAff) setFirstLoad(false);
@@ -116,6 +134,8 @@ function LandingPage({
     language.issueCategories,
     language.selectedAffId,
     language.selectedIssId,
+    queryAff,
+    queryIss,
     setFirstLoad,
   ]);
 
