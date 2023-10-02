@@ -254,10 +254,10 @@ For the curious, the math on the potential output is,
     Total BCP-47 Tags = 8,101 * 150 * (249+899) + 16,202
     Total BCP-47 Tags = ~1.4 Billion
 
-    Total Affiliations = 17 categories * ~ 20 Affiliations each
+    Total Affiliations = 17 categories * ~ 20 Affiliations each (minimum)
     Total Affiliations = 340
 
-    Total Issues = 15 categories * ~ 20 Issues each
+    Total Issues = 15 categories * ~ 20 Issues each (minimum)
     Total Issues = 300
 
     Total Essays = Total BCP-47 Tags * Total Affiliations * Total Issues
