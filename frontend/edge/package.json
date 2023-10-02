@@ -5,7 +5,7 @@
   "main": "bot-intercept.js",
   "scripts": {
     "prepair-build": "./update-hash.sh",
-    "build": "npm run prepair-build && tsc && esbuild ./dist/bot-intercept.js --bundle --minify --platform=node --define:process.env.DOMAIN=\\\"$DOMAIN\\\" --define:process.env.TITLE_TABLE=\\\"btcfix-be-$STAGE-title\\\" --define:process.env.LANGUAGE_TABLE=\\\"btcfix-be-$STAGE-language\\\" --outfile=./dist/bundle.js"
+    "build": "TMP_VAR_NAME=GPT_VERSION_$STAGE && COMBINED_GPT_VERSION=${!TMP_VAR_NAME} && npm run prepair-build && tsc && esbuild ./dist/bot-intercept.js --bundle --minify --platform=node --define:process.env.DOMAIN=\\\"$DOMAIN\\\" --define:process.env.TITLE_TABLE=\\\"btcfix-be-$STAGE-title\\\" --define:process.env.LANGUAGE_TABLE=\\\"btcfix-be-$STAGE-language\\\" --define:process.env.AFFILIATION_ISSUE_CACHE_TABLE=\\\"btcfix-be-$STAGE-affiliation-issue-cache\\\" --define:process.env.OPENAI_API_KEY=\\\"$OPENAI_API_KEY\\\" --define:process.env.GPT_VERSION=\\\"$COMBINED_GPT_VERSION\\\" --outfile=./dist/bundle.js"
   },
   "keywords": [],
   "author": "",
