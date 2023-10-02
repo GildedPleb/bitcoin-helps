@@ -174,7 +174,7 @@ function Job({
             </TextParagraph>
           </TextBlock>
         ) : (
-          <LoadingDots rightToLeft={direction} />
+          <LoadingDots />
         ))}
       {mountInvoice && (
         <Countdown
@@ -187,7 +187,6 @@ function Job({
         <Invoice
           invoice={invoiceData}
           willUnmount={willUnmountInvoice}
-          // direction={direction}
           readNow={translations?.readNow ?? ""}
         />
       )}

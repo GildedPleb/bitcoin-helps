@@ -4,12 +4,10 @@ import { useEffect, useState } from "react";
 
 import fadeIn from "../../../styles/fade-in";
 import fadeOut from "../../../styles/fade-out";
-import { type LeftToRightOrRightToLeft } from "../../../types";
 import { FADE_IN_OUT } from "../../../utilities/constants";
 
 interface LoadingInterface {
   small?: boolean | string;
-  rightToLeft: LeftToRightOrRightToLeft;
   text?: string;
   interval?: number;
   willUnmount?: boolean;
@@ -122,7 +120,6 @@ const FadeOut = styled.div<{ willUnmount: boolean }>`
 function LoadingDots({
   small = false,
   text = "",
-  rightToLeft,
   interval = 3,
   willUnmount = false,
 }: LoadingInterface) {
@@ -156,16 +153,15 @@ function LoadingDots({
             <Dot
               // eslint-disable-next-line react/no-array-index-key
               key={`${uniqueId}-${index}`}
-              fadeInDelay={(rightToLeft === "rtl" ? 2 - index : index) / 3} // FadeIn during the first 3 seconds
-              fadeOutDelay={(rightToLeft === "rtl" ? 2 - index : index) / 3 + 2} // FadeOut between 3-6 seconds
+              fadeInDelay={index / 3}
+              fadeOutDelay={index / 3 + 2}
               small={Boolean(small)}
             />
           ))}
         {phase !== 0 &&
           words.map((letter, index) => {
-            const isRtl = rightToLeft === "rtl" ? length - 1 - index : index;
-            const fadeInDelay = (isRtl / length) * 2;
-            const fadeOutDelay = (isRtl / length) * 2 + 6;
+            const fadeInDelay = (index / length) * 2;
+            const fadeOutDelay = (index / length) * 2 + 6;
             const char = letter === " " ? "\u00A0" : letter;
             return (
               // eslint-disable-next-line react/no-array-index-key

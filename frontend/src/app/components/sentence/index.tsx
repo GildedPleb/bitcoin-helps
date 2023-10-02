@@ -12,8 +12,6 @@ interface SentanceProperties {
 
 const Sentence = styled.div<SentanceProperties>`
   display: flex;
-  flex-direction: ${(properties) =>
-    properties.direction === "ltr" ? "row" : "row-reverse"};
   align-items: center;
   font-size: clamp(1.1rem, 3.5vw, 2rem);
   text-align: center;

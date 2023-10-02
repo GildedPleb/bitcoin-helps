@@ -30,8 +30,7 @@ const Container = styled.div<{ direction: LeftToRightOrRightToLeft }>`
 
   @media (max-width: 900px) {
     flex-direction: column;
-    align-items: ${(properties) =>
-      properties.direction === "ltr" ? "flex-end" : "flex-start"};
+    align-items: flex-end;
     max-width: 650px;
   }
 `;
