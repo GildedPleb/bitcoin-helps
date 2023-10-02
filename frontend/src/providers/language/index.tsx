@@ -1,4 +1,5 @@
 import { useApolloClient } from "@apollo/client";
+import tags from "language-tags";
 import React, {
   createContext,
   useCallback,
@@ -77,13 +78,22 @@ const populateLang = (code: string): LanguageOptionType => {
 function LanguageProvider({ children }: React.PropsWithChildren) {
   const previous = localStorage.getItem(LANGUAGE_KEY);
   const browserLanguage = populateLang(navigator.language);
+  const queryParameters = new URLSearchParams(window.location.search);
 
+  const affiliation = queryParameters.get("a") ?? undefined;
+  const issue = queryParameters.get("i") ?? undefined;
+  const currentURL = window.location.pathname;
+  const pathLanguage = currentURL.split("/")[1];
   const defaultLanguage =
     previous === null
       ? browserLanguage
       : (JSON.parse(previous) as LanguageOptionType);
 
-  const [language, setLanguage] = useState(defaultLanguage);
+  const urlSetLanguage = tags.check(pathLanguage)
+    ? populateLang(pathLanguage)
+    : undefined;
+
+  const [language, setLanguage] = useState(urlSetLanguage ?? defaultLanguage);
   const [languages, setLanguages] = useState([
     ...LANGUAGE_OPTIONS,
     browserLanguage,
@@ -154,21 +164,33 @@ function LanguageProvider({ children }: React.PropsWithChildren) {
   );
 
   useGetAfffiliationsAndIssuesQuery({
-    variables: { language: `${language.value} (${language.label})` },
+    variables: {
+      language: `${language.value} (${language.label})`,
+      affiliation,
+      issue,
+    },
     fetchPolicy: "network-only",
     notifyOnNetworkStatusChange: true,
     onCompleted: (data) => {
       setInitialLoading(false);
       if (data.getAfffiliationsAndIssues) {
         updateLanguageStatus(language.value, "available");
-        const { translations, affiliationTypes, issueCategories, id } =
-          data.getAfffiliationsAndIssues;
+        const {
+          translations,
+          affiliationTypes,
+          issueCategories,
+          id,
+          selectedAffId,
+          selectedIssId,
+        } = data.getAfffiliationsAndIssues;
         setLanguage((oldLang) => ({
           ...oldLang,
           translations,
           affiliationTypes,
           issueCategories,
           id,
+          selectedAffId,
+          selectedIssId,
         }));
       } else {
         updateLanguageStatus(language.value, "generating");

@@ -30,7 +30,7 @@ const stream = async (
   awsRequestId: string,
   id: string
 ) =>
-  awsInvoke(process.env.STREAM_FUNCTION_NAME, "Event", {
+  awsInvoke(process.env.STREAM_FN, "Event", {
     jobId,
     connectionId,
     awsRequestId,

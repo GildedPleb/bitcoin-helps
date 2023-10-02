@@ -16,33 +16,32 @@ interface ArgumentParameters {
 
 const findInputPair = async (argument: ArgumentParameters) =>
   awsInvoke<(InputPair & { arguments: Argument[] }) | undefined>(
-    process.env.FIND_INPUT_PAIR_FUNCTION_NAME,
+    process.env.FIND_INPUT_PAIR_FN,
     "RequestResponse",
     argument
   );
 
 const findJob = async (argument: ArgumentParameters) =>
   awsInvoke<GenerateJob | undefined>(
-    process.env.FIND_JOB_FUNCTION_NAME,
+    process.env.FIND_JOB_FN,
     "RequestResponse",
     argument
   );
 
 const createJob = async (argument: ArgumentParameters, id: string) =>
-  awsInvoke<GenerateJob>(
-    process.env.CREATE_JOB_FUNCTION_NAME,
-    "RequestResponse",
-    { ...argument, promptId: id }
-  );
+  awsInvoke<GenerateJob>(process.env.CREATE_JOB_FN, "RequestResponse", {
+    ...argument,
+    promptId: id,
+  });
 
 const getArgumentPrompts = async () =>
   awsInvoke<ArgumentPrompt[]>(
-    process.env.FIND_LATEST_ARGUMENT_PROMPT_FUNCTION_NAME,
+    process.env.FIND_LATEST_ARGUMENT_PROMPT_FN,
     "RequestResponse"
   );
 
 const createTitle = async (argumentId: number) =>
-  awsInvoke(process.env.CREATE_TITLE_FUNCTION_NAME, "Event", {
+  awsInvoke(process.env.CREATE_TITLE_FN, "Event", {
     argumentId,
   });
 

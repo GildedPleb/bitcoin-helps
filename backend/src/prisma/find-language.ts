@@ -10,12 +10,14 @@ export const handler = async ({ language }: Event) =>
     include: {
       issueCategories: {
         select: {
+          id: true,
           name: true,
           issues: true,
         },
       },
       affiliationTypes: {
         select: {
+          id: true,
           name: true,
           affiliations: true,
         },

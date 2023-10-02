@@ -3,7 +3,7 @@
     "target": "esnext",
     "types": ["node"],
     "module": "ESNext",
-    "lib": ["es2018"],
+    "lib": ["es2022", "DOM"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "outDir": "dist",

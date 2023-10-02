@@ -306,3 +306,36 @@ export const cacheLanguage = async (
   const command = new PutItemCommand(parameters);
   await client.send(command);
 };
+
+// Affiliation / Issue Cache
+
+export const AFFILIATION_ISSUE_CACHE_TABLE =
+  process.env.AFFILIATION_ISSUE_CACHE_TABLE ?? "AFFILIATION_ISSUE_CACHE_TABLE";
+
+interface AffiliationIssueCacheEntry {
+  response: string;
+  phrase: string;
+}
+
+export const getAffiliationOrIssue = async (
+  languageTag: string,
+  type: "A" | "I",
+  term: string | undefined
+): Promise<AffiliationIssueCacheEntry | undefined> => {
+  if (term === undefined || term === "") return undefined;
+  const compositeTerm = `${type}#${term}`;
+  const parameters = {
+    KeyConditionExpression:
+      "languageTag = :languageTagValue AND compositeTerm = :compositeTermValue",
+    ExpressionAttributeValues: marshall({
+      ":languageTagValue": languageTag,
+      ":compositeTermValue": compositeTerm,
+    }),
+    TableName: AFFILIATION_ISSUE_CACHE_TABLE,
+  };
+  const command = new QueryCommand(parameters);
+  const response = await databaseClient.send(command);
+
+  if (!response.Items || response.Items.length === 0) return undefined;
+  return unmarshall(response.Items[0]) as AffiliationIssueCacheEntry;
+};

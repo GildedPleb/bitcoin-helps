@@ -130,11 +130,7 @@ const components = {
     // eslint-disable-next-line react/jsx-props-no-spreading
     <selectComponents.Option {...properties} data={data} isRtl={isRtl}>
       {data.status === "generating" ? (
-        <LoadingDots
-          rightToLeft={isRtl ? "rtl" : "ltr"}
-          text={data.label}
-          small="1em"
-        />
+        <LoadingDots text={data.label} small="1em" />
       ) : (
         data.label
       )}

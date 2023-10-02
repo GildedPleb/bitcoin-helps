@@ -1,4 +1,3 @@
-import { type LeftToRightOrRightToLeft } from "../../../types";
 import LoadingDots from "../loading-dots";
 import AlternateButton from "./styles/alternate";
 
@@ -6,7 +5,6 @@ interface HeartButtonProperties {
   onClick: () => void;
   loading: boolean;
   liked: boolean;
-  isRtl: LeftToRightOrRightToLeft;
   disabled: boolean;
 }
 
@@ -18,7 +16,6 @@ function HeartButton({
   onClick,
   loading,
   liked,
-  isRtl,
   disabled,
 }: HeartButtonProperties) {
   return (
@@ -28,7 +25,7 @@ function HeartButton({
       tooltip="&#x2764;"
     >
       {loading ? (
-        <LoadingDots small rightToLeft={isRtl} />
+        <LoadingDots small />
       ) : (
         <svg
           xmlns="http://www.w3.org/2000/svg"

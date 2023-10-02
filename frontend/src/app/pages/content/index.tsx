@@ -206,9 +206,7 @@ function ContentPage({
           dislikeLoading={dislikeLoading}
           likeLoading={likeLoading}
           onCopy={handleLike}
-          isRtl={direction}
           disabled={!showLikeUnlike}
-          // show={!mountInvoice}
         />
       )}
     </Container>

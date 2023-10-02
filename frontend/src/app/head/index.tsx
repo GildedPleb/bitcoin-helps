@@ -46,7 +46,7 @@ function Head({ id }: { id: string | undefined }) {
 
   return (
     <Helmet>
-      <html lang={language.value} />
+      <html lang={language.value} dir={language.direction} />
       <meta name="description" content={siteDescription} />
       <title>{content}</title>
       <link rel="canonical" href={href} />

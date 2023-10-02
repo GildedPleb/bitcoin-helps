@@ -47,7 +47,7 @@ const createNewLanguage = async (
 
   cost.push(...translations.cost);
 
-  return awsInvoke(process.env.SAVE_LANGUAGE_FUNCTION_NAME, "Event", {
+  return awsInvoke(process.env.SAVE_LANGUAGE_FN, "Event", {
     language,
     affiliationTypeData: affiliationTypeList,
     issueCategoryData: issueCategoryList,
@@ -62,7 +62,7 @@ const findLanguagePrompt = async () =>
     LanguagePrompt & {
       translationExample: { example: TranslationTypeMapped; language: string };
     }
-  >(process.env.FIND_LANGUAGE_PROMPT_FUNCTION_NAME, "RequestResponse");
+  >(process.env.FIND_LANGUAGE_PROMPT_FN, "RequestResponse");
 
 export const handler = async ({ language }: Event) => {
   const languageTag = language.split(" ")[0];

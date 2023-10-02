@@ -74,6 +74,8 @@ export type LanguageSelectors = {
   affiliationTypes: Array<GroupType>;
   id: Scalars['String']['output'];
   issueCategories: Array<GroupType>;
+  selectedAffId?: Maybe<Scalars['String']['output']>;
+  selectedIssId?: Maybe<Scalars['String']['output']>;
   translations: TranslationTypeMapped;
 };
 
@@ -116,6 +118,8 @@ export type Query = {
 
 
 export type QueryGetAfffiliationsAndIssuesArgs = {
+  affiliation?: InputMaybe<Scalars['String']['input']>;
+  issue?: InputMaybe<Scalars['String']['input']>;
   language: Scalars['String']['input'];
 };
 
@@ -354,6 +358,8 @@ export type LanguageSelectorsResolvers<ContextType = any, ParentType extends Res
   affiliationTypes?: Resolver<Array<ResolversTypes['GroupType']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   issueCategories?: Resolver<Array<ResolversTypes['GroupType']>, ParentType, ContextType>;
+  selectedAffId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  selectedIssId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   translations?: Resolver<ResolversTypes['TranslationTypeMapped'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

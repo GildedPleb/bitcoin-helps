@@ -1,7 +1,6 @@
 import styled from "@emotion/styled";
 
 import fadeIn from "../../../styles/fade-in";
-import { type LeftToRightOrRightToLeft } from "../../../types";
 import { FADE_IN_OUT } from "../../../utilities/constants";
 import FlagButton from "../buttons/flag";
 import HeartButton from "../buttons/heart";
@@ -13,7 +12,6 @@ interface MenuBarProperties {
   liked: boolean;
   dislikeLoading: boolean;
   likeLoading: boolean;
-  isRtl: LeftToRightOrRightToLeft;
   disabled: boolean;
 }
 
@@ -44,7 +42,6 @@ function SubMenuBar({
   dislikeLoading,
   likeLoading,
   onCopy,
-  isRtl,
   disabled,
 }: MenuBarProperties) {
   return (
@@ -57,13 +54,11 @@ function SubMenuBar({
             liked={liked}
             disabled={disabled}
             loading={likeLoading}
-            isRtl={isRtl}
           />
           <FlagButton
             onClick={onFlag}
             disliked={disliked}
             loading={dislikeLoading}
-            isRtl={isRtl}
             disabled={disabled}
           />
         </Options>

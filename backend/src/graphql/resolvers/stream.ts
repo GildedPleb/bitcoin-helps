@@ -29,7 +29,7 @@ const INITIAL_BACKOFF_MS = 10;
 
 const findUniqueJob = async (jobId: string) =>
   awsInvoke<GenerateJob | null>(
-    process.env.FIND_JOB_BY_ID_FUNCTION_NAME,
+    process.env.FIND_JOB_BY_ID_FN,
     "RequestResponse",
     { jobId }
   );
@@ -42,14 +42,14 @@ const updateJob = async (jobId: string, state: JobStatus) =>
       affiliation: Affiliation & { affiliationType: AffiliationType };
       argumentPrompt: ArgumentPrompt;
     }
-  >(process.env.UPDATE_JOB_FUNCTION_NAME, "RequestResponse", { jobId, state });
+  >(process.env.UPDATE_JOB_FN, "RequestResponse", { jobId, state });
 
 const finalizeJob = async (
   job: GenerateJob,
   finalResult: string,
   cost: string
 ) =>
-  awsInvoke(process.env.FINALIZE_JOB_FUNCTION_NAME, "RequestResponse", {
+  awsInvoke(process.env.FINALIZE_JOB_FN, "RequestResponse", {
     job,
     finalResult,
     cost,

@@ -1,4 +1,3 @@
-import { type LeftToRightOrRightToLeft } from "../../../types";
 import LoadingDots from "../loading-dots";
 import AlternateButton from "./styles/alternate";
 
@@ -6,7 +5,6 @@ interface FlagButtonProperties {
   onClick: () => void;
   loading: boolean;
   disliked: boolean;
-  isRtl: LeftToRightOrRightToLeft;
   disabled: boolean;
 }
 
@@ -18,7 +16,6 @@ function FlagButton({
   onClick,
   loading,
   disliked,
-  isRtl,
   disabled,
 }: FlagButtonProperties) {
   return (
@@ -28,7 +25,7 @@ function FlagButton({
       tooltip="&#x274C;"
     >
       {loading ? (
-        <LoadingDots small rightToLeft={isRtl} />
+        <LoadingDots small />
       ) : (
         <>
           {/* &#x1F6A9; */}

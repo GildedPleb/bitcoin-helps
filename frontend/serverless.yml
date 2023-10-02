@@ -11,8 +11,13 @@ provider:
   region: us-east-1
   environment:
     STAGE: ${opt:stage, 'dev'}
+    # Dynamo Tables
     TITLE_TABLE: btcfix-be-${self:provider.stage}-title
     LANGUAGE_TABLE: btcfix-be-${self:provider.stage}-language
+    AFFILIATION_ISSUE_CACHE_TABLE: btcfix-be-${self:provider.stage}-affiliation-issue-cache
+    # Open AI
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY}
+    GPT_VERSION: ${env:GPT_VERSION_${self:provider.stage}}
 
 plugins:
   - serverless-scriptable-plugin
@@ -282,9 +287,12 @@ resources:
                 - Effect: Allow
                   Action:
                     - dynamodb:Query
+                    - dynamodb:PutItem
+                    - dynamodb:GetItem
                   Resource:
                     - !Sub "arn:aws:dynamodb:us-east-2:${AWS::AccountId}:table/${self:provider.environment.TITLE_TABLE}"
                     - !Sub "arn:aws:dynamodb:us-east-2:${AWS::AccountId}:table/${self:provider.environment.LANGUAGE_TABLE}"
+                    - !Sub "arn:aws:dynamodb:us-east-2:${AWS::AccountId}:table/${self:provider.environment.AFFILIATION_ISSUE_CACHE_TABLE}"
 
   Outputs:
     # Shared

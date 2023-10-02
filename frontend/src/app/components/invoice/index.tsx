@@ -42,7 +42,8 @@ const Address = styled.span`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 250px; /* adjust based on your requirement */
+  direction: ltr;
+  max-width: 250px;
   font-size: 1.1rem;
 `;
 
@@ -80,12 +81,10 @@ const QRCodeStyles = { width: "100%" };
 function Invoice({
   invoice,
   willUnmount,
-  // direction,
   readNow = "",
 }: {
   invoice: GetSpeedUpInvoiceQuery;
   willUnmount: boolean;
-  // direction: LeftToRightOrRightToLeft;
   readNow: string;
 }) {
   const [copied, setCopied] = useState(false);

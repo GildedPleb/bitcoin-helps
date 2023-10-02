@@ -22,29 +22,31 @@ provider:
     TITLE_TABLE: ${self:service}-${self:provider.stage}-title
     TOPIC_PREFIX_INVOICE: ${self:custom.topicPrefixInvoice}
     LANGUAGE_TABLE: ${self:service}-${self:provider.stage}-language
+    AFFILIATION_ISSUE_CACHE_TABLE: ${self:service}-${self:provider.stage}-affiliation-issue-cache
     # Lambda Invoke
-    FIND_JOB_BY_ID_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findJobById
-    FIND_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findLanguage
-    CREATE_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createLanguage
-    CREATE_INVOICE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createInvoice
-    FIND_INPUT_PAIR_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findInputPair
-    FIND_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findJob
-    CREATE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createJob
-    FIND_ARGUMENT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findArgument
+    FIND_JOB_BY_ID_FN: ${self:service}-${self:provider.stage}-findJobById
+    FIND_LANGUAGE_FN: ${self:service}-${self:provider.stage}-findLanguage
+    CREATE_LANGUAGE_FN: ${self:service}-${self:provider.stage}-createLanguage
+    CREATE_INVOICE_FN: ${self:service}-${self:provider.stage}-createInvoice
+    FIND_INPUT_PAIR_FN: ${self:service}-${self:provider.stage}-findInputPair
+    FIND_JOB_FN: ${self:service}-${self:provider.stage}-findJob
+    CREATE_JOB_FN: ${self:service}-${self:provider.stage}-createJob
+    FIND_ARGUMENT_FN: ${self:service}-${self:provider.stage}-findArgument
     LIKE_OR_DISLIKE: ${self:service}-${self:provider.stage}-likeOrDislike
-    UPDATE_INPUT_PAIR_HIT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-updateInputPairHit
-    FIND_LATEST_ARGUMENT_PROMPT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findLatestArgumentPrompts
-    FIND_BUDGET_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findBudget
-    CREATE_TITLE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createTitle
-    UPDATE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-updateJob
-    UPDATE_INVOICE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-updateInvoice
-    STREAM_FUNCTION_NAME: ${self:service}-${self:provider.stage}-stream
-    FINALIZE_JOB_FUNCTION_NAME: ${self:service}-${self:provider.stage}-finalizeJob
-    SAVE_LANGUAGE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-saveLanguage
-    FIND_LANGUAGE_PROMPT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findLanguagePrompt
-    UPDATE_ARGUMENT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-updateArgument
-    CREATE_COMPLETION_FUNCTION_NAME: ${self:service}-${self:provider.stage}-createCompletion
-    FIND_TITLE_PROMPT_FUNCTION_NAME: ${self:service}-${self:provider.stage}-findTitlePrompt
+    UPDATE_INPUT_PAIR_HIT_FN: ${self:service}-${self:provider.stage}-updateInputPairHit
+    FIND_LATEST_ARGUMENT_PROMPT_FN: ${self:service}-${self:provider.stage}-findLatestArgumentPrompts
+    FIND_BUDGET_FN: ${self:service}-${self:provider.stage}-findBudget
+    CREATE_TITLE_FN: ${self:service}-${self:provider.stage}-createTitle
+    UPDATE_JOB_FN: ${self:service}-${self:provider.stage}-updateJob
+    UPDATE_INVOICE_FN: ${self:service}-${self:provider.stage}-updateInvoice
+    STREAM_FN: ${self:service}-${self:provider.stage}-stream
+    FINALIZE_JOB_FN: ${self:service}-${self:provider.stage}-finalizeJob
+    SAVE_LANGUAGE_FN: ${self:service}-${self:provider.stage}-saveLanguage
+    FIND_LANGUAGE_PROMPT_FN: ${self:service}-${self:provider.stage}-findLanguagePrompt
+    UPDATE_ARGUMENT_FN: ${self:service}-${self:provider.stage}-updateArgument
+    CREATE_COMPLETION_FN: ${self:service}-${self:provider.stage}-createCompletion
+    FIND_TITLE_PROMPT_FN: ${self:service}-${self:provider.stage}-findTitlePrompt
+    ADD_AFF_OR_ISS_FN: ${self:service}-${self:provider.stage}-addAffOrIss
     # API Gateway
     PUBLISH_ENDPOINT: !Sub "wss://${WebsocketsApi}.execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}/"
     # IOT
@@ -218,6 +220,21 @@ functions:
     memorySize: 256
     timeout: 20 # 20 seconds
 
+  addIssueAffiliation:
+    handler: src/add/affiliation-issue.handler
+    role: addIssueAffiliationRole
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt:
+              - AffiliationIssueCacheTable
+              - StreamArn
+          batchSize: 2 # number of records per batch, should match the amount added to cache in the lambda@Edge FE function
+          startingPosition: LATEST
+    layers:
+      - { Ref: EndpointLambdaLayer }
+
   findLanguage:
     handler: src/prisma/find-language.handler
     <<: *prismaDefaults
@@ -300,6 +317,10 @@ functions:
 
   findTitlePrompt:
     handler: src/prisma/find-title-prompt.handler
+    <<: *prismaDefaults
+
+  addAffOrIss:
+    handler: src/prisma/add-aff-or-iss.handler
     <<: *prismaDefaults
 
 resources:
@@ -391,6 +412,23 @@ resources:
         KeySchema:
           - AttributeName: languageTag
             KeyType: HASH
+    AffiliationIssueCacheTable:
+      <<: *dynamoDbTableDefaults
+      Properties:
+        <<: *commonTableProps
+        TableName: ${self:provider.environment.AFFILIATION_ISSUE_CACHE_TABLE}
+        AttributeDefinitions:
+          - AttributeName: languageTag
+            AttributeType: S
+          - AttributeName: compositeTerm
+            AttributeType: S
+        KeySchema:
+          - AttributeName: languageTag
+            KeyType: HASH
+          - AttributeName: compositeTerm
+            KeyType: RANGE
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
 
     graphqlInvokeLanguageRole:
       Type: "AWS::IAM::Role"
@@ -428,6 +466,7 @@ resources:
                     - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.LANGUAGE_LOCKS_TABLE}"
                     - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.TITLE_TABLE}"
                     - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.LANGUAGE_TABLE}"
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.AFFILIATION_ISSUE_CACHE_TABLE}"
 
     graphqlInvokeSubscriptionRole:
       Type: "AWS::IAM::Role"
@@ -582,3 +621,28 @@ resources:
                     - "dynamodb:Query"
                   Resource:
                     - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.TITLE_TABLE}"
+
+    addIssueAffiliationRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: add-issue-affiliation-role-${self:provider.stage}
+        AssumeRolePolicyDocument: *assumeRolePolicyLambda
+        Policies:
+          - PolicyName: addIssueAffiliationRolePolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - *lambdaLoggingPermissions
+                - Effect: "Allow"
+                  Action: "lambda:InvokeFunction"
+                  Resource:
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-findLanguage"
+                    - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-addAffOrIss"
+                - Effect: "Allow"
+                  Action:
+                    - "dynamodb:GetRecords"
+                    - "dynamodb:GetShardIterator"
+                    - "dynamodb:DescribeStream"
+                    - "dynamodb:ListStreams"
+                  Resource:
+                    - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:provider.environment.AFFILIATION_ISSUE_CACHE_TABLE}/stream/*"

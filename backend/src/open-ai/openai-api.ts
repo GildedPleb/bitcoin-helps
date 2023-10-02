@@ -40,18 +40,14 @@ const createCompletion = async (
   prompt: PromptMessage[],
   completion?: string
 ) =>
-  awsInvoke<OpenAICall>(
-    process.env.CREATE_COMPLETION_FUNCTION_NAME,
-    "RequestResponse",
-    {
-      promptTokens,
-      completionTokens,
-      cost,
-      prompt,
-      completion,
-      budgetType,
-    }
-  );
+  awsInvoke<OpenAICall>(process.env.CREATE_COMPLETION_FN, "RequestResponse", {
+    promptTokens,
+    completionTokens,
+    cost,
+    prompt,
+    completion,
+    budgetType,
+  });
 
 /**
  *

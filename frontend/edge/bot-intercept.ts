@@ -2,10 +2,120 @@
 /* eslint-disable no-console */
 // edge/bot-intercept
 
-import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
+import querystring from "node:querystring";
+
+import {
+  DynamoDBClient,
+  GetItemCommand,
+  PutItemCommand,
+  QueryCommand,
+} from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import isbot from "isbot";
 import tags from "language-tags";
+
+type TitleStatus = "started" | "completed";
+
+interface TitleEntry {
+  title?: string;
+  subtitle?: string;
+  status: TitleStatus;
+}
+
+interface OpenAIResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+  choices: Array<{
+    message: { content: string; role: string };
+    index: number;
+    finish_reason: string;
+  }>;
+}
+
+interface QueryParameters {
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | readonly string[]
+    | readonly number[]
+    | readonly boolean[]
+    | null
+    | undefined;
+  i?: string | string[];
+  a?: string | string[];
+}
+
+interface LanguageCacheEntry {
+  siteTitle: string;
+  siteDescription: string;
+}
+
+interface AffiliationIssueCacheEntry {
+  response: string;
+  phrase: string;
+}
+
+interface CloudFrontRequestEvent {
+  Records: Array<{
+    cf: {
+      request: {
+        headers: Record<
+          string,
+          Array<{
+            key: string;
+            value: string;
+          }>
+        >;
+        uri: string;
+        querystring: string;
+      };
+    };
+  }>;
+}
+
+interface UriParseResult {
+  error: Error | undefined;
+  langTag: string | undefined;
+  id: number | undefined;
+}
+
+const handelError = (error: unknown) => {
+  console.log(error);
+};
+const BAD = "BAD_CONTENT";
+const RTL_LANGUAGES = [
+  "ar",
+  "fa",
+  "ur",
+  "ks",
+  "yi",
+  "he",
+  "dv",
+  "syc",
+  "men",
+  "lb",
+];
+
+const FLAGGED_PHRASES = [
+  "sorry",
+  "apologize",
+  "please don't share",
+  "i can't",
+  "i'm not",
+  "i'm here",
+  "not appropriate",
+  "let's keep",
+  "refrain from",
+  "for your security",
+];
 
 // WARNING: these must remain structured and not destructured to take advantage of esbuilds environment replacement features.
 // eslint-disable-next-line prefer-destructuring
@@ -14,6 +124,11 @@ const DOMAIN = process.env.DOMAIN;
 const TITLE_TABLE = process.env.TITLE_TABLE;
 // eslint-disable-next-line prefer-destructuring
 const LANGUAGE_TABLE = process.env.LANGUAGE_TABLE;
+// eslint-disable-next-line prefer-destructuring
+const AFFILIATION_ISSUE_CACHE_TABLE = process.env.AFFILIATION_ISSUE_CACHE_TABLE;
+// eslint-disable-next-line prefer-destructuring
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const MODEL = process.env.GPT_VERSION;
 
 if (DOMAIN === undefined || DOMAIN === "")
   throw new Error("DOMAIN env must be populated");
@@ -24,14 +139,87 @@ if (TITLE_TABLE === undefined || TITLE_TABLE === "")
 if (LANGUAGE_TABLE === undefined || LANGUAGE_TABLE === "")
   throw new Error("LANGUAGE_TABLE env must be populated");
 
+if (
+  AFFILIATION_ISSUE_CACHE_TABLE === undefined ||
+  AFFILIATION_ISSUE_CACHE_TABLE === ""
+)
+  throw new Error("AFFILIATION_ISSUE_CACHE_TABLE env must be populated");
+
 const DOMAIN_STAGED = `https://${DOMAIN}`;
 
-type TitleStatus = "started" | "completed";
+const URL = "https://api.openai.com/v1/chat/completions";
 
-interface TitleEntry {
-  title?: string;
-  subtitle?: string;
-  status: TitleStatus;
+/**
+ *
+ * @param message - the message to send the API
+ * @param signal - abort signal
+ * @param restrictToYesNo - weather to limit tokens
+ * @param defaultResponse - in the case of restrict to yes or no, default is returned when neight yes nor no is returned.
+ */
+async function fetchGptResponse(
+  message: string,
+  signal?: AbortSignal,
+  restrictToYesNo = false,
+  defaultResponse = ""
+): Promise<string | undefined> {
+  try {
+    if (OPENAI_API_KEY === undefined || OPENAI_API_KEY === "")
+      throw new Error("OPENAI_API_KEY env must be populated");
+    if (MODEL === undefined || MODEL === "")
+      throw new Error("MODEL env must be populated");
+    const Authorization = `Bearer ${OPENAI_API_KEY}`;
+    const headers = { "Content-Type": "application/json", Authorization };
+
+    const promptMessage = {
+      role: "user",
+      content: message,
+    };
+
+    const requestBody = {
+      messages: [promptMessage],
+      model: MODEL,
+      stream: false,
+      ...(restrictToYesNo ? { max_tokens: 5 } : {}),
+    };
+
+    const body = JSON.stringify(requestBody);
+    const data = { headers, method: "POST", body, signal };
+
+    console.log("Calling OpenAI with:", body);
+    const response = await fetch(URL, data);
+    if (response.ok) {
+      const jsonResponse = (await response.json()) as OpenAIResponse;
+      console.log("OpenAI raw response:", jsonResponse.choices[0]);
+      let modelResponse =
+        jsonResponse.choices[0]?.message?.content.trim().toLowerCase() ??
+        undefined;
+
+      if (restrictToYesNo) {
+        if (
+          modelResponse === "y" ||
+          modelResponse === "ye" ||
+          modelResponse.startsWith("yes")
+        ) {
+          modelResponse = "yes";
+        } else if (modelResponse === "n" || modelResponse.startsWith("no")) {
+          modelResponse = "no";
+        } else {
+          modelResponse = defaultResponse;
+        }
+      }
+
+      if (FLAGGED_PHRASES.some((phrase) => modelResponse.includes(phrase)))
+        return BAD;
+
+      return modelResponse;
+    }
+
+    console.error("Error fetching GPT response:", await response.json());
+    return undefined;
+  } catch (error) {
+    console.error("Error fetching GPT response:", error);
+    return undefined;
+  }
 }
 
 const localConfig = {
@@ -47,72 +235,87 @@ const databaseClient = new DynamoDBClient(
   process.env.IS_OFFLINE === undefined ? remoteConfig : localConfig
 );
 
-const getTitle = async (argumentId: number) => {
+const getTitle = async (
+  argumentId: number
+): Promise<TitleEntry | undefined> => {
   const parameters = {
-    KeyConditionExpression: "argumentId = :argumentIdValue",
-    ExpressionAttributeValues: marshall({
-      ":argumentIdValue": argumentId,
-    }),
+    Key: marshall({ argumentId }),
     TableName: TITLE_TABLE,
   };
-  const command = new QueryCommand(parameters);
+
+  const command = new GetItemCommand(parameters);
   const response = await databaseClient.send(command);
 
-  // eslint-disable-next-line unicorn/no-useless-undefined
-  if (!response.Items || response.Items.length === 0) return undefined;
-  return unmarshall(response.Items[0]) as TitleEntry | undefined;
+  if (!response.Item) return undefined;
+  return unmarshall(response.Item) as TitleEntry;
 };
-
-interface LanguageCacheEntry {
-  siteTitle: string;
-  siteDescription: string;
-}
 
 const getLanguage = async (
   languageTag: string
 ): Promise<LanguageCacheEntry | undefined> => {
   const parameters = {
-    KeyConditionExpression: "languageTag = :languageTagValue",
-    ExpressionAttributeValues: marshall({
-      ":languageTagValue": languageTag,
+    Key: marshall({
+      languageTag,
     }),
     TableName: LANGUAGE_TABLE,
+  };
+
+  const command = new GetItemCommand(parameters);
+  const response = await databaseClient.send(command);
+
+  if (!response.Item) return undefined;
+  return unmarshall(response.Item) as LanguageCacheEntry;
+};
+
+const cacheAffiliationOrIssue = async (
+  languageTag: string,
+  type: "A" | "I", // It's either 'Affiliation' or 'Issue'
+  term: string,
+  response: string,
+  phrase: string
+) => {
+  const compositeTerm = `${type}#${term}`;
+  const parameters = {
+    Item: marshall({
+      languageTag,
+      compositeTerm,
+      response,
+      phrase,
+    }),
+    TableName: AFFILIATION_ISSUE_CACHE_TABLE,
+  };
+  const command = new PutItemCommand(parameters);
+  await databaseClient.send(command);
+};
+
+const getAffiliationOrIssue = async (
+  languageTag: string,
+  type: "A" | "I",
+  term: string | undefined
+): Promise<AffiliationIssueCacheEntry | undefined> => {
+  if (term === undefined || term === "") return undefined;
+  const compositeTerm = `${type}#${term}`;
+  const parameters = {
+    KeyConditionExpression:
+      "languageTag = :languageTagValue AND compositeTerm = :compositeTermValue",
+    ExpressionAttributeValues: marshall({
+      ":languageTagValue": languageTag,
+      ":compositeTermValue": compositeTerm,
+    }),
+    TableName: AFFILIATION_ISSUE_CACHE_TABLE,
   };
   const command = new QueryCommand(parameters);
   const response = await databaseClient.send(command);
 
   if (!response.Items || response.Items.length === 0) return undefined;
-  return unmarshall(response.Items[0]) as LanguageCacheEntry;
+  return unmarshall(response.Items[0]) as AffiliationIssueCacheEntry;
 };
-
-interface CloudFrontRequestEvent {
-  Records: Array<{
-    cf: {
-      request: {
-        headers: Record<
-          string,
-          Array<{
-            key: string;
-            value: string;
-          }>
-        >;
-        uri: string;
-      };
-    };
-  }>;
-}
-
-interface UriParseResult {
-  error: Error | undefined;
-  langTag: string | undefined;
-  id: number | undefined;
-}
 
 /**
  *
  * @param uri - URI
  */
-export function validateAndParseUri(uri: string): UriParseResult {
+function validateAndParseUri(uri: string): UriParseResult {
   // Strip leading/trailing slashes and split by slash
   // eslint-disable-next-line prefer-const
   let [langTag, id, rest] = uri.split("/").filter((part) => part !== "") as [
@@ -162,9 +365,28 @@ export function validateAndParseUri(uri: string): UriParseResult {
   };
 }
 
+const sanitizeInput = (input: string): string =>
+  /**
+   * Removes all characters from the input string except for:
+   * alphanumeric characters, spaces, hyphens, plus signs, single quotes,
+   * ampersands, and open/close parentheses.
+   */
+  // eslint-disable-next-line unicorn/prefer-string-replace-all
+  input.replace(/[^\d &'()+A-Za-z-]+/g, "");
+
+const sanitizeOutput = (input: string, locale = "en"): string => {
+  const unwrapped = input
+    .trim()
+    // eslint-disable-next-line unicorn/prefer-string-replace-all
+    .replace(/^["'.]|["'.]$/g, "")
+    .trim();
+  return unwrapped.charAt(0).toLocaleUpperCase(locale) + unwrapped.slice(1);
+};
+
 /**
  *
  * @param id - argument ID
+ * @param rawQueryString - if there is a given Affiliation or issue
  * @param language - Language Tag
  * @example
  * baseUrl: www.domainforstuff.com
@@ -173,40 +395,276 @@ export function validateAndParseUri(uri: string): UriParseResult {
  * pageTitle: What is the best way to buy and sell a bike? (www.domainforstuff.com/blog/bikes)
  * pageSubTitle: Selling a bike in the digital age can be difficult, but it doesnt have to be! In this article, we will outline the best strategies for buying and selling bikes online (www.domainforstuff.com/blog/bikes)
  */
-async function generateBotContent(id: number | undefined, language = "en") {
+async function generateBotContent(
+  id: number | undefined,
+  rawQueryString: string,
+  language = "en"
+) {
   const articleTitleRaw =
-    id === undefined ? { title: undefined, subtitle: undefined } : getTitle(id);
+    id === undefined
+      ? Promise.resolve<TitleEntry>({
+          title: undefined,
+          subtitle: undefined,
+          status: "completed",
+        })
+      : getTitle(id);
 
-  const [articleTitle, websiteTitle] = await Promise.all([
+  const [articleTitle, translations] = await Promise.all([
     articleTitleRaw,
     getLanguage(language),
   ]);
 
-  const idIsNot = id === undefined || articleTitle?.title === undefined;
+  let content: string;
+  let subContent: string;
+  let type: string;
+  let href: string;
+  console.log("Translations for", language, ":", translations);
 
-  const siteTitle = websiteTitle
-    ? websiteTitle.siteTitle
-    : "Does Bitcoin Help?";
-  const siteDescription = websiteTitle
-    ? websiteTitle.siteDescription
-    : "Bitcoin helps no matter who you are or what you care about.";
-  const pageTitle = articleTitle?.title;
-  const pageSubTitle = articleTitle?.subtitle;
+  const {
+    siteTitle = "Does Bitcoin Help?",
+    siteDescription = "Bitcoin helps no matter who you are or what you care about.",
+  } = translations ?? {};
 
-  const subContent = pageSubTitle ?? siteDescription;
-  const content =
-    pageTitle !== undefined && pageTitle !== ""
-      ? `${pageTitle} | ${siteTitle}`
-      : siteTitle;
-  const type = idIsNot ? "article" : "website";
+  const isRtl = RTL_LANGUAGES.some((rtlLang) => language.startsWith(rtlLang));
 
-  const href = idIsNot
-    ? `${DOMAIN_STAGED}/${language}`
-    : `${DOMAIN_STAGED}/${language}/${id}`;
+  if (id === undefined) {
+    // Special case when no ID is provided
 
+    const { i, a } = querystring.parse(rawQueryString);
+    console.log("QUERY STRING:", i, a);
+    let alignWithFull = "";
+    let concernWithFull = "";
+    const affChecks: Array<Promise<string | undefined>> = [];
+    const issChecks: Array<Promise<string | undefined>> = [];
+
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    setTimeout(() => {
+      controller.abort();
+    }, 3500); // 3.5 seconds
+
+    // Check for affiliation
+    if (typeof a === "string" && a !== "") {
+      const aff = sanitizeInput(a);
+      const ca = await getAffiliationOrIssue(language, "A", aff);
+      console.log("Retrieved Cached Affiliation:", ca);
+      if (ca) {
+        if (ca.response !== "" && ca.phrase !== "")
+          alignWithFull = isRtl ? ` .${ca.phrase}` : `${ca.phrase}. `;
+      } else {
+        // Get promises for chatGPT
+        const affiliationExists = `Is '${aff}' an ideological affiliation held by any people in the BPC-47 language tag '${language}' speaking world? Answer with only 'Yes' or 'No’.`;
+        const affiliationIsGroup = `Is '${aff}' a term used to describe a specific group of people in the BPC-47 language tag '${language}' speaking world? Answer with only 'Yes' or 'No’.`;
+        const affiliationIsAppropriate = `Considering legality, cultural sensitivity, and ethical standards globally, is the affiliation '${aff}' potentially inappropriate, offensive, or associated with negative or illegal behavior in the BCP-47 language tag '${language}' speaking world? Answer with only 'Yes' or 'No'.`;
+        const correctedAffiliation = `Correctly spell, punctuate, capitalize, and otherwise make "${aff}" grammatically correct as an affiliation or group in the BCP-47 language tag '${language}' speaking world. Answer only with the correct term in the '${language}' language. ONLY REPLY WITH THE TERM.`;
+        const correctedAffiliationPhrase = `Correctly spell, punctuate, capitalize, and otherwise make "I align with ${aff}" grammatically correct as a statement of affiliation or group ideological alignment. Translate it into the BCP-47 language tag '${language}' language. Answer only with the correct phrase in the '${language}' language. ONLY REPLY WITH THE PHRASE.`;
+        const appropriateAffiliation = `Provide a conventional, neutral, tactful term to replace '${aff}' as an ideological affiliation or group. Translate it into the BCP-47 language tag '${language}' language. Answer only with the appropriate expression in the '${language}' language. ONLY REPLY WITH THE TERM.`;
+        const appropriateAffiliationPhrase = `Provide a conventional, neutral, tactful phrase to replace 'I align with ${aff}' a statement of affiliation or group ideological alignment. Translate it into the BCP-47 language tag '${language}' language. Answer only with the appropriate expression in the '${language}' language. ONLY REPLY WITH THE PHRASE.`;
+
+        affChecks.push(
+          Promise.resolve(aff),
+          fetchGptResponse(affiliationExists, signal, true, "no"),
+          fetchGptResponse(affiliationIsGroup, signal, true, "no"),
+          fetchGptResponse(affiliationIsAppropriate, signal, true, "yes"),
+          fetchGptResponse(correctedAffiliation, signal),
+          fetchGptResponse(correctedAffiliationPhrase, signal),
+          fetchGptResponse(appropriateAffiliation, signal),
+          fetchGptResponse(appropriateAffiliationPhrase, signal)
+        );
+      }
+    }
+
+    // Check for issue
+    if (typeof i === "string" && i !== "") {
+      const issue = sanitizeInput(i);
+      const ci = await getAffiliationOrIssue(language, "I", issue);
+      console.log("Retrieved Cached Issue:", ci);
+
+      if (ci) {
+        if (ci.response !== "" && ci.phrase !== "")
+          concernWithFull = isRtl ? ` .${ci.phrase}` : `${ci.phrase}. `;
+      } else {
+        // Get promises for chatGPT
+        const issueExists = `Is the issue '${issue}' encountered by people in the BCP-47 language tag '${language}' speaking community? Answer 'Yes' or 'No' only.`;
+        const issueIsAppropriate = `Given the necessity of maintaining decorum and respecting cultural and legal constraints, is the expression of the issue '${issue}' formulated using language or terms that are inappropriate, offensive, explicit, overly vague, or affiliated with illegal content in the regions where the BCP-47 language tag '${language}' is spoken? Answer with only 'Yes' or 'No’.`;
+        const correctedIssue = `Correctly spell, punctuate, capitalize, and otherwise make the phrasing of the issue "${issue}" grammatically correct for the BCP-47 language tag '${language}' speaking world. Answer only with the correct term in the '${language}' language. ONLY REPLY WITH THE TERM.`;
+        const correctedIssuePhrase = `Correctly spell, punctuate, capitalize, and otherwise make "My concern is ${issue}" grammatically correct as a statement of worry about an problem. Translate it into the BCP-47 language tag '${language}' language. Answer only with the correct phrase in the '${language}' language. ONLY REPLY WITH THE PHRASE.`;
+        const appropriateIssue = `Provide a conventional, neutral, tactful phrase to replace '${issue}' as an issue or problem. Translate it into the BCP-47 language tag '${language}' language. Answer only with the appropriate expression in the '${language}' language. ONLY REPLY WITH THE TERM.`;
+        const appropriateIssuePhrase = `Provide a conventional, neutral, tactful phrase to replace 'My concern is ${issue}' a statement of worry about an problem. Translate it into the BCP-47 language tag '${language}' language. Answer only with the appropriate expression in the '${language}' language. ONLY REPLY WITH THE PHRASE.`;
+
+        issChecks.push(
+          Promise.resolve(issue),
+          fetchGptResponse(issueExists, signal, true, "no"),
+          fetchGptResponse(issueIsAppropriate, signal, true, "yes"),
+          fetchGptResponse(correctedIssue, signal),
+          fetchGptResponse(correctedIssuePhrase, signal),
+          fetchGptResponse(appropriateIssue, signal),
+          fetchGptResponse(appropriateIssuePhrase, signal)
+        );
+      }
+    }
+
+    const [affAnswers, issAnswers] = await Promise.all([
+      Promise.all(affChecks),
+      Promise.all(issChecks),
+    ]);
+    console.log("OpenAI Completions:", { affAnswers, issAnswers });
+
+    if (affAnswers.length > 0) {
+      const [
+        original,
+        exists,
+        isGroup,
+        inppropriate,
+        corrected,
+        correctedPhrase,
+        appropriate,
+        appropriatePhrase,
+      ] = affAnswers;
+      const censored = affAnswers.some((answer) => answer?.includes(BAD));
+
+      if ((exists === "yes" || isGroup === "yes") && !censored) {
+        if (inppropriate === "yes") {
+          if (appropriate === undefined || appropriatePhrase === undefined) {
+            // there was no conventional framing or it failed to return. Do nothing, let it cache next time.
+          } else {
+            const term = sanitizeOutput(appropriate);
+            const phrase = sanitizeOutput(appropriatePhrase);
+            alignWithFull = isRtl ? ` .${phrase}` : `${phrase}. `;
+            cacheAffiliationOrIssue(
+              language,
+              "A",
+              original ?? "",
+              term,
+              phrase
+            ).catch(handelError);
+            cacheAffiliationOrIssue(language, "A", term, term, phrase).catch(
+              handelError
+            );
+          }
+        } else if (corrected === undefined || correctedPhrase === undefined) {
+          // the corrected response failed to return. Do nothing, let it cache next attempt.
+        } else {
+          const term = sanitizeOutput(corrected);
+          const phrase = sanitizeOutput(correctedPhrase);
+          alignWithFull = isRtl ? ` .${phrase}` : `${phrase}. `;
+          cacheAffiliationOrIssue(
+            language,
+            "A",
+            original ?? "",
+            term,
+            phrase
+          ).catch(handelError);
+          cacheAffiliationOrIssue(language, "A", term, term, phrase).catch(
+            handelError
+          );
+        }
+      } else {
+        console.log("Adding a bad A query to cache");
+
+        cacheAffiliationOrIssue(language, "A", original ?? "", "", "").catch(
+          handelError
+        );
+        cacheAffiliationOrIssue(language, "A", corrected ?? "", "", "").catch(
+          handelError
+        );
+      }
+    }
+
+    if (issAnswers.length > 0) {
+      const [
+        original,
+        exists,
+        inppropriate,
+        corrected,
+        correctedPhrase,
+        appropriate,
+        appropriatePhrase,
+      ] = issAnswers;
+
+      const censored = affAnswers.some((answer) => answer?.includes(BAD));
+
+      if (exists === "yes" && !censored) {
+        if (inppropriate === "yes") {
+          if (appropriate === undefined || appropriatePhrase === undefined) {
+            // the appropriately stated response failed to return. Do nothing, let it cache next attempt.
+          } else {
+            const term = sanitizeOutput(appropriate);
+            const phrase = sanitizeOutput(appropriatePhrase);
+            concernWithFull = isRtl ? ` .${phrase}` : `${phrase}. `;
+            cacheAffiliationOrIssue(
+              language,
+              "I",
+              original ?? "",
+              term,
+              phrase
+            ).catch(handelError);
+            cacheAffiliationOrIssue(language, "I", term, term, phrase).catch(
+              handelError
+            );
+          }
+        } else if (corrected === undefined || correctedPhrase === undefined) {
+          // the corrected response failed to return. Do nothing, let it cache next attempt.
+        } else {
+          const term = sanitizeOutput(corrected);
+          const phrase = sanitizeOutput(correctedPhrase);
+          concernWithFull = isRtl ? ` .${phrase}` : `${phrase}. `;
+          cacheAffiliationOrIssue(
+            language,
+            "I",
+            original ?? "",
+            term,
+            phrase
+          ).catch(handelError);
+          cacheAffiliationOrIssue(language, "I", term, term, phrase).catch(
+            handelError
+          );
+        }
+      } else {
+        console.log("Adding a bad I query to cache");
+        cacheAffiliationOrIssue(language, "I", original ?? "", "", "").catch(
+          (error) => {
+            console.log(error);
+          }
+        );
+        cacheAffiliationOrIssue(language, "I", corrected ?? "", "", "").catch(
+          (error) => {
+            console.log(error);
+          }
+        );
+      }
+    }
+
+    content = isRtl
+      ? `${siteTitle}${concernWithFull}${alignWithFull}`
+      : `${alignWithFull}${concernWithFull}${siteTitle}`;
+
+    console.log("CONTENT:", content);
+    subContent = siteDescription;
+    type = "website";
+
+    const validParameters: QueryParameters = {};
+    if (i !== undefined) validParameters.i = i;
+    if (a !== undefined) validParameters.a = a;
+    const newQueryString = querystring.stringify(validParameters);
+    href = `${DOMAIN_STAGED}/${language}?${newQueryString}`;
+    console.log("HREF:", href);
+  } else {
+    const { title: pageTitle, subtitle: pageSubTitle } = articleTitle ?? {};
+    const pageTitlePresent = pageTitle !== "" && pageTitle !== undefined;
+    content = pageTitlePresent ? `${pageTitle} | ${siteTitle}` : siteTitle;
+    subContent = pageSubTitle ?? siteDescription;
+    type = pageTitlePresent ? "article" : "website";
+    href = pageTitlePresent
+      ? `${DOMAIN_STAGED}/${language}`
+      : `${DOMAIN_STAGED}/${language}/${id}`;
+  }
+
+  const direction = isRtl ? "rtl" : "ltr";
   // This code should match the /index.html and the helmet defs in /src/app/head/index.ts
   return `<!DOCTYPE html>
-  <html lang="${language}">
+  <html lang="${language}" dir="${direction}">
   <head>
     <script src="https://kit.fontawesome.com/090ca49637.js" crossorigin="anonymous"></script>
     <meta charset="UTF-8" />
@@ -243,7 +701,7 @@ async function generateBotContent(id: number | undefined, language = "en") {
   <body>
     <div id="root"></div>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <script type="module" crossorigin src="${DOMAIN_STAGED}/assets/index-4a333498.js"></script>
+    <script type="module" crossorigin src="${DOMAIN_STAGED}/assets/index-21e02e5d.js"></script>
   </body>
   </html>
   `;
@@ -252,12 +710,26 @@ async function generateBotContent(id: number | undefined, language = "en") {
 const REDIRECT_REGEX =
   /^[^.]+$|\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|xml|pdf|webmanifest|avif|wasm)$)([^.]+$)/;
 const PASS_THROUGH_REGEX = /\.js$|\.png$|\.ico$|\.json$/;
+const STATIC_HEADERS = {
+  "cache-control": [
+    {
+      key: "Cache-Control",
+      value: "no-cache",
+    },
+  ],
+  "content-type": [
+    {
+      key: "Content-Type",
+      value: "text/html",
+    },
+  ],
+};
 
 export const handler = async (event: CloudFrontRequestEvent) => {
   console.log("Recieved event:", event.Records[0].cf);
   const { request } = event.Records[0].cf;
   const userAgent = request.headers["user-agent"][0].value;
-  const { uri, headers } = request;
+  const { uri, headers, querystring: rawQueryString } = request;
 
   // If the request is for a known static file type, forward it to S3 without modification.
   if (PASS_THROUGH_REGEX.test(uri)) {
@@ -288,28 +760,15 @@ export const handler = async (event: CloudFrontRequestEvent) => {
     };
   }
 
-  const { langTag, id } = validateAndParseUri(uri);
-
   if (isbot(userAgent)) {
     console.log("A bot!:", userAgent);
+
+    const { langTag, id } = validateAndParseUri(uri);
     return {
       status: "200",
       statusDescription: "OK",
-      headers: {
-        "cache-control": [
-          {
-            key: "Cache-Control",
-            value: "no-cache",
-          },
-        ],
-        "content-type": [
-          {
-            key: "Content-Type",
-            value: "text/html",
-          },
-        ],
-      },
-      body: await generateBotContent(id, langTag),
+      headers: STATIC_HEADERS,
+      body: await generateBotContent(id, rawQueryString, langTag),
     };
   }
   console.log("Not a bot!:", userAgent);
