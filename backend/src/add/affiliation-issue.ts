@@ -121,7 +121,9 @@ export const handler = async (event: DynamoDBStreamEvent): Promise<void> => {
     if (type === "I") {
       // Check if the 'response' exists as the name of an Issue for the language
       const issueExists = languageCache.issueCategories.some((category) =>
-        category.issues.some((issue) => issue.name === response)
+        category.issues.some(
+          (issue) => issue.name.toLowerCase() === response.toLowerCase()
+        )
       );
 
       if (issueExists) {
@@ -176,7 +178,8 @@ export const handler = async (event: DynamoDBStreamEvent): Promise<void> => {
       // Check if the 'response' exists as the name of an Affiliation for the language
       const affiliationExists = languageCache.affiliationTypes.some((affType) =>
         affType.affiliations.some(
-          (affiliation) => affiliation.name === response
+          (affiliation) =>
+            affiliation.name.toLowerCase() === response.toLowerCase()
         )
       );
 
