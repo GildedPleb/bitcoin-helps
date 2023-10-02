@@ -1,7 +1,7 @@
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
-import { useCallback, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   type GroupType,
@@ -30,6 +30,18 @@ const sortGroups = (groups: GroupType[]): GroupType[] => {
   return cloneGroups;
 };
 
+const findOptionById = (
+  groups: GroupType[] | undefined,
+  id: string | null | undefined
+): OptionTypeMapped | undefined => {
+  if (!groups || id === undefined || id === null || id === "") return undefined;
+  for (const group of groups)
+    for (const option of group.options)
+      if (option.value === id) return { ...option };
+
+  return undefined;
+};
+
 const Container = styled.section<{ willUnmount: boolean }>`
   width: 100%;
   height: 100vh;
@@ -51,20 +63,30 @@ const Container = styled.section<{ willUnmount: boolean }>`
 
 /**
  *
+ * @param root0 - props
  */
-function LandingPage() {
+function LandingPage({
+  setFirstLoad,
+  firstLoad,
+}: {
+  setFirstLoad: React.Dispatch<React.SetStateAction<boolean>>;
+  firstLoad: boolean;
+}) {
   const [willUnmount, setWillUnmount] = useState(false);
   const { setIsLoading, setLoadingText, isLoading } = useLoading();
-  const [affiliation, setAffiliation] = useState<OptionTypeMapped>();
-  const [issue, setIssue] = useState<OptionTypeMapped>();
 
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     language,
     languages,
     setLanguage,
     loading: languageLoading,
   } = useLanguage();
+  const [affiliation, setAffiliation] = useState<
+    OptionTypeMapped | undefined
+  >();
+  const [issue, setIssue] = useState<OptionTypeMapped | undefined>();
   const [getArgumentId, { error: searchError }] = useGetArgumentIdLazyQuery({
     variables: {
       issueId: issue?.value ?? "",
@@ -72,6 +94,30 @@ function LandingPage() {
       languageId: language.id ?? "",
     },
   });
+
+  useEffect(() => {
+    if (firstLoad) {
+      const foundAff = findOptionById(
+        language.affiliationTypes,
+        language.selectedAffId
+      );
+      const foundIss = findOptionById(
+        language.issueCategories,
+        language.selectedIssId
+      );
+      setAffiliation(foundAff);
+      setIssue(foundIss);
+      if (foundIss ?? foundAff) setFirstLoad(false);
+    }
+    return () => {};
+  }, [
+    firstLoad,
+    language.affiliationTypes,
+    language.issueCategories,
+    language.selectedAffId,
+    language.selectedIssId,
+    setFirstLoad,
+  ]);
 
   const handleLanguageChange = useCallback(
     (option: LanguageOptionType | null) => {
@@ -98,6 +144,10 @@ function LandingPage() {
         const { id } = result.data.getArgumentId;
         setTimeout(() => {
           navigate(`/${language.value}/${id}`);
+          // eslint-disable-next-line unicorn/no-useless-undefined
+          setAffiliation(undefined);
+          // eslint-disable-next-line unicorn/no-useless-undefined
+          setIssue(undefined);
         }, FADE_IN_OUT);
       }
     }
@@ -111,6 +161,36 @@ function LandingPage() {
     setIsLoading,
     setLoadingText,
   ]);
+
+  const handleAffiliationChange = useCallback(
+    (newAffiliation: OptionTypeMapped | undefined) => {
+      if (newAffiliation) {
+        const searchParameters = new URLSearchParams(location.search);
+        searchParameters.set("a", newAffiliation.label);
+        navigate({
+          pathname: location.pathname,
+          search: searchParameters.toString(),
+        });
+        setAffiliation(newAffiliation);
+      }
+    },
+    [location.pathname, location.search, navigate]
+  );
+
+  const handleIssueChange = useCallback(
+    (newIssue: OptionTypeMapped | undefined) => {
+      if (newIssue) {
+        const searchParameters = new URLSearchParams(location.search);
+        searchParameters.set("i", newIssue.label);
+        navigate({
+          pathname: location.pathname,
+          search: searchParameters.toString(),
+        });
+        setIssue(newIssue);
+      }
+    },
+    [location.pathname, location.search, navigate]
+  );
 
   if (searchError) {
     console.error(searchError);
@@ -143,7 +223,7 @@ function LandingPage() {
             <Selector
               language={language}
               value={affiliation}
-              onChange={setAffiliation}
+              onChange={handleAffiliationChange}
               options={sortGroups(language.affiliationTypes)}
               placeholder={language.translations?.selectAffiliation}
               selectorKey={1}
@@ -154,7 +234,7 @@ function LandingPage() {
             <Selector
               language={language}
               value={issue}
-              onChange={setIssue}
+              onChange={handleIssueChange}
               options={sortGroups(language.issueCategories)}
               placeholder={language.translations?.selectIssue}
               selectorKey={2}

@@ -39,6 +39,10 @@ function App() {
     string | undefined
   ];
   const navigate = useNavigate();
+  const queryParameters = new URLSearchParams(window.location.search);
+  const affiliation = queryParameters.get("a") ?? undefined;
+  const issue = queryParameters.get("i") ?? undefined;
+  const [firstLoad, setFirstLoad] = useState(true);
 
   useEffect(() => {
     let timeout: number;
@@ -70,26 +74,33 @@ function App() {
       tag !== undefined &&
       tag !== "" &&
       tag !== language.value &&
-      id === undefined
-    )
+      id === undefined &&
+      affiliation === undefined &&
+      issue === undefined
+    ) {
       navigate(`/`);
-  }, [id, language.value, navigate, tag]);
+    }
+  }, [affiliation, id, issue, language.value, navigate, tag]);
 
   return (
     <>
       <Head id={id} />
       <Overlay>
-        {mount && (
-          <LoadingDots
-            text={loadingText}
-            willUnmount={willUnmount}
-            rightToLeft={language.direction}
-          />
-        )}
+        {mount && <LoadingDots text={loadingText} willUnmount={willUnmount} />}
       </Overlay>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/:tag" element={<LandingPage />} />
+        <Route
+          path="/"
+          element={
+            <LandingPage setFirstLoad={setFirstLoad} firstLoad={firstLoad} />
+          }
+        />
+        <Route
+          path="/:tag"
+          element={
+            <LandingPage setFirstLoad={setFirstLoad} firstLoad={firstLoad} />
+          }
+        />
         <Route
           path="/:tag/:id"
           element={<ContentPage cacheReference={cacheReference} />}

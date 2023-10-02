@@ -1,8 +1,16 @@
 import { gql } from "@apollo/client";
 
 export const GET_AFFILIATIONS_ISSUES = gql`
-  query GetAfffiliationsAndIssues($language: String!) {
-    getAfffiliationsAndIssues(language: $language) {
+  query GetAfffiliationsAndIssues(
+    $language: String!
+    $affiliation: String
+    $issue: String
+  ) {
+    getAfffiliationsAndIssues(
+      language: $language
+      affiliation: $affiliation
+      issue: $issue
+    ) {
       id
       translations {
         selectAffiliation
@@ -32,6 +40,8 @@ export const GET_AFFILIATIONS_ISSUES = gql`
           label
         }
       }
+      selectedAffId
+      selectedIssId
     }
   }
 `;

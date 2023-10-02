@@ -74,6 +74,8 @@ export type LanguageSelectors = {
   affiliationTypes: Array<GroupType>;
   id: Scalars['String']['output'];
   issueCategories: Array<GroupType>;
+  selectedAffId?: Maybe<Scalars['String']['output']>;
+  selectedIssId?: Maybe<Scalars['String']['output']>;
   translations: TranslationTypeMapped;
 };
 
@@ -116,6 +118,8 @@ export type Query = {
 
 
 export type QueryGetAfffiliationsAndIssuesArgs = {
+  affiliation?: InputMaybe<Scalars['String']['input']>;
+  issue?: InputMaybe<Scalars['String']['input']>;
   language: Scalars['String']['input'];
 };
 
@@ -228,10 +232,12 @@ export type GetArgumentIdQuery = { __typename?: 'Query', getArgumentId?: { __typ
 
 export type GetAfffiliationsAndIssuesQueryVariables = Exact<{
   language: Scalars['String']['input'];
+  affiliation?: InputMaybe<Scalars['String']['input']>;
+  issue?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type GetAfffiliationsAndIssuesQuery = { __typename?: 'Query', getAfffiliationsAndIssues?: { __typename?: 'LanguageSelectors', id: string, translations: { __typename?: 'TranslationTypeMapped', selectAffiliation: string, selectIssue: string, selectNoMatch: string, speak: string, iAmAffiliatedWith: string, andICareAbout: string, loading: string, whyCare: string, curatingContent: string, readNow: string, siteDescription: string, siteTitle: string }, affiliationTypes: Array<{ __typename?: 'GroupType', label: string, options: Array<{ __typename?: 'OptionType', value: string, label: string }> }>, issueCategories: Array<{ __typename?: 'GroupType', label: string, options: Array<{ __typename?: 'OptionType', value: string, label: string }> }> } | null };
+export type GetAfffiliationsAndIssuesQuery = { __typename?: 'Query', getAfffiliationsAndIssues?: { __typename?: 'LanguageSelectors', id: string, selectedAffId?: string | null, selectedIssId?: string | null, translations: { __typename?: 'TranslationTypeMapped', selectAffiliation: string, selectIssue: string, selectNoMatch: string, speak: string, iAmAffiliatedWith: string, andICareAbout: string, loading: string, whyCare: string, curatingContent: string, readNow: string, siteDescription: string, siteTitle: string }, affiliationTypes: Array<{ __typename?: 'GroupType', label: string, options: Array<{ __typename?: 'OptionType', value: string, label: string }> }>, issueCategories: Array<{ __typename?: 'GroupType', label: string, options: Array<{ __typename?: 'OptionType', value: string, label: string }> }> } | null };
 
 
 export const GetArgumentRouteDocument = gql`
@@ -487,8 +493,12 @@ export type GetArgumentIdQueryHookResult = ReturnType<typeof useGetArgumentIdQue
 export type GetArgumentIdLazyQueryHookResult = ReturnType<typeof useGetArgumentIdLazyQuery>;
 export type GetArgumentIdQueryResult = Apollo.QueryResult<GetArgumentIdQuery, GetArgumentIdQueryVariables>;
 export const GetAfffiliationsAndIssuesDocument = gql`
-    query GetAfffiliationsAndIssues($language: String!) {
-  getAfffiliationsAndIssues(language: $language) {
+    query GetAfffiliationsAndIssues($language: String!, $affiliation: String, $issue: String) {
+  getAfffiliationsAndIssues(
+    language: $language
+    affiliation: $affiliation
+    issue: $issue
+  ) {
     id
     translations {
       selectAffiliation
@@ -518,6 +528,8 @@ export const GetAfffiliationsAndIssuesDocument = gql`
         label
       }
     }
+    selectedAffId
+    selectedIssId
   }
 }
     `;
@@ -535,6 +547,8 @@ export const GetAfffiliationsAndIssuesDocument = gql`
  * const { data, loading, error } = useGetAfffiliationsAndIssuesQuery({
  *   variables: {
  *      language: // value for 'language'
+ *      affiliation: // value for 'affiliation'
+ *      issue: // value for 'issue'
  *   },
  * });
  */

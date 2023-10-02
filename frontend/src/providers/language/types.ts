@@ -20,6 +20,9 @@ export interface LanguageOptionType {
   affiliationTypes?: GroupType[];
   issueCategories?: GroupType[];
   id?: string;
+
+  selectedAffId?: string | null;
+  selectedIssId?: string | null;
 }
 
 export interface LanguageContextProperties {
