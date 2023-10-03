@@ -382,8 +382,10 @@ const sanitizeOutput = (input: string, locale = "en"): string => {
   const unwrapped = input
     .trim()
     // eslint-disable-next-line unicorn/prefer-string-replace-all
-    .replace(/^["'.]|["'.]$/g, "")
-    .trim();
+    .replace(/^["'.]|["'.]$/g, "") // remove outer
+    .trim()
+    // eslint-disable-next-line unicorn/prefer-string-replace-all
+    .replace(/^["'.]|["'.]$/g, ""); // remove nested
   return unwrapped.charAt(0).toLocaleUpperCase(locale) + unwrapped.slice(1);
 };
 
@@ -463,11 +465,13 @@ async function generateBotContent(
           shouldProcess = true;
         } else {
           // Pre-screened and cached
-          alignWithFull = isRtl ? ` .${ca.phrase}` : `${ca.phrase}. `;
+          const final = sanitizeOutput(ca.phrase);
+          alignWithFull = isRtl ? ` .${final}` : `${final}. `;
         }
       } else if (ca && ca.response !== "" && ca.phrase !== "") {
         // Not pre-screened and cached
-        alignWithFull = isRtl ? ` .${ca.phrase}` : `${ca.phrase}. `;
+        const final = sanitizeOutput(ca.phrase);
+        alignWithFull = isRtl ? ` .${final}` : `${final}. `;
       } else {
         // Not pre-screened and not cached
         shouldProcess = true;
@@ -513,11 +517,13 @@ async function generateBotContent(
           shouldProcess = true;
         } else {
           // Pre-screened and cached
-          concernWithFull = isRtl ? ` .${ci.phrase}` : `${ci.phrase}. `;
+          const final = sanitizeOutput(ci.phrase);
+          concernWithFull = isRtl ? ` .${final}` : `${final}. `;
         }
       } else if (ci && ci.response !== "" && ci.phrase !== "") {
         // Not pre-screened and cached
-        concernWithFull = isRtl ? ` .${ci.phrase}` : `${ci.phrase}. `;
+        const final = sanitizeOutput(ci.phrase);
+        concernWithFull = isRtl ? ` .${final}` : `${final}. `;
       } else {
         // Not pre-screened and not cached
         shouldProcess = true;
