@@ -467,12 +467,12 @@ async function generateBotContent(
         } else {
           // Pre-screened and cached
           const final = sanitizeOutput(ca.phrase);
-          alignWithFull = isRtl ? ` .${final}` : `${final}. `;
+          alignWithFull = isRtl ? `${final} .` : `${final}. `;
         }
       } else if (ca && ca.response !== "" && ca.phrase !== "") {
         // Not pre-screened and cached
         const final = sanitizeOutput(ca.phrase);
-        alignWithFull = isRtl ? ` .${final}` : `${final}. `;
+        alignWithFull = isRtl ? `${final} .` : `${final}. `;
       } else {
         // Not pre-screened and not cached
         shouldProcess = true;
@@ -519,12 +519,12 @@ async function generateBotContent(
         } else {
           // Pre-screened and cached
           const final = sanitizeOutput(ci.phrase);
-          concernWithFull = isRtl ? ` .${final}` : `${final}. `;
+          concernWithFull = isRtl ? `${final} .` : `${final}. `;
         }
       } else if (ci && ci.response !== "" && ci.phrase !== "") {
         // Not pre-screened and cached
         const final = sanitizeOutput(ci.phrase);
-        concernWithFull = isRtl ? ` .${final}` : `${final}. `;
+        concernWithFull = isRtl ? `${final} .` : `${final}. `;
       } else {
         // Not pre-screened and not cached
         shouldProcess = true;
@@ -580,7 +580,7 @@ async function generateBotContent(
           } else {
             const term = sanitizeOutput(appropriate);
             const phrase = sanitizeOutput(appropriatePhrase);
-            alignWithFull = isRtl ? ` .${phrase}` : `${phrase}. `;
+            alignWithFull = isRtl ? `${phrase} .` : `${phrase}. `;
             cacheAffiliationOrIssue(
               language,
               "A",
@@ -597,7 +597,7 @@ async function generateBotContent(
         } else {
           const term = sanitizeOutput(corrected);
           const phrase = sanitizeOutput(correctedPhrase);
-          alignWithFull = isRtl ? ` .${phrase}` : `${phrase}. `;
+          alignWithFull = isRtl ? `${phrase} .` : `${phrase}. `;
           cacheAffiliationOrIssue(
             language,
             "A",
@@ -642,7 +642,7 @@ async function generateBotContent(
           } else {
             const term = sanitizeOutput(appropriate);
             const phrase = sanitizeOutput(appropriatePhrase);
-            concernWithFull = isRtl ? ` .${phrase}` : `${phrase}. `;
+            concernWithFull = isRtl ? `${phrase} .` : `${phrase}. `;
             cacheAffiliationOrIssue(
               language,
               "I",
@@ -659,7 +659,7 @@ async function generateBotContent(
         } else {
           const term = sanitizeOutput(corrected);
           const phrase = sanitizeOutput(correctedPhrase);
-          concernWithFull = isRtl ? ` .${phrase}` : `${phrase}. `;
+          concernWithFull = isRtl ? `${phrase} .` : `${phrase}. `;
           cacheAffiliationOrIssue(
             language,
             "I",
