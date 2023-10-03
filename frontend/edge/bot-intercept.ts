@@ -117,7 +117,7 @@ const FLAGGED_PHRASES = [
   "for your",
 ];
 
-const affApproved = new Set(["health goth"]);
+const affApproved = new Set(["health goth", "leftist"]);
 
 const issApproved = new Set(["demographic decline", "debanking"]);
 
@@ -385,7 +385,8 @@ const sanitizeOutput = (input: string, locale = "en"): string => {
     .replace(/^["'.]|["'.]$/g, "") // remove outer
     .trim()
     // eslint-disable-next-line unicorn/prefer-string-replace-all
-    .replace(/^["'.]|["'.]$/g, ""); // remove nested
+    .replace(/^["'.]|["'.]$/g, "") // remove nested
+    .trim();
   return unwrapped.charAt(0).toLocaleUpperCase(locale) + unwrapped.slice(1);
 };
 
@@ -685,9 +686,11 @@ async function generateBotContent(
       }
     }
 
-    content = isRtl
-      ? `${siteTitle}${concernWithFull}${alignWithFull}`
-      : `${alignWithFull}${concernWithFull}${siteTitle}`;
+    // content = isRtl
+    //   ? `${siteTitle}${concernWithFull}${alignWithFull}`
+    //   : `${alignWithFull}${concernWithFull}${siteTitle}`;
+
+    content = `${alignWithFull}${concernWithFull}${siteTitle}`;
 
     console.log("CONTENT:", content);
     subContent = siteDescription;
