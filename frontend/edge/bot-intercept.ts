@@ -463,11 +463,11 @@ async function generateBotContent(
           shouldProcess = true;
         } else {
           // Pre-screened and cached
-          concernWithFull = isRtl ? ` .${ca.phrase}` : `${ca.phrase}. `;
+          alignWithFull = isRtl ? ` .${ca.phrase}` : `${ca.phrase}. `;
         }
       } else if (ca && ca.response !== "" && ca.phrase !== "") {
         // Not pre-screened and cached
-        concernWithFull = isRtl ? ` .${ca.phrase}` : `${ca.phrase}. `;
+        alignWithFull = isRtl ? ` .${ca.phrase}` : `${ca.phrase}. `;
       } else {
         // Not pre-screened and not cached
         shouldProcess = true;
