@@ -107,15 +107,19 @@ const RTL_LANGUAGES = [
 const FLAGGED_PHRASES = [
   "sorry",
   "apologize",
-  "please don't share",
+  "please",
   "i can't",
   "i'm not",
   "i'm here",
   "not appropriate",
   "let's keep",
   "refrain from",
-  "for your security",
+  "for your",
 ];
+
+const affApproved = new Set(["health goth"]);
+
+const issApproved = new Set(["demographic decline", "debanking"]);
 
 // WARNING: these must remain structured and not destructured to take advantage of esbuilds environment replacement features.
 // eslint-disable-next-line prefer-destructuring
@@ -449,10 +453,28 @@ async function generateBotContent(
       const aff = sanitizeInput(a);
       const ca = await getAffiliationOrIssue(language, "A", aff);
       console.log("Retrieved Cached Affiliation:", ca);
-      if (ca) {
-        if (ca.response !== "" && ca.phrase !== "")
-          alignWithFull = isRtl ? ` .${ca.phrase}` : `${ca.phrase}. `;
+      const preScreened = affApproved.has(aff.toLowerCase());
+
+      let shouldProcess = false; // Flag to determine if the processing block should be executed
+
+      if (preScreened) {
+        if (!ca || ca.response === "" || ca.phrase === "") {
+          // Pre-screened and not cached or previously rejected
+          shouldProcess = true;
+        } else {
+          // Pre-screened and cached
+          concernWithFull = isRtl ? ` .${ca.phrase}` : `${ca.phrase}. `;
+        }
+      } else if (ca && ca.response !== "" && ca.phrase !== "") {
+        // Not pre-screened and cached
+        concernWithFull = isRtl ? ` .${ca.phrase}` : `${ca.phrase}. `;
       } else {
+        // Not pre-screened and not cached
+        shouldProcess = true;
+      }
+
+      // Do the processing if the flag is true
+      if (shouldProcess) {
         // Get promises for chatGPT
         const affiliationExists = `Is '${aff}' an ideological affiliation held by any people in the BPC-47 language tag '${language}' speaking world? Answer with only 'Yes' or 'No’.`;
         const affiliationIsGroup = `Is '${aff}' a term used to describe a specific group of people in the BPC-47 language tag '${language}' speaking world? Answer with only 'Yes' or 'No’.`;
@@ -481,12 +503,30 @@ async function generateBotContent(
       const ci = await getAffiliationOrIssue(language, "I", issue);
       console.log("Retrieved Cached Issue:", ci);
 
-      if (ci) {
-        if (ci.response !== "" && ci.phrase !== "")
+      const preScreened = issApproved.has(issue.toLowerCase());
+
+      let shouldProcess = false; // Flag to determine if the processing block should be executed
+
+      if (preScreened) {
+        if (!ci || ci.response === "" || ci.phrase === "") {
+          // Pre-screened and not cached or previously rejected
+          shouldProcess = true;
+        } else {
+          // Pre-screened and cached
           concernWithFull = isRtl ? ` .${ci.phrase}` : `${ci.phrase}. `;
+        }
+      } else if (ci && ci.response !== "" && ci.phrase !== "") {
+        // Not pre-screened and cached
+        concernWithFull = isRtl ? ` .${ci.phrase}` : `${ci.phrase}. `;
       } else {
+        // Not pre-screened and not cached
+        shouldProcess = true;
+      }
+
+      // Do the processing if the flag is true
+      if (shouldProcess) {
         // Get promises for chatGPT
-        const issueExists = `Is the issue '${issue}' encountered by people in the BCP-47 language tag '${language}' speaking community? Answer 'Yes' or 'No' only.`;
+        const issueExists = `Is the issue '${issue}' a reasonable issue faced or potentially faced by people in the BCP-47 language tag '${language}' speaking community? Answer 'Yes' or 'No' only.`;
         const issueIsAppropriate = `Given the necessity of maintaining decorum and respecting cultural and legal constraints, is the expression of the issue '${issue}' formulated using language or terms that are inappropriate, offensive, explicit, overly vague, or affiliated with illegal content in the regions where the BCP-47 language tag '${language}' is spoken? Answer with only 'Yes' or 'No’.`;
         const correctedIssue = `Correctly spell, punctuate, capitalize, and otherwise make the phrasing of the issue "${issue}" grammatically correct for the BCP-47 language tag '${language}' speaking world. Answer only with the correct term in the '${language}' language. ONLY REPLY WITH THE TERM.`;
         const correctedIssuePhrase = `Correctly spell, punctuate, capitalize, and otherwise make "My concern is ${issue}" grammatically correct as a statement of worry about an problem. Translate it into the BCP-47 language tag '${language}' language. Answer only with the correct phrase in the '${language}' language. ONLY REPLY WITH THE PHRASE.`;
@@ -524,7 +564,9 @@ async function generateBotContent(
       ] = affAnswers;
       const censored = affAnswers.some((answer) => answer?.includes(BAD));
 
-      if ((exists === "yes" || isGroup === "yes") && !censored) {
+      const preScreened = affApproved.has(original?.toLowerCase() ?? "Nope");
+
+      if ((exists === "yes" || isGroup === "yes" || preScreened) && !censored) {
         if (inppropriate === "yes") {
           if (appropriate === undefined || appropriatePhrase === undefined) {
             // there was no conventional framing or it failed to return. Do nothing, let it cache next time.
@@ -584,8 +626,9 @@ async function generateBotContent(
       ] = issAnswers;
 
       const censored = affAnswers.some((answer) => answer?.includes(BAD));
+      const preScreened = issApproved.has(original?.toLowerCase() ?? "Nope");
 
-      if (exists === "yes" && !censored) {
+      if ((exists === "yes" || preScreened) && !censored) {
         if (inppropriate === "yes") {
           if (appropriate === undefined || appropriatePhrase === undefined) {
             // the appropriately stated response failed to return. Do nothing, let it cache next attempt.
